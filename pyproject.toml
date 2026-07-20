@@ -5,7 +5,14 @@ description = "LLM fine-tuning and model development project for security analys
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "datasets==4.0.0",
+    "hf-transfer>=0.1.9,<1",
+    "huggingface-hub>=1,<2",
     "jsonschema>=4,<5",
+    "torch==2.12.1",
+    "torchao>=0.15.0",
+    "transformers==5.6.0",
+    "wandb==0.28.0",
 ]
 keywords = ["llm", "fine-tuning", "security", "malware-analysis", "model-development"]
 
@@ -15,11 +22,40 @@ dev = [
     "pytest>=9.1.0",
     "ruff>=0.15.16",
     "types-jsonschema>=4.26.0.20260518",
+    "types-pyyaml>=6.0.12.20250915",
 ]
+training = [
+    "accelerate==1.11.0",
+    "deepspeed==0.19.2",
+    "llamafactory",
+    "peft==0.18.1",
+    "pyyaml==6.0.3",
+    "trl==0.24.0",
+]
+
+[tool.uv.sources]
+llamafactory = { path = "vendor/LlamaFactory", editable = true }
 
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.ruff]
+exclude = [
+    ".venv",
+    ".venv-fast",
+    "vendor",
+    "data",
+    "model",
+    "training_artifacts",
+    "raw_datasets",
+    "artifacts",
+    "checkpoints",
+    "adapters",
+    "outputs",
+    "runs",
+    "wandb",
+]
 
 [tool.mypy]
 python_version = "3.12"

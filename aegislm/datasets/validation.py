@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 import jsonschema
+from jsonschema import Draft202012Validator
+
 from aegislm.schemas import DATASET_RECORD_SCHEMA
+
+
+_DATASET_RECORD_VALIDATOR = Draft202012Validator(DATASET_RECORD_SCHEMA)
 
 
 class DatasetValidationError(Exception):
@@ -35,7 +40,7 @@ def validate_record(record: dict[str, Any]) -> None:
         DatasetValidationError: If schema validation fails.
     """
     try:
-        jsonschema.validate(instance=record, schema=DATASET_RECORD_SCHEMA)
+        _DATASET_RECORD_VALIDATOR.validate(record)
     except jsonschema.exceptions.ValidationError as e:
         raise DatasetValidationError(f"Schema validation failed: {e.message}") from e
 

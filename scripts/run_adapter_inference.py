@@ -90,7 +90,7 @@ def main() -> None:
         generate_response=generate_response,
         generation_metadata={
             "backend": args.backend,
-            "adapter_path": str(args.adapter_path),
+            "adapter_path": args.adapter_path.as_posix(),
             "max_new_tokens": args.max_new_tokens,
             "temperature": args.temperature,
         },

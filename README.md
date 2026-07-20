@@ -1,5 +1,17 @@
 # AegisLM
 
+## AegisLM-B200 Profile
+
+This repository adds a reproducible two-GPU B200 profile for full-dataset
+LoRA training of `Qwen/Qwen3-Coder-Next`. It pins LlamaFactory v0.9.5 as a
+submodule, locks the training stack with `uv`, separates persistent model/data
+storage, and mirrors the latest complete checkpoint without signaling the
+trainer.
+
+Start with [docs/B200_2GPU_SETUP.md](docs/B200_2GPU_SETUP.md) and hand training
+control to the operator with
+[docs/B200_TRAINING_HANDOFF.md](docs/B200_TRAINING_HANDOFF.md).
+
 `AegisLM`은 Project NuriLab과 연계할 수 있는 별도 LLM 모델 개발 프로젝트입니다.
 
 이 저장소는 보안 분석 시스템 자체를 구현하기보다, 보안 분석에 특화된 로컬 LLM을 학습, 평가, 개선하는 데 집중합니다. Project NuriLab이 분석 파이프라인과 운영 시스템을 담당한다면, AegisLM은 그 시스템에 연결될 수 있는 모델, 어댑터, 데이터셋, 평가 방법을 준비합니다.

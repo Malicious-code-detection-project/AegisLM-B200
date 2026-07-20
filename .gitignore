@@ -11,6 +11,7 @@ wheels/
 
 # Virtual environments
 .venv/
+.venv-fast/
 
 # Local environment and secrets
 .env
@@ -19,6 +20,11 @@ wheels/
 
 # Local datasets and model artifacts
 data/
+data
+model/
+model
+training_artifacts/
+training_artifacts
 raw_datasets/
 artifacts/
 checkpoints/
