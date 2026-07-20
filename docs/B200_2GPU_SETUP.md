@@ -30,8 +30,7 @@ filesystem and is mirrored to persistent storage.
 ```bash
 cd /home/daegu/workspace/AegisLM-B200
 python scripts/setup_b200_workspace.py
-cp .env.example .env
-chmod 600 .env
+bash scripts/setup_server_env.sh
 uv sync --frozen --group training
 .venv/bin/python scripts/patch_deepspeed_zero3_dtype.py --apply
 .venv/bin/python scripts/patch_deepspeed_zero3_dtype.py --check
