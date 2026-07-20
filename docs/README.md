@@ -1,5 +1,12 @@
 # AegisLM Docs
 
+## B200 2-GPU Runbook
+
+- [B200_2GPU_SETUP.md](B200_2GPU_SETUP.md) - Server layout, install, data/model recovery, and preflight.
+- [B200_TRAINING_HANDOFF.md](B200_TRAINING_HANDOFF.md) - Operator command, global batch, paths, and resume flow.
+- [CHECKPOINT_POLICY.md](CHECKPOINT_POLICY.md) - Latest-only local/persistent checkpoint mirror policy.
+- [ENVIRONMENT_PROFILES.md](ENVIRONMENT_PROFILES.md) - Stable and optional fast kernel profiles.
+
 이 디렉터리는 `AegisLM`의 세부 기준과 실험 문서를 관리합니다.
 
 루트 [README.md](../README.md)는 프로젝트 정체성, 현재 Phase, 큰 로드맵, 주요 문서 링크만 유지합니다. 세부 기준, 실험 계획, 기여 절차, 테스트 기준은 이 디렉터리 아래 문서에 기록합니다.
