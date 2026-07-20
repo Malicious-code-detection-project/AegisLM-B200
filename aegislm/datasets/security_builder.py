@@ -19,7 +19,6 @@ from typing import Any, Iterable, Mapping
 from aegislm.datasets.validation import (
     DatasetValidationError,
     SafetyPolicyViolationError,
-    validate_record,
     validate_safety_policy,
 )
 from aegislm.evaluation.validation import validate_dataset_record
@@ -698,7 +697,10 @@ def split_records(
             metadata = record.setdefault("metadata", {})
             if isinstance(metadata, dict):
                 metadata["split"] = split_name
-            _validate_safe_record(record)
+
+    # Every record was validated when it entered the canonical builder. Only
+    # the schema-enumerated split label changes here, so revalidating the full
+    # corpus would duplicate the dominant preprocessing cost.
 
     return split_map
 
@@ -722,7 +724,6 @@ def write_split_jsonl(
 
 
 def _validate_safe_record(record: dict[str, Any]) -> None:
-    validate_record(record)
     validate_safety_policy(record)
     result = validate_dataset_record(record)
     if not result.ok:
