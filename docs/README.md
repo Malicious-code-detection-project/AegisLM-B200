@@ -4,6 +4,7 @@
 
 - [B200_2GPU_SETUP.md](B200_2GPU_SETUP.md) - Server layout, install, data/model recovery, and preflight.
 - [B200_TRAINING_HANDOFF.md](B200_TRAINING_HANDOFF.md) - Operator command, global batch, paths, and resume flow.
+- [B200_SERVER_READINESS_REPORT.md](B200_SERVER_READINESS_REPORT.md) - Verified server, model, dataset, and checkpoint status.
 - [CHECKPOINT_POLICY.md](CHECKPOINT_POLICY.md) - Latest-only local/persistent checkpoint mirror policy.
 - [ENVIRONMENT_PROFILES.md](ENVIRONMENT_PROFILES.md) - Stable and optional fast kernel profiles.
 
