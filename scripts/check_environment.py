@@ -60,10 +60,19 @@ def main() -> None:
     project_root = args.project_root.resolve()
     persistent_root = args.persistent_root.resolve()
     venv = project_root / (".venv-fast" if args.profile == "fast" else ".venv")
-    python = venv / "bin" / "python"
+    fast_blocked = args.profile == "fast" and not venv.exists()
+    python = (
+        project_root / ".venv" / "bin" / "python"
+        if fast_blocked
+        else venv / "bin" / "python"
+    )
 
     checks = [
-        _path_check(venv, f"{args.profile} virtualenv", required=True),
+        _profile_venv_check(
+            venv,
+            profile=args.profile,
+            require_fast=args.require_fast,
+        ),
         _path_check(
             project_root / "vendor" / "LlamaFactory",
             "pinned LlamaFactory checkout",
@@ -88,7 +97,15 @@ def main() -> None:
         _data_check(project_root / "data" / "llamafactory", args.require_data),
     ]
     if args.profile == "fast":
-        checks.append(_fast_profile_check(python, required=args.require_fast))
+        if fast_blocked:
+            checks.append(
+                CheckResult(
+                    "FAIL" if args.require_fast else "BLOCKED",
+                    "fast profile is not installed; nvcc/toolchain setup is required",
+                )
+            )
+        else:
+            checks.append(_fast_profile_check(python, required=args.require_fast))
 
     for check in checks:
         print(f"[{check.status}] {check.message}")
@@ -100,6 +117,19 @@ def _path_check(path: Path, label: str, *, required: bool) -> CheckResult:
     if path.exists():
         return CheckResult("OK", f"{label}: {path}")
     return CheckResult("FAIL" if required else "WARN", f"missing {label}: {path}")
+
+
+def _profile_venv_check(
+    path: Path,
+    *,
+    profile: str,
+    require_fast: bool,
+) -> CheckResult:
+    if path.exists():
+        return CheckResult("OK", f"{profile} virtualenv: {path}")
+    if profile == "fast" and not require_fast:
+        return CheckResult("BLOCKED", f"fast virtualenv is not installed: {path}")
+    return CheckResult("FAIL", f"missing {profile} virtualenv: {path}")
 
 
 def _symlink_check(link: Path, target: Path) -> CheckResult:
