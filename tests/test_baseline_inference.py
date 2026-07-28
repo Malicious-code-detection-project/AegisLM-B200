@@ -57,10 +57,8 @@ def test_generator_receives_formatted_prompt_messages(tmp_path: Path) -> None:
     assert len(observed_messages) == 5
     assert observed_messages[0][0]["role"] == "system"
     assert observed_messages[0][1]["role"] == "user"
-    assert (
-        "Record ID: fixture-kev-deserialization-001"
-        in observed_messages[0][1]["content"]
-    )
+    assert "Record ID:" not in observed_messages[0][1]["content"]
+    assert "fixture-kev-deserialization-001" not in observed_messages[0][1]["content"]
 
 
 def test_cli_mock_backend_writes_prediction_contract(tmp_path: Path) -> None:

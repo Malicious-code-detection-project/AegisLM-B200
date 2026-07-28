@@ -1,5 +1,11 @@
 # GPT-OSS-20B Fine-Tuning Experiment Plan
 
+> **2026-07-28 상태 갱신:** Phase E의 Qwen3-Coder-Next 80B lifecycle
+> 검증은 완료됐지만 500건 절대 품질 gate는 실패했습니다. 현재 활성
+> 계획은
+> [PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)입니다.
+> 이 문서의 초기 gpt-oss 학습 내용은 배경·canary 지침으로 유지합니다.
+
 This document defines the AegisLM fine-tuning and model development
 experiment track.
 

@@ -355,3 +355,30 @@ Phase D/E의 adapter 비교에는 `tests/fixtures/heldout_evaluation_records.jso
 - safety refusal evaluation candidate
 
 모든 record는 metadata-only 또는 synthetic이어야 하며, 실제 악성 샘플, executable payload, secrets, private CTI를 포함하지 않는다.
+
+## 18. Phase F Data Contract
+
+Phase F의 실행 정본은
+[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)입니다.
+대규모 학습 데이터는 다음 세 계층으로 관리합니다.
+
+```text
+raw_catalog.parquet
+→ eligible_manifest.parquet
+→ selected canonical/LLaMA-Factory JSONL
+```
+
+- catalog에는 code/executable payload가 아니라 hash, provenance, label
+  confidence, group, 품질 판정만 저장합니다.
+- split은 repository/function/patch/compiler group 단위로 표본추출 전에
+  결정합니다.
+- `target=0`과 patch 후 코드는 전역적으로 안전하다고 해석하지 않습니다.
+- source, dataset, split, label, target, expected output은 보존용 record에는
+  존재할 수 있지만 model-visible prompt에는 들어갈 수 없습니다.
+- raw PE/ELF와 byte dump는 Parquet, JSONL, Git에 저장하지 않습니다.
+- binary 학습 입력은 pseudo-C, 정적 특징, 제한된 assembly evidence를
+  포함한 normalized record만 허용합니다.
+
+Phase F source profile은 `configs/phase_f/source_v2.json`에 고정합니다.
+BigVul은 before/after와 CWE·수정 위치가 확인되지 않으면 `quarantine`이며,
+부족한 quota를 저신뢰 데이터로 채우지 않습니다.

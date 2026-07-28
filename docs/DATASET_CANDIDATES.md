@@ -159,3 +159,28 @@ Phase E tiny SFT should start with text/metadata records, not raw binary dataset
 - `docs/DATA_STRATEGY.md`
 - `docs/EVALUATION_PLAN.md`
 - `docs/FINETUNING_EXPERIMENT_PLAN.md`
+
+## 9. Phase F Binary-derived Candidates
+
+Phase F에서는 raw executable을 LLM에 직접 넣지 않습니다. 후보 데이터의
+역할은 source–binary 정렬, compiler 강건성, pseudo-C·정적 특징 생성,
+metadata benchmark로 나눕니다.
+
+| Candidate | Phase F role | Decision |
+| --- | --- | --- |
+| BigVul buildable patch pair | target CWE before/after binary pair | `primary-if-verified` |
+| [Assemblage](https://assemblage-dataset.net/) | source-built PE/ELF와 compiler variant | `feasibility-candidate` |
+| [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–binary–decompile representation | `feasibility-candidate` |
+| [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `benchmark-candidate` |
+| [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) | decompilation format와 representation 연구 | `reference` |
+| [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `metadata-evaluation` |
+| SOREL-20M full | 대규모 PE feature/disarmed binary | `hold` |
+| BODMAS raw, BIG 2015 | raw malware/old byte·assembly corpus | `hold` |
+
+Assemblage/Decompile-Bench/BinKit은 취약점 label을 자동으로 제공한다고
+간주하지 않습니다. source–binary 정렬 또는 강건성 자료로 사용하고,
+취약점 SFT label은 검증된 patch/CWE 근거와 별도로 연결해야 합니다.
+
+SOREL-20M full 약 8 TB download는 현재 shared storage를 거의 소진하므로
+시작하지 않습니다. EMBER2024도 초기 SFT에 섞지 않고 독립된
+metadata benchmark로 유지합니다.

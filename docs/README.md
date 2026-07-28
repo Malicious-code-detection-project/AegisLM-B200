@@ -7,6 +7,9 @@
 - [B200_SERVER_READINESS_REPORT.md](B200_SERVER_READINESS_REPORT.md) - Verified server, model, dataset, and checkpoint status.
 - [CHECKPOINT_POLICY.md](CHECKPOINT_POLICY.md) - Latest-only local/persistent checkpoint mirror policy.
 - [ENVIRONMENT_PROFILES.md](ENVIRONMENT_PROFILES.md) - Stable and optional fast kernel profiles.
+- [ABSOLUTE_EVALUATION.md](ABSOLUTE_EVALUATION.md) - Label-blind challenge, serving, and absolute pass/fail gates.
+- [FINETUNING_TEST_WORKBOOK.md](FINETUNING_TEST_WORKBOOK.md) - Manual B200 test progress, copyable commands, evidence, and decision workbook.
+- [PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md) - Phase F catalog, source/binary adapter experiment, gates, and NuriLab handoff.
 
 이 디렉터리는 `AegisLM`의 세부 기준과 실험 문서를 관리합니다.
 
@@ -21,6 +24,8 @@
 | [DATASET_CANDIDATES.md](DATASET_CANDIDATES.md) | Phase D/E 이후 공개 데이터셋 후보 registry와 안전성/용도 분류 |
 | [DATA_STRATEGY.md](DATA_STRATEGY.md) | Phase C 데이터 활용 전략, 전처리, tokenization/chunking, split, RAG/vector 분리 기준 |
 | [EVALUATION_PLAN.md](EVALUATION_PLAN.md) | Phase D/E 평가 계획, 점수화 기준, JSON/HTML 리포트 형식 |
+| [FINETUNING_TEST_WORKBOOK.md](FINETUNING_TEST_WORKBOOK.md) | B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록란, NuriLab 연결 가설, 120B 후보 |
+| [PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md) | Phase F 데이터 3계층, source/binary 별도 adapter, 절대 gate와 실행 순서 |
 | [EXPERIMENT_LOG_TEMPLATE.md](EXPERIMENT_LOG_TEMPLATE.md) | baseline/adapter 평가 결과를 같은 형식으로 기록하기 위한 템플릿 |
 | [PHASE_D_EXIT_CRITERIA.md](PHASE_D_EXIT_CRITERIA.md) | Phase D 완료 조건과 Phase E tiny SFT PoC 착수 gate |
 | [PHASE_E_TEAM_ONBOARDING.html](PHASE_E_TEAM_ONBOARDING.html) | Phase E 이슈 처리와 팀 교육 주제를 한 장으로 정리한 온보딩 인포그래픽 |

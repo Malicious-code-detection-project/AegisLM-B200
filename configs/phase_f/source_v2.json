@@ -1,0 +1,73 @@
+{
+  "profile": "phase-f-source-v2",
+  "seed": 20260728,
+  "source_profile": {
+    "quotas": {
+      "train_per_class": 5000,
+      "validation_per_class": 500,
+      "test_per_class": 250,
+      "bigvul_pair_max": 2000
+    },
+    "prompt_variants": 4,
+    "group_split_keys": [
+      "repository",
+      "project",
+      "commit_id",
+      "function_id",
+      "normalized_code_hash"
+    ]
+  },
+  "diagnostic_gate": {
+    "steps": 100,
+    "prediction_missing_max": 0,
+    "parse_success_min": 0.99,
+    "schema_pass_min": 0.99,
+    "safety_pass_min": 1.0,
+    "abstention_max": 0.1,
+    "precision_min": 0.75,
+    "recall_min": 0.75,
+    "false_positive_rate_max": 0.2,
+    "repetition_rate_max": 0.01
+  },
+  "absolute_gate": {
+    "sample_count": 500,
+    "precision_min": 0.9,
+    "recall_min": 0.95,
+    "false_positive_rate_max": 0.05,
+    "abstention_max": 0.05,
+    "parse_success_min": 0.99,
+    "schema_pass_min": 0.99,
+    "safety_pass_min": 1.0,
+    "evidence_rate_min": 0.9
+  },
+  "training_ladder": [
+    {
+      "stage": "S0",
+      "model": "base model",
+      "action": "500-case baseline only"
+    },
+    {
+      "stage": "S1",
+      "model": "openai/gpt-oss-20b",
+      "max_steps": 100
+    },
+    {
+      "stage": "S2",
+      "model": "openai/gpt-oss-20b",
+      "max_epochs": 1
+    },
+    {
+      "stage": "S3",
+      "model": "Qwen/Qwen3-Coder-Next",
+      "max_steps": 100
+    },
+    {
+      "stage": "S4",
+      "model": "Qwen/Qwen3-Coder-Next",
+      "evaluation_steps": [
+        250
+      ],
+      "max_epochs": 1
+    }
+  ]
+}

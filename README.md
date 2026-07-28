@@ -33,9 +33,13 @@ LLM 모델 개발은 분석 파이프라인 구현과 다른 속도로 움직입
 
 ## 현재 초점
 
-현재 저장소 단계는 **Phase E: tiny SFT PoC** 시작입니다.
+현재 저장소 단계는 **Phase F: 데이터 재설계 + adapter 복구 실험**입니다.
 
-Phase D에서는 baseline inference runner, evaluation harness, held-out fixture, experiment log template, artifact storage policy, Phase D exit criteria를 정리했습니다. 이제 Phase E에서는 작은 안전 dataset으로 SFT 학습 루프를 검증하고, adapter 저장/로드와 held-out evaluation 비교 흐름을 끝까지 확인합니다.
+Phase E에서는 Qwen3-Coder-Next 80B LoRA를 학습하고 adapter 저장·재로드,
+merge, vLLM serving, 5건 smoke와 500건 절대평가까지 완료했습니다. 인프라
+경로는 통과했지만 500건 품질 gate는 실패했습니다. Phase F에서는
+label·provenance 누출과 반복 target을 제거하고 1만~1.2만 건의 균형 잡힌
+source dataset부터 다시 검증합니다.
 
 초기 기준 모델은 `openai/gpt-oss-20b`입니다.
 
@@ -63,13 +67,19 @@ v0 단계에서는 악성코드 유사 스크립트 동작 설명, 취약점 맥
 파인튜닝 전에 `openai/gpt-oss-20b` 기본 모델의 출력과 평가 기준선을 확인하는 구조를 마련했습니다. baseline inference, JSON parse success, required field completeness, hallucinated ATT&CK mapping, unsafe guidance 여부를 adapter 개선 전 비교 기준으로 사용합니다.
 
 
--> **Phase E: tiny SFT PoC (진행 중)**
+**Phase E: SFT lifecycle PoC (완료 — infrastructure PASS / model quality FAIL)**
 
-작은 데이터셋으로 Unsloth QLoRA와 Hugging Face TRL LoRA / QLoRA 경로를 비교합니다. 목표는 큰 성능 향상이 아니라, 학습 루프, adapter 저장/로드, held-out evaluation 비교 흐름을 끝까지 검증하는 것입니다.
+Qwen3-Coder-Next 80B에서 학습, adapter 저장·로드, merge, 실제 API serving,
+5건 smoke, 500건 label-blind 평가 흐름을 끝까지 검증했습니다. 낮은 loss와
+별개로 precision, recall, FPR, schema gate를 통과하지 못해 현재 adapter는
+채택하지 않습니다.
 
-**Phase F: dataset 확장 + adapter 개선**
+-> **Phase F: dataset 재설계 + source/binary adapter 개선 (진행 중)**
 
-평가 기준이 안정된 뒤 NVD, CISA KEV, MITRE ATT&CK, 공개 CTI, Project NuriLab synthetic fixture 같은 안전한 데이터 소스를 확장합니다. adapter 품질은 JSON 유효성, 설명 품질, ATT&CK 매핑 정확도, 안전성 기준으로 개선합니다.
+기존 33만 건을 확대하지 않고 catalog→eligible manifest→materialized JSONL
+세 계층으로 재구성합니다. 먼저 1만~1.2만 건 source adapter를 절대평가하고,
+통과 후 pseudo-C·정적 특징·제한된 assembly 기반 binary-derived adapter를
+별도로 검증합니다.
 
 **Phase G: 직접 모델/레이어 연구**
 
@@ -102,6 +112,9 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/DATASET_CANDIDATES.md` - 공개 데이터셋 후보 registry와 안전성/용도 분류
 - `docs/DATA_STRATEGY.md` - Phase C 데이터 활용 전략
 - `docs/EVALUATION_PLAN.md` - Phase D/E 평가 계획과 결과 리포트 기준
+- `docs/ABSOLUTE_EVALUATION.md` - label-blind 코드 challenge, adapter 서빙, 절대평가 gate
+- `docs/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
+- `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F 데이터 카탈로그, source/binary 실험, gate와 NuriLab 연결 기준
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽
