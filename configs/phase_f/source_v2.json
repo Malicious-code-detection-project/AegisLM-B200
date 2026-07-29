@@ -4,8 +4,8 @@
   "phase_status": {
     "F0": "complete",
     "F1": "complete_group_first_pool_materialized_and_audited",
-    "F2": "running_current_target_design_failed_rework_required",
-    "F3": "blocked_by_F2",
+    "F2": "blocked_evidence_supply_sard_extractor_required",
+    "F3": "blocked_by_F2_evidence_supply",
     "F4": "blocked_by_F3",
     "F5": "blocked_by_F3_F4",
     "F6A": "ready_parallel_research",
@@ -135,6 +135,22 @@
     "single_target_template_fraction_max": 0.02,
     "manual_review_sample_count": 100,
     "manual_label_or_evidence_error_rate_max": 0.05
+  },
+  "f2_audit": {
+    "status": "evidence_supply_blocked",
+    "artifact": "data/processed/phase-f-source-v2-r2/f2/source-target-audit.json",
+    "artifact_sha256": "0419b36cc6c61eaf5f00f6ae8bc88a88cb2535280f66efce5e44ab5e0f88fae4",
+    "total_records": 11900,
+    "eligible_records": 281,
+    "core_training_eligible_records": 0,
+    "evidence_level_not_grounded": 11500,
+    "positive_code_span_missing": 51,
+    "tokenizer_cutoff_excluded": 68,
+    "maximum_accepted_tokens": 2045,
+    "maximum_observed_tokens": 6172,
+    "automated_quality_gates_for_eligible_records": "pass",
+    "quota_gates": "fail",
+    "next_task": "sard_juliet_function_level_good_bad_extractor"
   },
   "token_budget": {
     "tokenizer": "model/base/qwen3-coder-next",

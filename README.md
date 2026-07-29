@@ -48,9 +48,12 @@ source dataset부터 다시 검증합니다.
 `openai/gpt-oss-20b`는 Qwen 실험 결론 이후 파이프라인 이식성을 확인하는
 보조 후보이며 Qwen 재학습의 선행 조건이 아닙니다.
 
-2026-07-29 감사에서 현재 `phase-f-source-v2`는 분할·중복·누출 검사는
-통과했지만 정답 표현 반복과 2,048-token 초과 사례가 발견됐습니다. 따라서
-현재 materialization은 학습 승인본이 아니라 재설계 대상입니다.
+2026-07-29 F2 감사에서 source 전용 계약과 실제 Qwen tokenizer gate를
+적용했습니다. 외부 patch pair에서 281건은 자동 품질 gate를 통과했지만,
+core 11,500건은 exact code/patch 근거가 없어 모두 제외됐습니다. 따라서
+F2는 `evidence_supply_blocked`이며 `phase-f-source-v3` 학습은 시작하지
+않습니다. 다음 작업은 확보한 SARD/Juliet에서 함수 단위 good/bad와 exact
+근거를 추출하는 것입니다.
 
 F1 raw catalog에 이어 group-first pool, 보안 범주화, category sampling,
 reserve와 cross-dataset holdout 구현 및 full materialization 감사를
@@ -96,7 +99,7 @@ Qwen3-Coder-Next 80B에서 학습, adapter 저장·로드, merge, 실제 API ser
 별개로 precision, recall, FPR, schema gate를 통과하지 못해 현재 adapter는
 채택하지 않습니다.
 
--> **Phase F: dataset 재설계 + source/binary adapter 개선 (F1 완료, F2 진행 중)**
+-> **Phase F: dataset 재설계 + source/binary adapter 개선 (F2 evidence supply blocked)**
 
 기존 33만 건을 확대하지 않고 catalog→eligible manifest→materialized JSONL
 세 계층으로 재구성합니다. 구조 검사를 통과한 데이터에 대해 코드 근거가

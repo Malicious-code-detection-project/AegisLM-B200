@@ -51,6 +51,22 @@ from aegislm.datasets.phase_f_raw import (
     normalize_primevul_pair,
     raw_dataset_inventory,
 )
+from aegislm.datasets.source import (
+    SOURCE_SYSTEM_PROMPT,
+    SourceContractError,
+    SourceTargetResult,
+    build_source_target,
+    derive_patch_findings,
+    format_source_prompt,
+    phase_f_record_to_source_record,
+    source_prompt_variant_id,
+    validate_source_output,
+    validate_source_record,
+)
+from aegislm.datasets.source_audit import (
+    audit_source_targets,
+    count_source_training_tokens,
+)
 
 __all__ = [
     "validate_record",
@@ -94,4 +110,16 @@ __all__ = [
     "normalize_diversevul_row",
     "normalize_primevul_pair",
     "raw_dataset_inventory",
+    "SOURCE_SYSTEM_PROMPT",
+    "SourceContractError",
+    "SourceTargetResult",
+    "audit_source_targets",
+    "build_source_target",
+    "derive_patch_findings",
+    "count_source_training_tokens",
+    "format_source_prompt",
+    "phase_f_record_to_source_record",
+    "source_prompt_variant_id",
+    "validate_source_output",
+    "validate_source_record",
 ]

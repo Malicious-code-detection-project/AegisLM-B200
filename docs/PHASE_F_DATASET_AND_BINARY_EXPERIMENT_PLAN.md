@@ -29,8 +29,8 @@ flowchart LR
 | --- | --- | --- |
 | F0 | `Complete` | Phase E infrastructure PASS / quality FAIL |
 | F1 | `Complete` | r2 group-first pool·taxonomy·reserve·2개 cross-dataset 재현성 감사 통과 |
-| F2 | `Running — 기존 target 설계 Fail` | 정답 반복·근거 부재·contract 불일치·token 초과 확인 |
-| F3 | `Blocked by F2` | r2 pool은 완료됐지만 현재 train target은 학습 승인본 아님 |
+| F2 | `Blocked — evidence supply` | source v1 contract 구현; core 11,500건 grounded evidence 0, 외부 pair 281건만 자동 gate 통과 |
+| F3 | `Blocked by F2 evidence supply` | SARD/Juliet extractor와 grounded source 공급 필요 |
 | F4 | `Blocked by F3` | 승인 challenge 필요 |
 | F5 | `Blocked by F3/F4` | 신규 YAML·checkpoint guard도 필요 |
 | F6-A | `Ready — 병행 조사 가능` | GPU 불필요 |
@@ -268,7 +268,7 @@ paired 파일에서 provenance가 서로 다른 예외 1쌍은 자동 quarantine
 
 ## F2 — Source Task·Output Contract·Target 재설계
 
-상태: `Running — 기존 설계 Fail`
+상태: `Blocked — evidence supply`
 
 이 단계의 목표는 label을 맞히는 문구를 외우게 하는 것이 아니라, 제공된
 코드에서 관찰 가능한 근거로 target CWE를 판단하게 하는 것입니다.
@@ -348,6 +348,31 @@ recommendations
 - 100건 수동 검토의 label/근거 오류율 ≤ `0.05`
 
 F2가 실패하면 dataset 수를 채우거나 GPU 학습으로 넘어가지 않습니다.
+
+### 2026-07-29 F2 실제 감사 결과
+
+- source record/output contract:
+  `aegislm.source-vulnerability-record.v1` /
+  `aegislm.source-vulnerability-assessment.v1`
+- 실제 tokenizer: `model/base/qwen3-coder-next`, thinking 비활성 chat template
+- 감사 레코드: core 11,500 + BigVul·PrimeVul pair holdout 400 = 11,900
+- core 학습 eligible: `0`
+- 외부 pair 중 target 생성: `349`
+- 2,048-token 초과 제외: `68`
+- 최종 자동 품질 gate 통과: `281`
+- grounded evidence 부족: `11,500`
+- patch span 생성 실패: `51`
+- 최종 281건의 schema·prompt leakage·positive linkage·generic evidence·
+  exact duplicate·single target·global safety·cutoff gate: 모두 PASS
+- quota gate: 전부 FAIL
+- audit artifact:
+  `data/processed/phase-f-source-v2-r2/f2/source-target-audit.json`
+- SHA-256:
+  `0419b36cc6c61eaf5f00f6ae8bc88a88cb2535280f66efce5e44ab5e0f88fae4`
+
+따라서 F2는 모델이나 loss 문제가 아니라 **grounded source evidence 공급
+부족**으로 중단합니다. BigVul·PrimeVul의 외부 test 역할은 유지하며,
+다음 작업은 SARD/Juliet function-level good/bad extractor입니다.
 
 ---
 

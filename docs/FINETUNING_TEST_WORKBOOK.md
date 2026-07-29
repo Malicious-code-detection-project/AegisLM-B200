@@ -1324,8 +1324,8 @@ Phase F 상세 기준은
 | --- | --- | --- | --- | --- |
 | F0 기존 run 동결 | `Pass` | adapter·merged model·500건 결과 hash 보존 | `aegislm-qwen3next-20260728T100259-operator` | Phase E infrastructure PASS / model quality FAIL |
 | F1 raw catalog·범주화·감사 | `Pass` | group-first pool, language 비의존 taxonomy, reserve·cross-dataset 수량과 누출 검증 | `data/processed/phase-f-source-v2-r2/` | 2026-07-29 수량·hash·group leakage·재현성 감사 완료 |
-| F2 source task·target 재설계 | `Running` | source 전용 contract, code-grounded target, 반복·token 제한 | 2026-07-29 기존 설계 `Fail` | unique output 939, summary 8 |
-| F3 source 승인본 동결 | `Blocked` | F2 통과 후 `phase-f-source-v3`, cutoff 초과 0, 수동 100건 통과 |  | r2는 F1 pool이며 학습 승인본 아님 |
+| F2 source task·target 재설계 | `Blocked` | source v1 contract 구현, 실제 Qwen tokenizer 감사 | `.../phase-f-source-v2-r2/f2/source-target-audit.json` | core eligible 0; 외부 pair 자동 gate PASS 281 |
+| F3 source 승인본 동결 | `Blocked` | SARD extractor 후 `phase-f-source-v3`, cutoff 초과 0, 수동 100건 통과 |  | quota gate 전부 FAIL, 학습 금지 |
 | F4-Q0-B Qwen base 500건 | `Blocked` | F3 통과 후 절대 기준선 보존 |  |  |
 | F4-Q0-E Phase E adapter 500건 | `Blocked` | 같은 승인 challenge로 legacy 최종 판정 |  |  |
 | F5-Q1 Qwen 80B 신규 100-step | `Blocked` | base에서 시작, 진단 gate와 save/reload/API |  | Phase E checkpoint resume 금지 |
@@ -1424,6 +1424,22 @@ sha256sum \
 | cutoff 초과 challenge | `46 / 500` (`9.20%`) |
 | contract 문제 | CWE source 판별을 CTI/malware용 `risk_level`·`malware_like_behaviors` schema에 억지로 매핑 |
 | 판정 | `Fail` — F3 승인본 재생성 전 F4/F5 금지 |
+
+### F2 source v1 contract·evidence supply 감사
+
+| 항목 | 기록 |
+| --- | --- |
+| Contract | `aegislm.source-vulnerability-record.v1` / `aegislm.source-vulnerability-assessment.v1` |
+| 실제 tokenizer | `model/base/qwen3-coder-next`, `enable_thinking=false`, cutoff `2048` |
+| 전체 감사 | `11,900` |
+| core train/validation/blind eligible | `0 / 0 / 0` |
+| 외부 pair target 생성 / cutoff 제외 / 최종 eligible | `349 / 68 / 281` |
+| 제외 사유 | evidence 미확보 `11,500`; patch span 미생성 `51`; cutoff `68` |
+| 최종 281건 gate | schema·leakage·linkage·generic evidence·duplicate·global safety·cutoff 모두 PASS |
+| 최대 accepted / observed token | `2,045 / 6,172` |
+| Audit SHA-256 | `0419b36cc6c61eaf5f00f6ae8bc88a88cb2535280f66efce5e44ab5e0f88fae4` |
+| 판정 | `Blocked — evidence supply`; Qwen 학습 금지 |
+| 다음 작업 | SARD/Juliet function-level good/bad + exact evidence extractor |
 
 ### Qwen 신규 학습 공통 기록
 
