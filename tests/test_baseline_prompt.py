@@ -22,7 +22,11 @@ def test_formats_phase_c_record_as_system_and_user_messages() -> None:
     assert messages[0]["role"] == "system"
     assert messages[0]["content"] == BASELINE_SYSTEM_PROMPT
     assert messages[1]["role"] == "user"
-    assert "Record ID: fixture-kev-deserialization-001" in user_content
+    assert "Record ID:" not in user_content
+    assert record["id"] not in user_content
+    assert record["source"]["name"] not in user_content
+    assert "Source JSON:" not in user_content
+    assert "Metadata JSON:" not in user_content
     assert str(record["input"]["task"]) in user_content
     assert str(record["input"]["context"]) in user_content
     assert '"candidate_attack_techniques": [' in user_content
@@ -70,3 +74,22 @@ def test_formatter_does_not_mutate_record() -> None:
     format_baseline_prompt(record)
 
     assert record == original
+
+
+def test_formatter_filters_gold_and_provenance_signal_keys() -> None:
+    record = deepcopy(load_records()[0])
+    record["input"]["signals"].update(
+        {
+            "dataset": "DiverseVul",
+            "target": 1,
+            "label": "vulnerable",
+            "observable": "bounded static signal",
+        }
+    )
+
+    user_content = format_baseline_prompt(record)[1]["content"]
+
+    assert "DiverseVul" not in user_content
+    assert '"target"' not in user_content
+    assert '"label"' not in user_content
+    assert "bounded static signal" in user_content

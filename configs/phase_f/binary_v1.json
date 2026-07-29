@@ -1,0 +1,47 @@
+{
+  "profile": "phase-f-binary-derived-v1",
+  "seed": 20260728,
+  "representation": [
+    "pseudo_c",
+    "static_features",
+    "bounded_assembly_evidence"
+  ],
+  "b0_feasibility": {
+    "patch_pairs": 100,
+    "function_records": 200,
+    "compilers": [
+      "gcc",
+      "clang"
+    ],
+    "train_optimizations": [
+      "O0",
+      "O2"
+    ],
+    "compile_success_min": 0.9,
+    "decompile_success_min": 0.9,
+    "source_binary_function_link_min": 0.95,
+    "target_cwe_and_patch_location_required": true,
+    "raw_payload_prompt_count_max": 0,
+    "provenance_prompt_count_max": 0
+  },
+  "b1_dataset": {
+    "patch_pairs": 2000,
+    "train_records_max": 4000,
+    "validation_records": 400,
+    "blind_test_records": 500,
+    "robustness_optimization": "O3",
+    "robustness_stripped": true,
+    "compiler_consistency_functions": 100
+  },
+  "absolute_gate": {
+    "precision_min": 0.9,
+    "recall_min": 0.95,
+    "false_positive_rate_max": 0.05,
+    "abstention_max": 0.05,
+    "parse_success_min": 0.99,
+    "schema_pass_min": 0.99,
+    "evidence_rate_min": 0.9,
+    "compiler_consistency_min": 0.95,
+    "raw_payload_output_count_max": 0
+  }
+}

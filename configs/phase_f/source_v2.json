@@ -1,0 +1,260 @@
+{
+  "profile": "phase-f-source-v2-r2",
+  "seed": 20260728,
+  "phase_status": {
+    "F0": "complete",
+    "F1": "complete_group_first_pool_materialized_and_audited",
+    "F2": "complete_source_v2_automated_and_manual_gates_passed",
+    "F3": "ready_build_and_freeze_phase_f_source_v3",
+    "F4": "blocked_by_F3",
+    "F5": "blocked_by_F3_F4",
+    "F6A": "ready_parallel_research",
+    "F6B": "blocked_by_F5",
+    "F7": "blocked_by_F6B",
+    "F8": "blocked_by_F5_F7",
+    "F9": "not_started"
+  },
+  "source_profile": {
+    "raw_sources": {
+      "diversevul": "source_core",
+      "bigvul": "verified_pair_cross_dataset_holdout",
+      "primevul_v0_1": "paired_cross_dataset_holdout",
+      "sard_juliet_c_cpp_1_3": "grounded_source_v2_ready_for_source_v3_integration",
+      "cybersecurity_qa_v2": "provenance_only"
+    },
+    "dataset_roles": {
+      "core_training": [
+        "DiverseVul"
+      ],
+      "cross_dataset_holdout": [
+        "BigVul",
+        "PrimeVul"
+      ],
+      "provenance_only": [
+        "rezaduty/cybersecurity-qa-v2"
+      ]
+    },
+    "eligibility": {
+      "require_scoped_cwe": true,
+      "reject_exact_and_near_duplicates": true,
+      "quarantine_conflicting_duplicate_labels": true
+    },
+    "group_split_ratio": {
+      "train": 0.8,
+      "validation": 0.1,
+      "test": 0.1
+    },
+    "sampling": {
+      "status": "implemented_and_full_materialization_audited",
+      "method": "group_first_category_stratified",
+      "strata": [
+        "label",
+        "pool",
+        "weakness_family",
+        "evidence_level",
+        "representation",
+        "pair_type",
+        "length_bucket",
+        "label_confidence",
+        "repository"
+      ],
+      "cwe_temperature_exponent": 0.25,
+      "repository_temperature_exponent": 0.15,
+      "max_repository_fraction_per_class": 0.1
+    },
+    "taxonomy": {
+      "status": "implemented_and_full_materialization_audited",
+      "category_axes": [
+        "task_family",
+        "weakness_family",
+        "evidence_level",
+        "representation",
+        "pair_type",
+        "length_bucket",
+        "label",
+        "label_confidence"
+      ],
+      "language_policy": {
+        "use_as_category": false,
+        "use_for_sampling_quota": false,
+        "model_visible": false,
+        "use_as_quality_gate": false,
+        "preserve_source_provided_value_for_audit": true,
+        "infer_when_missing": false,
+        "unknown_is_valid": true
+      },
+      "planned_sampling_unit": "category_cell",
+      "prevent_low_confidence_backfill": true
+    },
+    "quotas": {
+      "train_per_class": 5000,
+      "validation_per_class": 500,
+      "test_per_class": 250,
+      "cross_dataset_records_per_dataset": 200,
+      "bigvul_pair_max": 2000
+    },
+    "prompt_variants": 4,
+    "group_split_keys": [
+      "repository",
+      "project",
+      "commit_id",
+      "function_id",
+      "normalized_code_hash"
+    ]
+  },
+  "materialization_status": {
+    "artifact": "phase-f-source-v2-r2",
+    "status": "pool_complete_target_rework_required",
+    "approved_for_training": false,
+    "reasons": [
+      "generic_target_repetition",
+      "positive_evidence_not_code_grounded",
+      "tokenizer_cutoff_exceeded",
+      "legacy_output_contract_mismatch"
+    ],
+    "replacement_profile": "phase-f-source-v3"
+  },
+  "materialization_contract": {
+    "train_records": 10000,
+    "validation_records": 1000,
+    "blind_test_records": 500,
+    "blind_test_per_class": 250,
+    "cross_dataset_records_per_dataset": 200,
+    "cross_dataset_names": [
+      "BigVul",
+      "PrimeVul"
+    ],
+    "reserve_policy": "retain_all_unselected_eligible_with_original_pool",
+    "quarantine_policy": "retain_all_uncertain_or_unverified_records",
+    "language_used_for_sampling_or_prompt": false
+  },
+  "target_quality_gate": {
+    "positive_code_grounding_min": 0.95,
+    "generic_positive_evidence_max": 0,
+    "exact_target_duplicate_rate_max": 0.05,
+    "single_target_template_fraction_max": 0.02,
+    "manual_review_sample_count": 100,
+    "manual_label_or_evidence_error_rate_max": 0.05
+  },
+  "f2_audit": {
+    "status": "evidence_supply_blocked",
+    "artifact": "data/processed/phase-f-source-v2-r2/f2/source-target-audit.json",
+    "artifact_sha256": "0419b36cc6c61eaf5f00f6ae8bc88a88cb2535280f66efce5e44ab5e0f88fae4",
+    "total_records": 11900,
+    "eligible_records": 281,
+    "core_training_eligible_records": 0,
+    "evidence_level_not_grounded": 11500,
+    "positive_code_span_missing": 51,
+    "tokenizer_cutoff_excluded": 68,
+    "maximum_accepted_tokens": 2045,
+    "maximum_observed_tokens": 6172,
+    "automated_quality_gates_for_eligible_records": "pass",
+    "quota_gates": "fail",
+    "next_task": "legacy_audit_superseded_by_grounded_sard_v2",
+    "superseded_by": "data/processed/phase-f-sard-grounded-v2/dataset_manifest.json"
+  },
+  "sard_juliet_grounded_profile": {
+    "profile": "phase-f-sard-grounded-v2",
+    "output_contract": "aegislm.source-vulnerability-assessment.v2",
+    "status": "ready_for_source_v3_integration",
+    "artifact": "data/processed/phase-f-sard-grounded-v2",
+    "approved_for_source_v3_integration": true,
+    "approved_for_training": false,
+    "archive_sha256": "ada9d7e1c323d283446df3f55bdee0d00bda1fed786785fe98764d58688f38eb",
+    "complete_pairs_after_causal_filter": 11540,
+    "unique_complete_pairs": 8191,
+    "selected_pairs": 5750,
+    "train_records": 10000,
+    "validation_records": 1000,
+    "blind_test_records": 500,
+    "maximum_tokens": 1913,
+    "model_visible_leakage_count": 0,
+    "exact_code_duplicate_rate": 0.0,
+    "exact_target_duplicate_rate": 0.027478260869565216,
+    "maximum_exact_target_fraction": 0.000782608695652174,
+    "dataset_manifest_sha256": "bb25c0d6a350d4053d0c7210624b32cbf0f8d84e2807c5b1b1afa0d7f3e70795",
+    "manual_review_sha256": "d2ebdcdfe4caef252378fc21edd42939c06e81f01bda3ff7d49b2776231a50d2",
+    "manual_review": {
+      "reviewed_count": 100,
+      "label_or_evidence_error_count": 0,
+      "error_rate": 0.0,
+      "causal_pattern_groups": 79,
+      "status": "pass"
+    },
+    "next_gate": "build_and_freeze_phase_f_source_v3"
+  },
+  "token_budget": {
+    "tokenizer": "model/base/qwen3-coder-next",
+    "cutoff_len": 2048,
+    "maximum_over_cutoff_records": 0,
+    "allow_blind_right_truncation": false
+  },
+  "diagnostic_gate": {
+    "steps": 100,
+    "prediction_missing_max": 0,
+    "parse_success_min": 0.99,
+    "schema_pass_min": 0.99,
+    "safety_pass_min": 1.0,
+    "abstention_max": 0.1,
+    "precision_min": 0.75,
+    "recall_min": 0.75,
+    "false_positive_rate_max": 0.2,
+    "repetition_rate_max": 0.01
+  },
+  "absolute_gate": {
+    "sample_count": 500,
+    "precision_min": 0.9,
+    "recall_min": 0.95,
+    "false_positive_rate_max": 0.05,
+    "abstention_max": 0.05,
+    "parse_success_min": 0.99,
+    "schema_pass_min": 0.99,
+    "safety_pass_min": 1.0,
+    "evidence_rate_min": 0.9
+  },
+  "training_ladder": [
+    {
+      "stage": "Q0-B",
+      "model": "Qwen/Qwen3-Coder-Next",
+      "action": "20-case smoke then 500-case absolute base evaluation"
+    },
+    {
+      "stage": "Q0-E",
+      "model": "Qwen/Qwen3-Coder-Next with frozen Phase E adapter",
+      "action": "20-case smoke then 500-case absolute legacy evaluation"
+    },
+    {
+      "stage": "Q1",
+      "model": "Qwen/Qwen3-Coder-Next",
+      "start_from": "base",
+      "max_steps": 100
+    },
+    {
+      "stage": "Q2",
+      "model": "Qwen/Qwen3-Coder-Next",
+      "resume_from": "Q1",
+      "max_steps": 250
+    },
+    {
+      "stage": "Q3",
+      "model": "Qwen/Qwen3-Coder-Next",
+      "resume_from": "Q2",
+      "max_steps": 313,
+      "condition": "quality_is_still_improving"
+    },
+    {
+      "stage": "M1",
+      "model": "Qwen/Qwen3-Coder-Next",
+      "action": "merge accepted Q2 or Q3 adapter and verify with vLLM"
+    }
+  ],
+  "secondary_model_track": [
+    {
+      "stage": "G0",
+      "model": "openai/gpt-oss-20b",
+      "max_steps": 100,
+      "condition": "run only after Qwen Q0-M1 decision",
+      "blocks_qwen": false
+    }
+  ]
+}

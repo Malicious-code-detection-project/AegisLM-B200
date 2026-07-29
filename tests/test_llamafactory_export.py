@@ -23,7 +23,8 @@ def test_export_llamafactory_records_uses_aegislm_safety_gate() -> None:
 
     assert len(exported) == 1
     assert exported[0]["system"].startswith("You are AegisLM")
-    assert "Record ID:" in exported[0]["instruction"]
+    assert "Record ID:" not in exported[0]["instruction"]
+    assert record["id"] not in exported[0]["instruction"]
     assert exported[0]["input"] == ""
     assert json.loads(exported[0]["output"]) == record["expected_output"]
 

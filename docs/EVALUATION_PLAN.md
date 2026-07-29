@@ -186,3 +186,23 @@ uv run python scripts/evaluate_predictions.py \
 - 이 실패 결과는 harness 검증용이며, 실제 `openai/gpt-oss-20b` baseline 점수로 기록하지 않는다.
 - `outputs/`는 Git 제외 경로이므로 생성 산출물은 커밋하지 않는다.
 
+## 10. Phase F Absolute Evaluation
+
+Phase E 이후 모델 채택은 composite score나 loss가 아니라
+[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)의
+절대 gate로 결정합니다.
+
+Source 100-step 진단은 빠른 중단용이며 최종 채택 근거가 아닙니다.
+최종 source 평가는 label-blind 500건에서 precision ≥ 0.90, recall ≥
+0.95, FPR ≤ 0.05, abstention ≤ 0.05, parse/schema ≥ 0.99, safety =
+1.00, evidence ≥ 0.90을 모두 통과해야 합니다.
+
+Binary-derived 평가는 `present / not_observed / uncertain` 계약을 사용합니다.
+동일 absolute gate에 compiler variant consistency ≥ 0.95를 추가합니다.
+`not_observed`는 target CWE 범위의 negative이며 전체 파일이 안전하다는
+뜻이 아닙니다.
+
+Source와 binary 결과는 서로 다른 task·adapter의 독립 판정입니다.
+두 adapter가 각자 gate를 통과하기 전에는 혼합 adapter, NuriLab signal,
+RAG/MCP의 개선 효과를 평가하지 않습니다.
+

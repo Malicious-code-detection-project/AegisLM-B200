@@ -159,3 +159,57 @@ Phase E tiny SFT should start with text/metadata records, not raw binary dataset
 - `docs/DATA_STRATEGY.md`
 - `docs/EVALUATION_PLAN.md`
 - `docs/FINETUNING_EXPERIMENT_PLAN.md`
+
+## 9. Phase F Binary-derived Candidates
+
+Phase F에서는 raw executable을 LLM에 직접 넣지 않습니다. 후보 데이터의
+역할은 source–binary 정렬, compiler 강건성, pseudo-C·정적 특징 생성,
+metadata benchmark로 나눕니다.
+
+| Candidate | Phase F role | Decision |
+| --- | --- | --- |
+| BigVul buildable patch pair | target CWE before/after binary pair | `primary-if-verified` |
+| [Assemblage](https://assemblage-dataset.net/) | source-built PE/ELF와 compiler variant | `feasibility-candidate` |
+| [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–binary–decompile representation | `feasibility-candidate` |
+| [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `benchmark-candidate` |
+| [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) | decompilation format와 representation 연구 | `reference` |
+| [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `metadata-evaluation` |
+| SOREL-20M full | 대규모 PE feature/disarmed binary | `hold` |
+| BODMAS raw, BIG 2015 | raw malware/old byte·assembly corpus | `hold` |
+
+Assemblage/Decompile-Bench/BinKit은 취약점 label을 자동으로 제공한다고
+간주하지 않습니다. source–binary 정렬 또는 강건성 자료로 사용하고,
+취약점 SFT label은 검증된 patch/CWE 근거와 별도로 연결해야 합니다.
+
+SOREL-20M full 약 8 TB download는 현재 shared storage를 거의 소진하므로
+시작하지 않습니다. EMBER2024도 초기 SFT에 섞지 않고 독립된
+metadata benchmark로 유지합니다.
+
+## 10. Phase F Source·Patch 보강 후보
+
+Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
+언어 종류를 늘리기 위해서가 아니라 weakness·patch·code evidence가
+명확한 레코드를 확보하기 위해 검토합니다.
+
+| Candidate | Phase F role | Decision |
+| --- | --- | --- |
+| [PrimeVul](https://github.com/DLVulDet/PrimeVul) | 정제된 vulnerable/benign source와 paired evaluation | `acquired-and-materialized`; v0.1 paired 중 global dedup을 통과한 pair로 cross-dataset test 200건 구성 |
+| [NIST SARD](https://samate.nist.gov/SARD/test-suites/112) / Juliet C/C++ 1.3 | 명시적 weakness, buildable source, 자체 source–binary pair 생성 | `ready-for-source-v3-integration`; 인과 filter 통과 11,540 pair·unique 8,191 pair 중 5,750쌍으로 10,000/1,000/500 구성, 자동 gate와 고정 100건 수동 gate PASS |
+| [MegaVul](https://github.com/icyrockton/megavul) | CVE/fix commit와 graph representation 보강 | `secondary-candidate`; GPL-3.0과 대용량 crawl 주의 |
+| [CVEfixes](https://arxiv.org/abs/2107.08760) / [MoreFixes](https://github.com/JafarAkhondali/Morefixes) | fixing commit·patch 근거 보강 | `secondary-candidate`; 원 repository license 추적 |
+
+외부 다운로드 전에 현재 BigVul raw의 `func_after`, `lines_before`,
+`lines_after`, `patch`를 target builder가 사용하지 못한 문제부터
+수정합니다. 이미 가진 근거를 복구하는 것이 새 데이터를 추가하는 것보다
+우선입니다.
+
+### 권장 확보 순서
+
+1. [완료] F2 source contract·code-grounded target·token gate 구현
+2. [완료] NIST SARD/Juliet 고정 100건 수동 label·근거 감사
+3. SARD 통과 자료를 `phase-f-source-v3`으로 통합·동결
+4. Assemblage·Decompile-Bench의 metadata 및 소규모 aligned subset
+5. BinKit compiler-robustness subset
+6. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
+
+전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.

@@ -61,7 +61,9 @@ def test_valid_record_formatting_success() -> None:
     assert messages[0]["content"] == BASELINE_SYSTEM_PROMPT
 
     assert messages[1]["role"] == "user"
-    assert f"Record ID: {record['id']}" in messages[1]["content"]
+    assert f"Record ID: {record['id']}" not in messages[1]["content"]
+    assert record["source"]["name"] not in messages[1]["content"]
+    assert '"split"' not in messages[1]["content"]
 
     assert messages[2]["role"] == "assistant"
     # Assistant content must be pretty-printed JSON matching expected_output

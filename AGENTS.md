@@ -19,6 +19,10 @@ Project NuriLab과 협업 방식과 보안 철학은 공유하지만, 이 저장
 | Phase E 이슈 처리와 팀 교육 주제 인포그래픽 | `docs/PHASE_E_TEAM_ONBOARDING.html` |
 | Phase C 데이터 활용 전략 | `docs/DATA_STRATEGY.md` |
 | Phase D/E 평가 계획과 리포트 기준 | `docs/EVALUATION_PLAN.md` |
+| label-blind 코드 challenge와 절대평가 gate | `docs/ABSOLUTE_EVALUATION.md` |
+| B200 수동 파인튜닝 검증 실행·기록 워크북 | `docs/FINETUNING_TEST_WORKBOOK.md` |
+| Phase F 데이터 재설계·binary-derived 실험 정본 | `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` |
+| source label·근거 수동 검토 기준 | `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md` |
 | baseline/adapter 평가 결과 기록 템플릿 | `docs/EXPERIMENT_LOG_TEMPLATE.md` |
 | Phase D 완료 조건과 Phase E 착수 gate | `docs/PHASE_D_EXIT_CRITERIA.md` |
 | 파인튜닝 학습 로드맵과 실험 전략 | `docs/FINETUNING_EXPERIMENT_PLAN.md` |
@@ -54,20 +58,23 @@ Phase A: 문서/저장소 정체성 정리
 Phase B: 최소 코드 뼈대 생성
 Phase C: 데이터 전략 + JSON schema + tiny dataset
 Phase D: baseline inference + evaluation
-Phase E: tiny SFT PoC
-Phase F: dataset 확장 + adapter 개선
+Phase E: SFT lifecycle PoC와 절대평가
+Phase F: dataset 재설계 + source/binary adapter 개선
 Phase G: 직접 모델/레이어 연구
 ```
 
-현재 Phase E의 우선순위는 다음과 같다.
+Phase E는 `infrastructure PASS / model quality FAIL`로 종료했다. 현재
+Phase F의 우선순위는 다음과 같다.
 
-- Phase D baseline inference와 evaluation 기준선을 adapter 비교 기준으로 유지
-- Phase E tiny SFT training dataset을 metadata-only 또는 synthetic record로 준비
-- held-out evaluation fixture를 training data에 섞지 않음
-- SFT dataset formatting helper와 training config dry-run을 먼저 확인
+- 기존 33만 건과 80B adapter를 실패 기준선으로 동결
+- source/metadata/label/target을 model-visible prompt에서 제거
+- catalog→eligible manifest→materialized JSONL 세 계층을 유지
+- 10,000건 source profile과 독립 500건 challenge를 먼저 구성
+- 20B 100-step canary가 진단 gate를 통과한 뒤에만 80B로 진행
+- source와 binary-derived adapter를 서로 분리해 절대평가
+- binary는 raw byte가 아니라 pseudo-C, 정적 특징, 제한된 assembly를 사용
+- 두 adapter가 독립 gate를 통과하기 전에는 NuriLab/RAG/MCP 연결을 보류
 - GPU/runtime, HF access, model/cache/adapter 저장 경로를 Git 밖으로 분리
-- Unsloth QLoRA와 TRL LoRA/QLoRA 경로를 작은 PoC로 비교
-- adapter load, inference, held-out evaluation을 baseline과 같은 metric으로 검증
 - 모델, checkpoint, adapter, raw dataset, generated prediction/report는 계속 Git 밖에 보관
 
 ---
@@ -245,6 +252,9 @@ PR 본문은 `docs/PR_DESCRIPTION_TEMPLATE.md`를 기준으로 작성한다. 최
 - `docs/README.md`는 세부 문서 인덱스와 문서 관리 규칙의 정본이다.
 - `docs/DATA_STRATEGY.md`는 Phase C 데이터 활용, 전처리, tokenization/chunking, split, RAG/vector 분리 기준의 정본이다.
 - `docs/EVALUATION_PLAN.md`는 Phase D/E 평가 계획, 점수화 기준, 결과 리포트 형식의 정본이다.
+- `docs/FINETUNING_TEST_WORKBOOK.md`는 B200 수동 검증의 진행 상태, 실행 명령, 증거 기록, 최종 연구 결정의 정본이다.
+- `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md`는 Phase F catalog, source/binary adapter, 중단 gate와 NuriLab handoff의 정본이다.
+- `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md`는 source target의 label·경로·exact span·인과관계 수동 판정 기준의 정본이다.
 - `docs/PHASE_D_EXIT_CRITERIA.md`는 Phase D 완료 조건과 Phase E 착수 gate의 정본이다.
 - `docs/FINETUNING_EXPERIMENT_PLAN.md`는 학습 로드맵, 실험 전략, dataset/evaluation 기준의 정본이다.
 - `docs/PR_DESCRIPTION_TEMPLATE.md`는 PR 본문 작성 형식과 체크리스트의 정본이다.

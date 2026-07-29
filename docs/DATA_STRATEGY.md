@@ -355,3 +355,67 @@ Phase D/E의 adapter 비교에는 `tests/fixtures/heldout_evaluation_records.jso
 - safety refusal evaluation candidate
 
 모든 record는 metadata-only 또는 synthetic이어야 하며, 실제 악성 샘플, executable payload, secrets, private CTI를 포함하지 않는다.
+
+## 18. Phase F Data Contract
+
+Phase F의 실행 정본은
+[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)입니다.
+대규모 학습 데이터는 다음 세 계층으로 관리합니다.
+
+```text
+raw_catalog.parquet
+→ eligible_manifest.parquet
+→ selected canonical/LLaMA-Factory JSONL
+```
+
+- catalog에는 code/executable payload가 아니라 hash, provenance, label
+  confidence, group, 품질 판정만 저장합니다.
+- split은 repository/function/patch/compiler group 단위로 표본추출 전에
+  결정합니다.
+- language는 taxonomy, sampling quota, model-visible prompt, 품질
+  gate에서 제외합니다. 원본이 제공한 값만 감사 metadata로 보존하고
+  누락된 언어를 추정하지 않으며 `unknown`도 정상 입력으로 처리합니다.
+- 학습용 category는 weakness family, evidence level, representation,
+  before/after pair, token length, label confidence를 기준으로 구성합니다.
+- `target=0`과 patch 후 코드는 전역적으로 안전하다고 해석하지 않습니다.
+- source, dataset, split, label, target, expected output은 보존용 record에는
+  존재할 수 있지만 model-visible prompt에는 들어갈 수 없습니다.
+- raw PE/ELF와 byte dump는 Parquet, JSONL, Git에 저장하지 않습니다.
+- binary 학습 입력은 pseudo-C, 정적 특징, 제한된 assembly evidence를
+  포함한 normalized record만 허용합니다.
+
+Phase F source profile은 `configs/phase_f/source_v2.json`에 고정합니다.
+BigVul은 before/after와 CWE·수정 위치가 확인되지 않으면 `quarantine`이며,
+부족한 quota를 저신뢰 데이터로 채우지 않습니다.
+
+### 18.1 Group-first pool과 잉여 데이터
+
+Eligible record는 샘플링 전에 group hash로 `train / validation / test`
+pool에 고정합니다. 같은 repository·function·commit·patch pair는 서로
+다른 pool로 갈 수 없습니다.
+
+- Train materialization: 10,000건
+- Validation materialization: 1,000건
+- Blind test: 500건, positive/negative 250/250
+- Cross-dataset test: BigVul 200건, PrimeVul 200건; 각 dataset은 core
+  학습에서 제외하고 완전한 before/fixed pair 100개로 구성
+- Reserve: 선택되지 않은 eligible 272,904건 전부
+- Quarantine: 근거·pair·label 검토가 필요한 158,251건 전부
+
+잉여 eligible을 모두 test로 사용하지 않습니다. `reserve_manifest`에 원래
+pool을 보존해 다른 seed의 재학습, 부족 category 교체, 오염된 blind
+challenge 교체와 후속 평가에 사용합니다. Cross-dataset test는 해당
+dataset을 core train/validation에서 완전히 제외한 경우에만 그 이름을
+사용합니다.
+
+2026-07-29 기준 위 구성을 `phase-f-source-v2-r2`로 materialize하고 동일
+seed 재생성 hash 감사를 통과했습니다. 이는 F1 pool 완료본이며, F2
+target·token gate를 통과한 학습 승인본은 아닙니다.
+
+후속 F2에서는 label-only core를 억지로 사용하지 않고 SARD/Juliet에서
+setup·guard·effect exact span을 복구했습니다. `phase-f-sard-grounded-v2`는
+source assessment v2 계약, system/user/assistant 전체 누출 감사, 실제 Qwen
+2,048-token gate와 고정 100건 검토를 통과해
+`ready_for_source_v3_integration` 상태입니다. 이 자료는 F3 통합 후보이며,
+F3 manifest와 training config를 동결하기 전까지
+`approved_for_training=false`를 유지합니다.

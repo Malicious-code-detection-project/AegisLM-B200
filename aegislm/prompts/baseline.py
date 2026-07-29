@@ -39,22 +39,23 @@ signals, curated evidence, and human review remain the decision basis."""
 
 
 def format_baseline_prompt(record: Mapping[str, Any]) -> list[PromptMessage]:
-    """Format one Phase C dataset record as baseline system/user messages."""
+    """Format one dataset record without exposing provenance or gold metadata.
+
+    ``source``, ``metadata``, record IDs, dataset names, labels, and split
+    annotations are deliberately excluded. Only task-relevant context and
+    observable signals may cross the model-visible prompt boundary.
+    """
     input_section = cast(Mapping[str, Any], record["input"])
+    visible_signals = _model_visible_signals(input_section["signals"])
 
     user_prompt = "\n\n".join(
         [
-            "Analyze the following normalized AegisLM dataset record.",
-            f"Record ID: {record['id']}",
+            "Analyze the following security evidence.",
             f"Task: {input_section['task']}",
             "Context:",
             str(input_section["context"]),
             "Signals JSON:",
-            _to_pretty_json(input_section["signals"]),
-            "Source JSON:",
-            _to_pretty_json(record["source"]),
-            "Metadata JSON:",
-            _to_pretty_json(record["metadata"]),
+            _to_pretty_json(visible_signals),
             (
                 "Produce only the JSON output object matching the required "
                 "AegisLM output contract."
@@ -70,3 +71,33 @@ def format_baseline_prompt(record: Mapping[str, Any]) -> list[PromptMessage]:
 
 def _to_pretty_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+_PROVENANCE_OR_GOLD_SIGNAL_KEYS = {
+    "dataset",
+    "dataset_name",
+    "source",
+    "source_dataset",
+    "source_revision",
+    "target",
+    "label",
+    "gold",
+    "split",
+    "expected_output",
+    "is_vulnerable",
+}
+
+
+def _model_visible_signals(value: Any) -> dict[str, Any]:
+    """Return recursively filtered, task-observable signals."""
+    if not isinstance(value, Mapping):
+        return {}
+    visible: dict[str, Any] = {}
+    for key, item in value.items():
+        if str(key).lower() in _PROVENANCE_OR_GOLD_SIGNAL_KEYS:
+            continue
+        if isinstance(item, Mapping):
+            visible[str(key)] = _model_visible_signals(item)
+        else:
+            visible[str(key)] = item
+    return visible
