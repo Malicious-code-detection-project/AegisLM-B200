@@ -1322,36 +1322,49 @@ Phase F 상세 기준은
 
 | 단계 | 상태 | 통과 기준 | Run ID / 증거 | 운영자 메모 |
 | --- | --- | --- | --- | --- |
-| F0 기존 run 동결 | `Ready` | adapter·merged model·500건 결과 hash 보존 |  |  |
-| F1 raw catalog | `Not Started` | 416,009건 감사, payload 미포함 |  |  |
-| F1 source-v2 materialize | `Not Started` | 10,000 train·1,000 validation·500 blind, 누출 0 |  |  |
-| S0 base 500건 | `Not Started` | baseline inventory 보존 |  |  |
-| S1 20B 100-step | `Not Started` | 진단 gate와 save/reload/serve |  |  |
-| S2 20B 1 epoch | `Blocked` | S1 통과 후 absolute gate |  |  |
-| S3 80B 100-step | `Blocked` | S2 통과 후 진단 gate |  |  |
-| S4 80B 최대 1 epoch | `Blocked` | 500건 absolute gate |  |  |
-| B0 binary 100 pair | `Blocked` | source adapter 판정 후 feasibility gate |  |  |
-| B1 binary adapter | `Blocked` | B0 통과와 2,000 verified pair |  |  |
-| F4 NuriLab/RAG/MCP | `Blocked` | source·binary 독립 gate 통과 |  |  |
+| F0 기존 run 동결 | `Pass` | adapter·merged model·500건 결과 hash 보존 | `aegislm-qwen3next-20260728T100259-operator` | Phase E infrastructure PASS / model quality FAIL |
+| F1 raw catalog·범주화·감사 | `Pass` | group-first pool, language 비의존 taxonomy, reserve·cross-dataset 수량과 누출 검증 | `data/processed/phase-f-source-v2-r2/` | 2026-07-29 수량·hash·group leakage·재현성 감사 완료 |
+| F2 source task·target 재설계 | `Running` | source 전용 contract, code-grounded target, 반복·token 제한 | 2026-07-29 기존 설계 `Fail` | unique output 939, summary 8 |
+| F3 source 승인본 동결 | `Blocked` | F2 통과 후 `phase-f-source-v3`, cutoff 초과 0, 수동 100건 통과 |  | r2는 F1 pool이며 학습 승인본 아님 |
+| F4-Q0-B Qwen base 500건 | `Blocked` | F3 통과 후 절대 기준선 보존 |  |  |
+| F4-Q0-E Phase E adapter 500건 | `Blocked` | 같은 승인 challenge로 legacy 최종 판정 |  |  |
+| F5-Q1 Qwen 80B 신규 100-step | `Blocked` | base에서 시작, 진단 gate와 save/reload/API |  | Phase E checkpoint resume 금지 |
+| F5-Q2 Qwen 80B 총 250-step | `Blocked` | Q1 통과 후 Q1만 resume, 500건 absolute |  |  |
+| F5-Q3 Qwen 80B 총 313-step | `Blocked` | Q2까지 개선 지속 시만 1 epoch |  | 선택 단계 |
+| F5-M1 최종 merge·vLLM | `Blocked` | 채택 후보만 BF16 merge 후 HTTP 검증 |  |  |
+| GPT-OSS-20B 보조 실험 | `Blocked` | F5 Qwen 결론 이후 이식성 확인 |  | Qwen 선행 조건 아님 |
+| F6 binary 조사·B0 | `Ready/Blocked` | 조사는 병행, B0는 F5 판정 후 |  |  |
+| F7 binary adapter | `Blocked` | B0 통과와 verified pair |  |  |
+| F8 NuriLab/RAG/MCP | `Blocked` | source·binary 독립 gate 통과 |  |  |
+| F9 최종 결정 | `Not Started` | 채택/Source만/재학습/모델 변경/중단/Phase G |  |  |
 
 ### F1 실행
 
+> 이 명령은 기존 `phase-f-source-v2`를 덮어쓰지 않고 r2 pool artifact를
+> 생성합니다. r2의 train JSONL도 F1 분류 결과일 뿐이며 F2
+> code-grounded target과 tokenizer gate를 통과하기 전에는 학습 승인본이
+> 아닙니다.
+
 ```bash
-PHASE_F_ROOT=/approved/data/phase-f-source-v2
+PHASE_F_ROOT=data/processed/phase-f-source-v2-r2
 
 uv run python scripts/build_phase_f_source_dataset.py \
-  --input /approved/data/hf-full-v1/train.jsonl \
-  --input /approved/data/hf-full-v1/validation.jsonl \
-  --input /approved/data/hf-full-v1/test.jsonl \
+  --raw-root "${RAW_DATA_ROOT:-data/raw_data}" \
   --output-dir "$PHASE_F_ROOT"
 
 sha256sum \
   "$PHASE_F_ROOT"/raw_catalog.parquet \
   "$PHASE_F_ROOT"/eligible_manifest.parquet \
+  "$PHASE_F_ROOT"/selected_manifest.parquet \
+  "$PHASE_F_ROOT"/reserve_manifest.parquet \
+  "$PHASE_F_ROOT"/quarantine_manifest.parquet \
+  "$PHASE_F_ROOT"/reject_manifest.parquet \
   "$PHASE_F_ROOT"/train.jsonl \
   "$PHASE_F_ROOT"/validation.jsonl \
   "$PHASE_F_ROOT"/challenge.jsonl \
   "$PHASE_F_ROOT"/gold.jsonl \
+  "$PHASE_F_ROOT"/cross_dataset/*/challenge.jsonl \
+  "$PHASE_F_ROOT"/cross_dataset/*/gold.jsonl \
   > "$PHASE_F_ROOT"/SHA256SUMS
 ```
 
@@ -1359,42 +1372,83 @@ sha256sum \
 
 | 항목 | 기록 |
 | --- | --- |
-| 운영자 / 일시 / run ID |  |
-| Git commit / dirty 이유 |  |
-| config hash |  |
-| 입력 canonical JSONL 절대경로·hash |  |
-| output root 절대경로 |  |
-| raw catalog / manifest hash |  |
-| eligible / quarantine / reject 수 |  |
-| exact / near duplicate 수 |  |
-| leakage flag 원본 수 / materialized 누출 수 |  |
-| train / validation / challenge 수 |  |
-| class·template·language·CWE 분포 |  |
-| BigVul verified pair 수 |  |
-| 최종 판정 (`Pass/Fail/Rerun`) |  |
-| 사용자 메모 |  |
+| 운영자 / 일시 / run ID | 사용자 + Codex / 2026-07-29 / `phase-f-source-v2-20260729` |
+| Git commit / dirty 이유 | `63e0a02bb02c...`; raw normalizer·계층 sampler 구현이 아직 미커밋 |
+| config hash | `93febdc560e4e9f89622b1694b0c4b68be3811175293d80b2743b47a58825d59` |
+| 입력 raw snapshot 절대경로·hash | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/raw_data`; `_manifests/*.sha256` 재검증 PASS |
+| output root 절대경로 | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v2` |
+| raw catalog / manifest hash | `78b622a0...` / `845b0a38...` |
+| eligible / quarantine / reject 수 | `275,897 / 160,686 / 82,545` |
+| exact / near duplicate 수 | reject `71,427 / 11,118`; label 충돌 격리 `2,358 / 4,491` records |
+| leakage flag 원본 수 / materialized 누출 수 | audit-only raw canonical은 target·provenance 보존 / model-visible control 누출 `0` |
+| train / validation / challenge 수 | `10,000 / 1,000 / 500`; 각 split positive:negative `1:1` |
+| class·template·CWE·repository 분포 | 4 template 균등, 선택 149 CWE·705 repository; language는 quota·prompt·gate에서 제외 |
+| 보안 taxonomy 분포 | 미구현 — weakness family·evidence level·representation·pair type·length·label confidence별 집계 필요 |
+| BigVul verified pair 수 | changed pair `10,880`; source-v2 편입 `0` — pair·license 검토 전 quarantine |
+| 최종 판정 (`Pass/Fail/Rerun`) | `Rerun` — raw catalog 구조는 통과했지만 category taxonomy·quota와 정답·contract·token gate가 미완료; 학습 금지 |
+| 사용자 메모 | 이 행은 legacy v2 감사 기록이다. 현재 F1 완료본은 아래 `phase-f-source-v2-r2` 기록을 사용하며, 학습 승인본은 F2 이후 `phase-f-source-v3`으로 별도 생성한다. |
 
-### 100-step 공통 기록
+### F1-R2 group-first pool 완료 기록
 
-| 항목 | 20B S1 | 80B S3 |
-| --- | --- | --- |
-| run ID / model revision |  |  |
-| train manifest hash |  |  |
-| global batch / max steps |  |  |
-| wall time / step time |  |  |
-| GPU별 idle / peak VRAM |  |  |
-| final loss |  |  |
-| checkpoint 절대경로·hash |  |  |
-| save / reload / serving HTTP |  |  |
-| precision / recall / FPR |  |  |
-| abstention / parse / schema / safety |  |  |
-| positive·negative 예측 수 |  |  |
-| repetition / length 종료 |  |  |
-| 다음 단계 (`Go/No-Go`) |  |  |
-| 근거 / 사용자 메모 |  |  |
+| 항목 | 기록 |
+| --- | --- |
+| Run ID | `phase-f-source-v2-r2-20260729` |
+| Git commit / dirty 이유 | `63e0a02bb02c...`; Phase F r2 normalizer·sampler·문서 변경은 검증 완료 후 아직 미커밋 |
+| config SHA-256 | `7967d5fa6927121f1172b3778e656884f8f0460180e8b2e28537bbdc1131e80e` |
+| 입력 | immutable DiverseVul·BigVul·PrimeVul raw snapshot; SARD Juliet은 extractor 전 raw-only |
+| Core dataset | DiverseVul |
+| Cross-dataset holdout | BigVul·PrimeVul verified before/fixed-after pair, core 학습에서 dataset 단위 제외 |
+| Train / validation / blind | `10,000 / 1,000 / 500`, 각 positive:negative `1:1` |
+| Cross-dataset | BigVul `200` + PrimeVul `200`; dataset마다 완전한 pair `100`, present/not_observed `100/100` |
+| Eligible / selected / reserve | `284,804 / 11,900 / 272,904`; eligible partition 누락 `0`, selected/reserve overlap `0` |
+| Quarantine / reject | `158,251 / 94,249`; PrimeVul official paired record의 metadata 불일치 1 pair도 quarantine |
+| Taxonomy | weakness family·evidence·representation·pair·length·label confidence |
+| Language | sampling·prompt·gate 제외, source-provided audit metadata만 보존 |
+| 무결성 | group pool leakage `0`, cross incomplete pair `0`, model-visible dataset/language control 누출 `0/0` |
+| 재현성 | 동일 seed 재생성 artifact 19개 SHA-256 불일치 `0` |
+| artifact 절대경로 | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v2-r2` |
+| `SHA256SUMS` hash | `b17fa32296042ebc9377dcef8915aeabaac895d9ed682cef096fa08328de87e6` |
+| 현재 판정 | `Pass` — F1 분류·분할 완료. F2 target·token gate 전까지 학습 입력 승인 금지 |
 
-Loss는 관찰값일 뿐 진행 gate가 아닙니다. 20B가 진단 gate를 통과하지
-못하면 80B run을 시작하지 않습니다.
+### F2 기존 target 설계 재감사 기록
+
+| 항목 | 기록 |
+| --- | --- |
+| 정답 exact unique | `939 / 10,000` |
+| 상위 4개 exact output | `5,000 / 10,000` |
+| unique summary | `8` |
+| positive evidence | 동일 generic 문장 사실상 1종, code span 연결 없음 |
+| Qwen tokenizer / cutoff | `model/base/qwen3-coder-next` / `2048` |
+| cutoff 초과 train | `927 / 10,000` (`9.27%`), positive `781`, negative `146` |
+| cutoff 초과 validation | `121 / 1,000` (`12.10%`) |
+| cutoff 초과 challenge | `46 / 500` (`9.20%`) |
+| contract 문제 | CWE source 판별을 CTI/malware용 `risk_level`·`malware_like_behaviors` schema에 억지로 매핑 |
+| 판정 | `Fail` — F3 승인본 재생성 전 F4/F5 금지 |
+
+### Qwen 신규 학습 공통 기록
+
+| 항목 | Q1 100-step | Q2 250-step | Q3 313-step |
+| --- | --- | --- | --- |
+| run ID / model revision |  |  |  |
+| Git commit / dirty 이유 |  |  |  |
+| train manifest·config hash |  |  |  |
+| 시작 checkpoint | `base` | `Q1 only` | `Q2 only` |
+| global batch / max steps | `32 / 100` | `32 / 250` | `32 / 313` |
+| wall time / step time |  |  |  |
+| GPU별 idle / peak VRAM |  |  |  |
+| final loss(관찰값) |  |  |  |
+| checkpoint 절대경로·hash |  |  |  |
+| save / reload / serving HTTP |  |  |  |
+| precision / recall / FPR |  |  |  |
+| abstention / parse / schema / safety |  |  |  |
+| evidence linkage / prediction 수 |  |  |  |
+| repetition / length 종료 |  |  |  |
+| 다음 단계 (`Go/No-Go`) |  |  |  |
+| 근거 / 사용자 메모 |  |  |  |
+
+Loss는 관찰값일 뿐 진행 gate가 아닙니다. Q1이 진단 gate를 통과하지
+못하면 Q2로 진행하지 않습니다. Q3는 Q2까지 품질이 계속 개선될 때만
+수행합니다. GPT-OSS-20B 결과는 Qwen 진행을 막지 않습니다.
 
 ### B0 binary feasibility 기록
 

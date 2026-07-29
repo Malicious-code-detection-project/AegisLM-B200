@@ -41,7 +41,26 @@ merge, vLLM serving, 5건 smoke와 500건 절대평가까지 완료했습니다.
 label·provenance 누출과 반복 target을 제거하고 1만~1.2만 건의 균형 잡힌
 source dataset부터 다시 검증합니다.
 
-초기 기준 모델은 `openai/gpt-oss-20b`입니다.
+현재 주 실험 모델은 Phase E와 동일한 `Qwen/Qwen3-Coder-Next` 80B입니다.
+먼저 정제 데이터에서 base와 기존 Phase E adapter를 각각 절대평가하고,
+그 다음 새 LoRA를 base에서 100 step 학습합니다. 진단 gate를 통과한
+경우에만 250 step, 필요하면 1 epoch(약 313 step)까지 이어갑니다.
+`openai/gpt-oss-20b`는 Qwen 실험 결론 이후 파이프라인 이식성을 확인하는
+보조 후보이며 Qwen 재학습의 선행 조건이 아닙니다.
+
+2026-07-29 감사에서 현재 `phase-f-source-v2`는 분할·중복·누출 검사는
+통과했지만 정답 표현 반복과 2,048-token 초과 사례가 발견됐습니다. 따라서
+현재 materialization은 학습 승인본이 아니라 재설계 대상입니다.
+
+F1 raw catalog에 이어 group-first pool, 보안 범주화, category sampling,
+reserve와 cross-dataset holdout 구현 및 full materialization 감사를
+완료했습니다. 최종 `phase-f-source-v2-r2`는 train 10,000건,
+validation 1,000건, blind test 500건, BigVul·PrimeVul cross-dataset
+test 각 200건과 reserve 272,904건으로 고정했습니다. Language는
+분류·샘플링·프롬프트·품질 gate에서
+제외하고, 원본이 제공한 값만 감사 metadata로 보존합니다. Phase F의
+핵심은 언어명을 맞히는 것이 아니라 코드·pseudo-C·정적 특징에서 위험한
+연산, 데이터 흐름, API 사용과 악성 행위 패턴을 근거로 찾는 것입니다.
 
 v0 단계에서는 악성코드 유사 스크립트 동작 설명, 취약점 맥락 요약, CTI 메타데이터 정리, ATT&CK 매핑, 위험도 우선순위화를 JSON 형식으로 생성하는 모델을 목표로 합니다.
 
@@ -64,7 +83,10 @@ v0 단계에서는 악성코드 유사 스크립트 동작 설명, 취약점 맥
 
 **Phase D: baseline inference + evaluation (완료)**
 
-파인튜닝 전에 `openai/gpt-oss-20b` 기본 모델의 출력과 평가 기준선을 확인하는 구조를 마련했습니다. baseline inference, JSON parse success, required field completeness, hallucinated ATT&CK mapping, unsafe guidance 여부를 adapter 개선 전 비교 기준으로 사용합니다.
+초기 scaffold에서는 `openai/gpt-oss-20b`를 기준 모델로 가정해 baseline
+inference와 평가 구조를 마련했습니다. 이후 실제 B200 lifecycle 검증
+대상이 Qwen3-Coder-Next 80B로 확정됐으므로, 현재 Phase F 기준선도 Qwen
+base입니다. GPT-OSS 관련 내용은 차기 모델 후보 기록으로만 유지합니다.
 
 
 **Phase E: SFT lifecycle PoC (완료 — infrastructure PASS / model quality FAIL)**
@@ -74,12 +96,13 @@ Qwen3-Coder-Next 80B에서 학습, adapter 저장·로드, merge, 실제 API ser
 별개로 precision, recall, FPR, schema gate를 통과하지 못해 현재 adapter는
 채택하지 않습니다.
 
--> **Phase F: dataset 재설계 + source/binary adapter 개선 (진행 중)**
+-> **Phase F: dataset 재설계 + source/binary adapter 개선 (F1 완료, F2 진행 중)**
 
 기존 33만 건을 확대하지 않고 catalog→eligible manifest→materialized JSONL
-세 계층으로 재구성합니다. 먼저 1만~1.2만 건 source adapter를 절대평가하고,
-통과 후 pseudo-C·정적 특징·제한된 assembly 기반 binary-derived adapter를
-별도로 검증합니다.
+세 계층으로 재구성합니다. 구조 검사를 통과한 데이터에 대해 코드 근거가
+있는 정답, 출력 다양성, tokenizer cutoff를 추가로 검증한 뒤 Qwen 80B
+source adapter를 새로 학습합니다. 통과 후 pseudo-C·정적 특징·제한된
+assembly 기반 binary-derived adapter를 별도로 검증합니다.
 
 **Phase G: 직접 모델/레이어 연구**
 
@@ -114,7 +137,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/EVALUATION_PLAN.md` - Phase D/E 평가 계획과 결과 리포트 기준
 - `docs/ABSOLUTE_EVALUATION.md` - label-blind 코드 challenge, adapter 서빙, 절대평가 gate
 - `docs/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
-- `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F 데이터 카탈로그, source/binary 실험, gate와 NuriLab 연결 기준
+- `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽

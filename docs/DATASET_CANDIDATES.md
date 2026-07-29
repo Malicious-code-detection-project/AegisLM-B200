@@ -184,3 +184,31 @@ Assemblage/Decompile-Bench/BinKit은 취약점 label을 자동으로 제공한�
 SOREL-20M full 약 8 TB download는 현재 shared storage를 거의 소진하므로
 시작하지 않습니다. EMBER2024도 초기 SFT에 섞지 않고 독립된
 metadata benchmark로 유지합니다.
+
+## 10. Phase F Source·Patch 보강 후보
+
+Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
+언어 종류를 늘리기 위해서가 아니라 weakness·patch·code evidence가
+명확한 레코드를 확보하기 위해 검토합니다.
+
+| Candidate | Phase F role | Decision |
+| --- | --- | --- |
+| [PrimeVul](https://github.com/DLVulDet/PrimeVul) | 정제된 vulnerable/benign source와 paired evaluation | `acquired-and-materialized`; v0.1 paired 중 global dedup을 통과한 pair로 cross-dataset test 200건 구성 |
+| [NIST SARD](https://samate.nist.gov/SARD/test-suites/112) / Juliet C/C++ 1.3 | 명시적 weakness, buildable source, 자체 source–binary pair 생성 | `raw-acquired`; 공식 ZIP hash 검증 완료, function-level extractor 전에는 materialize하지 않음 |
+| [MegaVul](https://github.com/icyrockton/megavul) | CVE/fix commit와 graph representation 보강 | `secondary-candidate`; GPL-3.0과 대용량 crawl 주의 |
+| [CVEfixes](https://arxiv.org/abs/2107.08760) / [MoreFixes](https://github.com/JafarAkhondali/Morefixes) | fixing commit·patch 근거 보강 | `secondary-candidate`; 원 repository license 추적 |
+
+외부 다운로드 전에 현재 BigVul raw의 `func_after`, `lines_before`,
+`lines_after`, `patch`를 target builder가 사용하지 못한 문제부터
+수정합니다. 이미 가진 근거를 복구하는 것이 새 데이터를 추가하는 것보다
+우선입니다.
+
+### 권장 확보 순서
+
+1. F2 source contract·code-grounded target·token gate 구현
+2. NIST SARD/Juliet function-level good/bad extractor
+3. Assemblage·Decompile-Bench의 metadata 및 소규모 aligned subset
+4. BinKit compiler-robustness subset
+5. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
+
+전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.

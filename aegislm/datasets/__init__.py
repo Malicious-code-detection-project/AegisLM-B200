@@ -35,6 +35,22 @@ from aegislm.datasets.phase_f import (
     build_source_profile,
     materialize_source_record,
 )
+from aegislm.datasets.phase_f_raw import (
+    BIGVUL_REVISION,
+    CYBERSECURITY_QA_REVISION,
+    DIVERSEVUL_REVISION,
+    PRIMEVUL_REPOSITORY_REVISION,
+    PRIMEVUL_REVISION,
+    SARD_JULIET_CPP_REVISION,
+    iter_bigvul_raw_records,
+    iter_primevul_paired_records,
+    load_diversevul_raw_records,
+    normalize_bigvul_row,
+    normalize_bigvul_rows,
+    normalize_diversevul_row,
+    normalize_primevul_pair,
+    raw_dataset_inventory,
+)
 
 __all__ = [
     "validate_record",
@@ -64,4 +80,18 @@ __all__ = [
     "build_raw_catalog",
     "build_source_profile",
     "materialize_source_record",
+    "BIGVUL_REVISION",
+    "CYBERSECURITY_QA_REVISION",
+    "DIVERSEVUL_REVISION",
+    "PRIMEVUL_REVISION",
+    "PRIMEVUL_REPOSITORY_REVISION",
+    "SARD_JULIET_CPP_REVISION",
+    "iter_bigvul_raw_records",
+    "iter_primevul_paired_records",
+    "load_diversevul_raw_records",
+    "normalize_bigvul_row",
+    "normalize_bigvul_rows",
+    "normalize_diversevul_row",
+    "normalize_primevul_pair",
+    "raw_dataset_inventory",
 ]
