@@ -48,14 +48,15 @@ source dataset부터 다시 검증합니다.
 `openai/gpt-oss-20b`는 Qwen 실험 결론 이후 파이프라인 이식성을 확인하는
 보조 후보이며 Qwen 재학습의 선행 조건이 아닙니다.
 
-2026-07-29 F2 감사에서 source 전용 계약과 실제 Qwen tokenizer gate를
+2026-07-29 F2 감사에서 source 전용 v2 계약과 실제 Qwen tokenizer gate를
 적용했습니다. 기존 core 11,500건은 exact code/patch 근거가 없어 모두
-제외됐지만, 후속 SARD/Juliet 함수 추출기로 중복 제거 후 9,122개의
-grounded good/bad pair를 확보했습니다. 이 중 고정 seed로 5,750쌍을 골라
-train 10,000건, validation 1,000건, blind test 500건을 만들었고 자동
-품질·수량·2,048-token gate를 모두 통과했습니다. 현재 상태는
-`manual_review_required`입니다. 고정 100건의 label·근거 검토 전에는
-`phase-f-source-v3` 통합이나 Qwen 학습을 시작하지 않습니다.
+제외하고, SARD/Juliet 함수에서 직접 증명할 수 있는 setup·guard·effect만
+남겼습니다. 최종 `phase-f-sard-grounded-v2`는 5,750쌍으로 train
+10,000건, validation 1,000건, blind test 500건을 구성하며 자동
+품질·수량·2,048-token gate와 고정 100건 수동 gate를 모두 통과했습니다.
+수동 검토 오류는 `0/100`이고 정답의 Juliet `good/bad` 용어 누출도
+`0`입니다. 현재 상태는 `ready_for_source_v3_integration`이며, 아직
+`approved_for_training=false`입니다. 다음 작업은 F3 승인본 구축·동결입니다.
 
 F1 raw catalog에 이어 group-first pool, 보안 범주화, category sampling,
 reserve와 cross-dataset holdout 구현 및 full materialization 감사를
@@ -101,7 +102,7 @@ Qwen3-Coder-Next 80B에서 학습, adapter 저장·로드, merge, 실제 API ser
 별개로 precision, recall, FPR, schema gate를 통과하지 못해 현재 adapter는
 채택하지 않습니다.
 
--> **Phase F: dataset 재설계 + source/binary adapter 개선 (F2 evidence supply blocked)**
+-> **Phase F: dataset 재설계 + source/binary adapter 개선 (F2 PASS / F3 Ready)**
 
 기존 33만 건을 확대하지 않고 catalog→eligible manifest→materialized JSONL
 세 계층으로 재구성합니다. 구조 검사를 통과한 데이터에 대해 코드 근거가

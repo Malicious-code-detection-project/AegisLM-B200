@@ -182,7 +182,7 @@ SOURCE_VULNERABILITY_RECORD_SCHEMA: dict[str, object] = {
     },
 }
 
-SOURCE_VULNERABILITY_OUTPUT_SCHEMA: dict[str, object] = {
+SOURCE_VULNERABILITY_OUTPUT_V1_SCHEMA: dict[str, object] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "aegislm.source-vulnerability-assessment.v1",
     "title": "AegisLM Source Vulnerability Assessment v1",
@@ -222,6 +222,124 @@ SOURCE_VULNERABILITY_OUTPUT_SCHEMA: dict[str, object] = {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 1000,
+                    },
+                    "operation": {"type": "string", "minLength": 1},
+                    "evidence": {"type": "string", "minLength": 1},
+                    "confidence": {
+                        "type": "string",
+                        "enum": list(CONFIDENCE_LEVELS),
+                    },
+                },
+            },
+        },
+        "limitations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1},
+        },
+        "recommendations": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+        },
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {"assessment": {"const": "present"}},
+                "required": ["assessment"],
+            },
+            "then": {"properties": {"findings": {"minItems": 1}}},
+        },
+        {
+            "if": {
+                "properties": {"assessment": {"const": "not_observed"}},
+                "required": ["assessment"],
+            },
+            "then": {"properties": {"findings": {"maxItems": 0}}},
+        },
+    ],
+}
+
+SOURCE_VULNERABILITY_OUTPUT_SCHEMA: dict[str, object] = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "aegislm.source-vulnerability-assessment.v2",
+    "title": "AegisLM Source Vulnerability Assessment v2",
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "schema_version",
+        "scope",
+        "assessment",
+        "assessment_basis",
+        "findings",
+        "limitations",
+        "recommendations",
+    ],
+    "properties": {
+        "schema_version": {"const": "aegislm.source-vulnerability-assessment.v2"},
+        "scope": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["target_cwe", "boundary"],
+            "properties": {
+                "target_cwe": {"type": "string", "pattern": "^CWE-[0-9]+$"},
+                "boundary": {"const": "supplied_function"},
+            },
+        },
+        "assessment": {"type": "string", "enum": list(SOURCE_ASSESSMENTS)},
+        "assessment_basis": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": [
+                    "code_spans",
+                    "relationship",
+                    "conclusion",
+                    "confidence",
+                ],
+                "properties": {
+                    "code_spans": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 10,
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000,
+                        },
+                    },
+                    "relationship": {"type": "string", "minLength": 1},
+                    "conclusion": {"type": "string", "minLength": 1},
+                    "confidence": {
+                        "type": "string",
+                        "enum": list(CONFIDENCE_LEVELS),
+                    },
+                },
+            },
+        },
+        "findings": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": [
+                    "code_spans",
+                    "operation",
+                    "evidence",
+                    "confidence",
+                ],
+                "properties": {
+                    "code_spans": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 10,
+                        "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000,
+                        },
                     },
                     "operation": {"type": "string", "minLength": 1},
                     "evidence": {"type": "string", "minLength": 1},

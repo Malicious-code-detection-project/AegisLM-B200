@@ -411,3 +411,11 @@ dataset을 core train/validation에서 완전히 제외한 경우에만 그 이�
 2026-07-29 기준 위 구성을 `phase-f-source-v2-r2`로 materialize하고 동일
 seed 재생성 hash 감사를 통과했습니다. 이는 F1 pool 완료본이며, F2
 target·token gate를 통과한 학습 승인본은 아닙니다.
+
+후속 F2에서는 label-only core를 억지로 사용하지 않고 SARD/Juliet에서
+setup·guard·effect exact span을 복구했습니다. `phase-f-sard-grounded-v2`는
+source assessment v2 계약, system/user/assistant 전체 누출 감사, 실제 Qwen
+2,048-token gate와 고정 100건 검토를 통과해
+`ready_for_source_v3_integration` 상태입니다. 이 자료는 F3 통합 후보이며,
+F3 manifest와 training config를 동결하기 전까지
+`approved_for_training=false`를 유지합니다.

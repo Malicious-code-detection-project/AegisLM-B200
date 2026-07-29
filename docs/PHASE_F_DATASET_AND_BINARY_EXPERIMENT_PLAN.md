@@ -29,8 +29,8 @@ flowchart LR
 | --- | --- | --- |
 | F0 | `Complete` | Phase E infrastructure PASS / quality FAIL |
 | F1 | `Complete` | r2 group-first pool·taxonomy·reserve·2개 cross-dataset 재현성 감사 통과 |
-| F2 | `Blocked — evidence supply` | source v1 contract 구현; core 11,500건 grounded evidence 0, 외부 pair 281건만 자동 gate 통과 |
-| F3 | `Blocked by F2 evidence supply` | SARD/Juliet extractor와 grounded source 공급 필요 |
+| F2 | `Complete` | source output v2, causal evidence builder, Qwen token gate, 고정 100건 수동 검토 `0/100` 오류 |
+| F3 | `Ready` | 승인된 `phase-f-sard-grounded-v2`를 `phase-f-source-v3`으로 구축·동결 |
 | F4 | `Blocked by F3` | 승인 challenge 필요 |
 | F5 | `Blocked by F3/F4` | 신규 YAML·checkpoint guard도 필요 |
 | F6-A | `Ready — 병행 조사 가능` | GPU 불필요 |
@@ -40,8 +40,8 @@ flowchart LR
 | F9 | `Not Started` | 앞 단계 결과 필요 |
 
 현재 다음 작업은 GPT-OSS 학습이나 Qwen 학습 시작이 아닙니다.
-**F2 source output contract와 code-grounded target을 고치고 r2 pool에서
-F3 학습 승인 데이터를 만드는 것**입니다.
+**F2 통과 자료로 F3 `phase-f-source-v3` 승인본을 구축·동결하고, 그
+challenge로 F4 base/legacy adapter 절대 기준선을 만드는 것**입니다.
 
 ## 최종 연구 질문
 
@@ -268,7 +268,7 @@ paired 파일에서 provenance가 서로 다른 예외 1쌍은 자동 quarantine
 
 ## F2 — Source Task·Output Contract·Target 재설계
 
-상태: `Blocked — evidence supply`
+상태: `Complete — SARD grounded v2 automated/manual gate PASS`
 
 이 단계의 목표는 label을 맞히는 문구를 외우게 하는 것이 아니라, 제공된
 코드에서 관찰 가능한 근거로 target CWE를 판단하게 하는 것입니다.
@@ -305,12 +305,18 @@ content 기준으로 다시 감사했습니다.
 F2에서 versioned contract를 새로 추가합니다.
 
 ```text
+schema_version: aegislm.source-vulnerability-assessment.v2
 scope.target_cwe
 assessment: present | not_observed | uncertain
+assessment_basis:
+  - code_spans[]
+  - relationship
+  - conclusion
+  - confidence
 findings:
-  - location 또는 code span
+  - code_spans[]
   - operation
-  - explanation
+  - evidence
   - confidence
 limitations
 recommendations
@@ -321,7 +327,8 @@ recommendations
 - `not_observed`는 제공된 함수와 target CWE 범위에만 적용
 - dataset, source, record ID, split, target label은 prompt에서 제거
 - CWE 자체는 검사 범위이므로 prompt에 표시 가능
-- positive finding은 실제 code span·operation·patch와 연결
+- assessment basis는 setup·guard·effect의 인과관계를 관련 exact span으로 연결
+- positive finding은 실제 code spans·operation·patch와 연결
 - 근거가 없으면 `uncertain` 또는 학습 제외
 - negative는 프로그램 전체가 안전하다고 주장하지 않음
 - ATT&CK mapping은 source vulnerability contract에서 제거
@@ -349,7 +356,7 @@ recommendations
 
 F2가 실패하면 dataset 수를 채우거나 GPU 학습으로 넘어가지 않습니다.
 
-### 2026-07-29 F2 실제 감사 결과
+### 2026-07-29 F2 기존 r2 pool 감사 결과
 
 - source record/output contract:
   `aegislm.source-vulnerability-record.v1` /
@@ -374,7 +381,7 @@ F2가 실패하면 dataset 수를 채우거나 GPU 학습으로 넘어가지 않
 evidence 공급 부족**으로 중단했습니다. BigVul·PrimeVul의 외부 test
 역할은 유지합니다.
 
-### F2-SARD — Grounded evidence 공급 결과
+### F2-SARD — Grounded evidence 공급 최종 결과
 
 2026-07-29에 SARD/Juliet C/C++ 1.3 공식 ZIP을 직접 읽는 보수적
 function-level extractor를 구현하고 실제 Qwen tokenizer로 전체
@@ -383,36 +390,45 @@ materialization을 검증했습니다.
 - 입력 ZIP SHA-256:
   `ada9d7e1c323d283446df3f55bdee0d00bda1fed786785fe98764d58688f38eb`
 - `_01`~`_10` 단일 파일형에서 private `POTENTIAL FLAW`/`FIX` 주석으로
-  bad/good 함수를 확인하고, 모델 입력에서는 함수명·주석·dataset 정보를
-  제거
-- 완전한 pair `12,630`, exact-code 중복 제거 후 `9,122`
+  candidate 함수를 확인하고, 모델 입력과 assistant target에서는
+  함수명·주석·dataset·Juliet `good/bad` 용어를 제거
+- source output `aegislm.source-vulnerability-assessment.v2`:
+  `assessment_basis.code_spans`로 setup·guard·effect 관계를 최대 10개
+  exact span으로 기록
+- 증명할 수 없는 absence-only fix, 동일 문자열 위치를 구분할 수 없는
+  double-close, 외부 상수에 숨은 executable path는 보수적으로 제외
+- 인과관계 filter 통과 pair `11,540`, exact-code 중복 제거 후 unique
+  pair `8,191`
 - 선택 `5,750` pair: train `5,000`, validation `500`, blind test `250`
 - 최종 레코드: `10,000 / 1,000 / 500`, 각 split present/not_observed 1:1
-- 모델-visible label/provenance 누출 `0`, exact-code 중복률 `0`
-- exact-target 중복률 `0.0200`, 최대 단일 target 비중 `0.001217`
-- 실제 Qwen 전체 chat sequence 최대 `1,631` tokens, cutoff 초과 `0`
+- system·user·assistant 전체의 model-visible label/provenance 누출 `0`,
+  exact-code 중복률 `0`
+- exact-target 중복률 `0.027478`, 최대 단일 target 비중 `0.000783`
+- 실제 Qwen 전체 chat sequence 최대 `1,913` tokens, cutoff 초과 `0`
 - dataset manifest SHA-256:
-  `bf6cad0969cc675a65e980b0a0c219e48e9d7465bc3631f21ecb9a19b59467f6`
+  `bb25c0d6a350d4053d0c7210624b32cbf0f8d84e2807c5b1b1afa0d7f3e70795`
+- 고정 100건: present `50`, not_observed `50`, `26` CWE, `79` 인과 유형
+- 수동 검토: label·근거 오류 `0/100`, 미결정 `0`
+- 수동 검토 JSONL SHA-256:
+  `d2ebdcdfe4caef252378fc21edd42939c06e81f01bda3ff7d49b2776231a50d2`
 - 자동 gate: PASS
-- 현재 판정: `manual_review_required`
-
-자동 통과는 학습 승인이 아닙니다. 사용자가
-`manual_review_100.jsonl`의 `operator_label_error`와
-`operator_evidence_error`를 모두 boolean으로 기록한 뒤 다음 명령으로
-오류율 5% 이하를 확인합니다.
+- 수동 gate: PASS
+- 현재 판정: `ready_for_source_v3_integration`
+- `approved_for_training`: `false`
 
 ```bash
 uv run python scripts/finalize_sard_juliet_manual_review.py \
-  --dataset-dir data/processed/phase-f-sard-grounded-v1
+  --dataset-dir data/processed/phase-f-sard-grounded-v2
 ```
 
-수동 gate까지 통과해야만 SARD 자료를 `phase-f-source-v3`에 통합합니다.
+기존 실패한 v1과 v2 pre-rubric 산출물은 보존합니다. 이 통과는 F3 통합
+자격이며 곧바로 GPU 학습을 승인하는 의미가 아닙니다.
 
 ---
 
 ## F3 — Source Dataset 승인본 구축과 동결
 
-상태: `Blocked by F2-SARD manual review`
+상태: `Ready — F2 automated/manual gate PASS`
 
 현재 `phase-f-source-v2`는 실패 분석용으로 동결합니다. 수정본은 덮어쓰지
 않고 다음 경로에 생성합니다.
@@ -746,9 +762,9 @@ Raw byte 직접 학습, byte-level tokenizer/model, live malware 실행과 새
 
 ## 구현·문서 다음 순서
 
-1. source vulnerability schema·prompt·evaluator 구현
-2. code-grounded target builder와 token audit 구현
-3. F2 target·token gate를 적용한 `phase-f-source-v3` 생성·수동 100건 감사·동결
+1. [완료] source vulnerability schema·prompt·evaluator 구현
+2. [완료] code-grounded target builder·token audit·고정 100건 검토
+3. F2 통과 자료로 `phase-f-source-v3` 생성·동결
 4. Phase F Qwen YAML과 checkpoint namespace guard 구현
 5. Q0-B/Q0-E 실행
 6. Q1 100-step 신규 학습

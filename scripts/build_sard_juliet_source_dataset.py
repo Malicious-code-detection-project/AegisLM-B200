@@ -117,6 +117,15 @@ def main() -> None:
                 "expected_output": json.loads(materialized["messages"][2]["content"]),
                 "operator_label_error": None,
                 "operator_evidence_error": None,
+                "review_status": None,
+                "checks": {
+                    "label_matches_target_cwe": None,
+                    "vulnerable_or_fixed_path_is_feasible": None,
+                    "code_spans_are_exact": None,
+                    "causal_relationship_is_complete": None,
+                    "cwe_explanation_is_specific": None,
+                    "irrelevant_spans_are_absent": None,
+                },
                 "notes": "",
             }
         )

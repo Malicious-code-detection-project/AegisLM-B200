@@ -21,6 +21,8 @@ _GENERIC_EVIDENCE_MARKERS = (
     "dataset label",
     "positive for the scoped",
     "requires deterministic validation",
+    "code-visible operation on the vulnerable execution path",
+    "exact source operation is the code-visible basis",
 )
 
 

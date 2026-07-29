@@ -15,11 +15,13 @@ from jsonschema import Draft202012Validator
 from aegislm.schemas import (
     SOURCE_EVIDENCE_LEVELS,
     SOURCE_VULNERABILITY_OUTPUT_SCHEMA,
+    SOURCE_VULNERABILITY_OUTPUT_V1_SCHEMA,
     SOURCE_VULNERABILITY_RECORD_SCHEMA,
 )
 
 _RECORD_VALIDATOR = Draft202012Validator(SOURCE_VULNERABILITY_RECORD_SCHEMA)
 _OUTPUT_VALIDATOR = Draft202012Validator(SOURCE_VULNERABILITY_OUTPUT_SCHEMA)
+_OUTPUT_V1_VALIDATOR = Draft202012Validator(SOURCE_VULNERABILITY_OUTPUT_V1_SCHEMA)
 _FORBIDDEN_PROMPT_KEYS = {
     "dataset",
     "dataset_name",
@@ -74,13 +76,17 @@ class SourceTargetResult:
 SOURCE_SYSTEM_PROMPT = """You are AegisLM, a defensive source-code vulnerability analyst.
 
 Return exactly one JSON object and no Markdown. The object must contain:
+- schema_version="aegislm.source-vulnerability-assessment.v2"
 - scope: target_cwe and boundary="supplied_function"
 - assessment: present, not_observed, or uncertain
-- findings: exact code_span, operation, evidence, and confidence
+- assessment_basis: related exact code_spans, their relationship, conclusion, confidence
+- findings: related exact code_spans, operation, evidence, and confidence
 - limitations: array of strings
 - recommendations: array of strings
 
-Use only the supplied function. Every code_span must be copied exactly from it.
+Use only the supplied function. Every item in code_spans must be copied exactly
+from it. Explain the security relationship between the spans; naming one API or
+repeating a generic statement is not sufficient evidence.
 The assessment is scoped to the requested CWE and supplied function; it is not a
 claim that the whole program is safe. Do not infer from provenance, dataset
 identity, labels, record IDs, file paths, or split metadata. Do not emit ATT&CK
@@ -108,18 +114,28 @@ def validate_source_output(
     source_code: str | None = None,
 ) -> list[str]:
     """Return source output schema and semantic errors."""
-    errors = _schema_errors(_OUTPUT_VALIDATOR, output)
+    validator = (
+        _OUTPUT_VALIDATOR
+        if output.get("schema_version") == "aegislm.source-vulnerability-assessment.v2"
+        else _OUTPUT_V1_VALIDATOR
+    )
+    errors = _schema_errors(validator, output)
     if errors:
         return errors
     assessment = str(output["assessment"])
     findings = cast(list[Mapping[str, Any]], output["findings"])
     if source_code is not None:
-        for index, finding in enumerate(findings):
-            span = str(finding["code_span"])
-            if span not in source_code:
-                errors.append(
-                    f"findings.{index}.code_span is not an exact source substring"
-                )
+        if validator is _OUTPUT_VALIDATOR:
+            basis = cast(list[Mapping[str, Any]], output["assessment_basis"])
+            errors.extend(_exact_span_errors("assessment_basis", basis, source_code))
+            errors.extend(_exact_span_errors("findings", findings, source_code))
+        else:
+            for index, finding in enumerate(findings):
+                span = str(finding["code_span"])
+                if span not in source_code:
+                    errors.append(
+                        f"findings.{index}.code_span is not an exact source substring"
+                    )
     if assessment == "not_observed" and _contains_global_safety_claim(output):
         errors.append("not_observed output makes a global safety claim")
     return errors
@@ -161,6 +177,7 @@ def build_source_target(
     record: Mapping[str, Any],
     *,
     findings: Sequence[Mapping[str, Any]] = (),
+    assessment_basis: Sequence[Mapping[str, Any]] = (),
 ) -> SourceTargetResult:
     """Build a target only when the private label has trustworthy evidence."""
     record_errors = validate_source_record(record)
@@ -174,31 +191,36 @@ def build_source_target(
     if evidence_level not in SOURCE_EVIDENCE_LEVELS:
         return SourceTargetResult(None, False, "evidence_level_not_grounded", False)
 
-    grounded = [
-        {
-            "code_span": str(item.get("code_span") or ""),
-            "operation": str(item.get("operation") or ""),
-            "evidence": str(item.get("evidence") or ""),
-            "confidence": str(item.get("confidence") or "medium"),
-        }
-        for item in findings
-        if str(item.get("code_span") or "") in str(code["text"])
-        and str(item.get("operation") or "").strip()
-        and str(item.get("evidence") or "").strip()
-    ]
-    if label == "present" and not grounded:
+    source_code = str(code["text"])
+    grounded_findings = _normalize_findings(findings, source_code)
+    grounded_basis = _normalize_basis(assessment_basis, source_code)
+    if not grounded_basis:
+        grounded_basis = [
+            {
+                "code_spans": item["code_spans"],
+                "relationship": item["operation"],
+                "conclusion": item["evidence"],
+                "confidence": item["confidence"],
+            }
+            for item in grounded_findings
+        ]
+    if label == "present" and not grounded_findings:
         return SourceTargetResult(None, False, "positive_code_span_missing", False)
+    if not grounded_basis:
+        return SourceTargetResult(None, False, "assessment_basis_missing", False)
     if label == "uncertain":
         return SourceTargetResult(None, False, "uncertain_not_supervised", False)
 
     scope_anchor = _scope_anchor(str(code["text"]))
     target = {
+        "schema_version": "aegislm.source-vulnerability-assessment.v2",
         "scope": {
             "target_cwe": task["target_cwe"],
             "boundary": "supplied_function",
         },
         "assessment": label,
-        "findings": grounded if label == "present" else [],
+        "assessment_basis": grounded_basis,
+        "findings": grounded_findings if label == "present" else [],
         "limitations": [
             "This assessment is limited to the requested CWE and supplied function.",
             (
@@ -215,7 +237,10 @@ def build_source_target(
     if target_errors:
         raise SourceContractError("; ".join(target_errors))
     return SourceTargetResult(
-        target, True, "eligible", label != "present" or bool(grounded)
+        target,
+        True,
+        "eligible",
+        bool(grounded_basis) and (label != "present" or bool(grounded_findings)),
     )
 
 
@@ -345,6 +370,82 @@ def _find_forbidden_keys(value: Any) -> list[str]:
 def _contains_global_safety_claim(value: Mapping[str, Any]) -> bool:
     text = "\n".join(_iter_strings(value))
     return any(pattern.search(text) for pattern in _GLOBAL_SAFETY_CLAIMS)
+
+
+def _exact_span_errors(
+    field: str,
+    items: Sequence[Mapping[str, Any]],
+    source_code: str,
+) -> list[str]:
+    errors: list[str] = []
+    for item_index, item in enumerate(items):
+        for span_index, span in enumerate(cast(Sequence[Any], item["code_spans"])):
+            if str(span) not in source_code:
+                errors.append(
+                    f"{field}.{item_index}.code_spans.{span_index} "
+                    "is not an exact source substring"
+                )
+    return errors
+
+
+def _normalize_findings(
+    findings: Sequence[Mapping[str, Any]],
+    source_code: str,
+) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    for item in findings:
+        spans = _normalize_code_spans(item, source_code)
+        operation = str(item.get("operation") or "").strip()
+        evidence = str(item.get("evidence") or "").strip()
+        if not spans or not operation or not evidence:
+            continue
+        normalized.append(
+            {
+                "code_spans": spans,
+                "operation": operation,
+                "evidence": evidence,
+                "confidence": str(item.get("confidence") or "medium"),
+            }
+        )
+    return normalized
+
+
+def _normalize_basis(
+    basis: Sequence[Mapping[str, Any]],
+    source_code: str,
+) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    for item in basis:
+        spans = _normalize_code_spans(item, source_code)
+        relationship = str(item.get("relationship") or "").strip()
+        conclusion = str(item.get("conclusion") or "").strip()
+        if not spans or not relationship or not conclusion:
+            continue
+        normalized.append(
+            {
+                "code_spans": spans,
+                "relationship": relationship,
+                "conclusion": conclusion,
+                "confidence": str(item.get("confidence") or "medium"),
+            }
+        )
+    return normalized
+
+
+def _normalize_code_spans(
+    item: Mapping[str, Any],
+    source_code: str,
+) -> list[str]:
+    raw_spans = item.get("code_spans")
+    if isinstance(raw_spans, Sequence) and not isinstance(raw_spans, str):
+        candidates = [str(span).strip() for span in raw_spans]
+    else:
+        candidates = [str(item.get("code_span") or "").strip()]
+    return list(
+        dict.fromkeys(
+            span[:1000] for span in candidates if span and span in source_code
+        )
+    )[:10]
 
 
 def _iter_strings(value: Any) -> list[str]:

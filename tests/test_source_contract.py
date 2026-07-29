@@ -100,8 +100,24 @@ def _finding() -> dict[str, str]:
     }
 
 
+def _basis() -> dict[str, Any]:
+    return {
+        "code_spans": ["return p[i];"],
+        "relationship": "The supplied function performs an indexed read from p.",
+        "conclusion": (
+            "The scoped result depends on whether the caller constrains i; "
+            "no whole-program claim is made."
+        ),
+        "confidence": "medium",
+    }
+
+
 def _target(record: dict[str, Any]) -> dict[str, Any]:
-    result = build_source_target(record, findings=[_finding()])
+    result = build_source_target(
+        record,
+        findings=[_finding()],
+        assessment_basis=[_basis()],
+    )
     assert result.target is not None
     return result.target
 
@@ -118,7 +134,7 @@ def test_source_record_output_and_exact_span_validation() -> None:
     assert any("non-empty" in error for error in validate_source_output(missing))
 
     invented = copy.deepcopy(target)
-    invented["findings"][0]["code_span"] = "strcpy(dst, src);"
+    invented["findings"][0]["code_spans"] = ["strcpy(dst, src);"]
     assert any(
         "exact source substring" in error
         for error in validate_source_output(
@@ -126,6 +142,30 @@ def test_source_record_output_and_exact_span_validation() -> None:
             source_code=record["code"]["text"],
         )
     )
+
+    invented_basis = copy.deepcopy(target)
+    invented_basis["assessment_basis"][0]["code_spans"] = ["strcpy(dst, src);"]
+    assert any(
+        "assessment_basis.0.code_spans.0" in error
+        for error in validate_source_output(
+            invented_basis,
+            source_code=record["code"]["text"],
+        )
+    )
+
+
+def test_v2_requires_relationship_basis_for_every_assessment() -> None:
+    positive = _record()
+    negative = _record(label="not_observed")
+
+    positive_result = build_source_target(positive, findings=[_finding()])
+    negative_result = build_source_target(negative)
+
+    assert positive_result.target is not None
+    assert positive_result.target["schema_version"].endswith(".v2")
+    assert positive_result.target["assessment_basis"]
+    assert negative_result.eligible is False
+    assert negative_result.reason == "assessment_basis_missing"
 
 
 def test_source_prompt_excludes_private_control_metadata() -> None:
@@ -143,7 +183,7 @@ def test_source_prompt_excludes_private_control_metadata() -> None:
 
 def test_not_observed_rejects_global_safety_claim() -> None:
     record = _record(label="not_observed")
-    target = build_source_target(record).target
+    target = build_source_target(record, assessment_basis=[_basis()]).target
     assert target is not None
     target["limitations"] = ["This program is safe."]
 
@@ -227,7 +267,9 @@ def test_source_evaluator_computes_absolute_metrics() -> None:
             record_id="negative",
             model_id="model",
             run_id="run",
-            raw_output=json.dumps(build_source_target(negative).target),
+            raw_output=json.dumps(
+                build_source_target(negative, assessment_basis=[_basis()]).target
+            ),
         ),
     ]
 

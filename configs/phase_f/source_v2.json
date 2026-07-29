@@ -4,8 +4,8 @@
   "phase_status": {
     "F0": "complete",
     "F1": "complete_group_first_pool_materialized_and_audited",
-    "F2": "sard_automated_pass_manual_review_required",
-    "F3": "blocked_by_F2_sard_manual_review",
+    "F2": "complete_source_v2_automated_and_manual_gates_passed",
+    "F3": "ready_build_and_freeze_phase_f_source_v3",
     "F4": "blocked_by_F3",
     "F5": "blocked_by_F3_F4",
     "F6A": "ready_parallel_research",
@@ -19,7 +19,7 @@
       "diversevul": "source_core",
       "bigvul": "verified_pair_cross_dataset_holdout",
       "primevul_v0_1": "paired_cross_dataset_holdout",
-      "sard_juliet_c_cpp_1_3": "grounded_source_materialized_manual_review_required",
+      "sard_juliet_c_cpp_1_3": "grounded_source_v2_ready_for_source_v3_integration",
       "cybersecurity_qa_v2": "provenance_only"
     },
     "dataset_roles": {
@@ -150,26 +150,38 @@
     "maximum_observed_tokens": 6172,
     "automated_quality_gates_for_eligible_records": "pass",
     "quota_gates": "fail",
-    "next_task": "complete_sard_juliet_manual_review_then_build_source_v3"
+    "next_task": "legacy_audit_superseded_by_grounded_sard_v2",
+    "superseded_by": "data/processed/phase-f-sard-grounded-v2/dataset_manifest.json"
   },
   "sard_juliet_grounded_profile": {
-    "profile": "phase-f-sard-grounded-v1",
-    "status": "manual_review_required",
+    "profile": "phase-f-sard-grounded-v2",
+    "output_contract": "aegislm.source-vulnerability-assessment.v2",
+    "status": "ready_for_source_v3_integration",
+    "artifact": "data/processed/phase-f-sard-grounded-v2",
+    "approved_for_source_v3_integration": true,
     "approved_for_training": false,
     "archive_sha256": "ada9d7e1c323d283446df3f55bdee0d00bda1fed786785fe98764d58688f38eb",
-    "complete_pairs": 12630,
-    "unique_complete_pairs": 9122,
+    "complete_pairs_after_causal_filter": 11540,
+    "unique_complete_pairs": 8191,
     "selected_pairs": 5750,
     "train_records": 10000,
     "validation_records": 1000,
     "blind_test_records": 500,
-    "maximum_tokens": 1631,
+    "maximum_tokens": 1913,
     "model_visible_leakage_count": 0,
     "exact_code_duplicate_rate": 0.0,
-    "exact_target_duplicate_rate": 0.02,
-    "maximum_exact_target_fraction": 0.001217391304347826,
-    "dataset_manifest_sha256": "bf6cad0969cc675a65e980b0a0c219e48e9d7465bc3631f21ecb9a19b59467f6",
-    "next_gate": "manual_review_100_label_and_evidence_error_rate_lte_0_05"
+    "exact_target_duplicate_rate": 0.027478260869565216,
+    "maximum_exact_target_fraction": 0.000782608695652174,
+    "dataset_manifest_sha256": "bb25c0d6a350d4053d0c7210624b32cbf0f8d84e2807c5b1b1afa0d7f3e70795",
+    "manual_review_sha256": "d2ebdcdfe4caef252378fc21edd42939c06e81f01bda3ff7d49b2776231a50d2",
+    "manual_review": {
+      "reviewed_count": 100,
+      "label_or_evidence_error_count": 0,
+      "error_rate": 0.0,
+      "causal_pattern_groups": 79,
+      "status": "pass"
+    },
+    "next_gate": "build_and_freeze_phase_f_source_v3"
   },
   "token_budget": {
     "tokenizer": "model/base/qwen3-coder-next",

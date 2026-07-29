@@ -22,6 +22,7 @@ Project NuriLab과 협업 방식과 보안 철학은 공유하지만, 이 저장
 | label-blind 코드 challenge와 절대평가 gate | `docs/ABSOLUTE_EVALUATION.md` |
 | B200 수동 파인튜닝 검증 실행·기록 워크북 | `docs/FINETUNING_TEST_WORKBOOK.md` |
 | Phase F 데이터 재설계·binary-derived 실험 정본 | `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` |
+| source label·근거 수동 검토 기준 | `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md` |
 | baseline/adapter 평가 결과 기록 템플릿 | `docs/EXPERIMENT_LOG_TEMPLATE.md` |
 | Phase D 완료 조건과 Phase E 착수 gate | `docs/PHASE_D_EXIT_CRITERIA.md` |
 | 파인튜닝 학습 로드맵과 실험 전략 | `docs/FINETUNING_EXPERIMENT_PLAN.md` |
@@ -253,6 +254,7 @@ PR 본문은 `docs/PR_DESCRIPTION_TEMPLATE.md`를 기준으로 작성한다. 최
 - `docs/EVALUATION_PLAN.md`는 Phase D/E 평가 계획, 점수화 기준, 결과 리포트 형식의 정본이다.
 - `docs/FINETUNING_TEST_WORKBOOK.md`는 B200 수동 검증의 진행 상태, 실행 명령, 증거 기록, 최종 연구 결정의 정본이다.
 - `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md`는 Phase F catalog, source/binary adapter, 중단 gate와 NuriLab handoff의 정본이다.
+- `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md`는 source target의 label·경로·exact span·인과관계 수동 판정 기준의 정본이다.
 - `docs/PHASE_D_EXIT_CRITERIA.md`는 Phase D 완료 조건과 Phase E 착수 gate의 정본이다.
 - `docs/FINETUNING_EXPERIMENT_PLAN.md`는 학습 로드맵, 실험 전략, dataset/evaluation 기준의 정본이다.
 - `docs/PR_DESCRIPTION_TEMPLATE.md`는 PR 본문 작성 형식과 체크리스트의 정본이다.

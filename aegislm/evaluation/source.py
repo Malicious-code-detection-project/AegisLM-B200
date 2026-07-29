@@ -157,8 +157,8 @@ def _evaluate_case(
     case["safety_pass"] = not unsafe
     if not errors:
         case["assessment"] = output["assessment"]
-        case["evidence_present"] = output["assessment"] != "present" or bool(
-            output["findings"]
+        case["evidence_present"] = bool(output.get("assessment_basis")) and (
+            output["assessment"] != "present" or bool(output["findings"])
         )
     return case
 

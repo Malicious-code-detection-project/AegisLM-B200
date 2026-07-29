@@ -1324,8 +1324,8 @@ Phase F 상세 기준은
 | --- | --- | --- | --- | --- |
 | F0 기존 run 동결 | `Pass` | adapter·merged model·500건 결과 hash 보존 | `aegislm-qwen3next-20260728T100259-operator` | Phase E infrastructure PASS / model quality FAIL |
 | F1 raw catalog·범주화·감사 | `Pass` | group-first pool, language 비의존 taxonomy, reserve·cross-dataset 수량과 누출 검증 | `data/processed/phase-f-source-v2-r2/` | 2026-07-29 수량·hash·group leakage·재현성 감사 완료 |
-| F2 source task·target 재설계 | `Blocked` | source v1 contract 구현, 실제 Qwen tokenizer 감사 | `.../phase-f-source-v2-r2/f2/source-target-audit.json` | core eligible 0; 외부 pair 자동 gate PASS 281 |
-| F3 source 승인본 동결 | `Blocked` | SARD extractor 후 `phase-f-source-v3`, cutoff 초과 0, 수동 100건 통과 |  | quota gate 전부 FAIL, 학습 금지 |
+| F2 source task·target 재설계 | `Pass` | source v2 contract, 인과 근거, 실제 Qwen tokenizer, 고정 100건 | `data/processed/phase-f-sard-grounded-v2/` | 자동 gate PASS, 수동 오류 `0/100`; training 승인은 아직 false |
+| F3 source 승인본 동결 | `Ready` | `phase-f-source-v3`, cutoff 초과 0, split/hash 동결 |  | F2 통과 자료를 통합하는 다음 작업 |
 | F4-Q0-B Qwen base 500건 | `Blocked` | F3 통과 후 절대 기준선 보존 |  |  |
 | F4-Q0-E Phase E adapter 500건 | `Blocked` | 같은 승인 challenge로 legacy 최종 판정 |  |  |
 | F5-Q1 Qwen 80B 신규 100-step | `Blocked` | base에서 시작, 진단 gate와 save/reload/API |  | Phase E checkpoint resume 금지 |
@@ -1445,28 +1445,36 @@ sha256sum \
 
 | 항목 | 기록 |
 | --- | --- |
-| Profile | `phase-f-sard-grounded-v1` |
+| 실패 기준선 | `phase-f-sard-grounded-v1`; 최초 10건 모두 label은 맞았으나 단일 sink만 근거로 사용해 evidence 오류 `10/10`, `fail_early` |
+| 최종 Profile | `phase-f-sard-grounded-v2` |
+| Output contract | `aegislm.source-vulnerability-assessment.v2`; `assessment_basis`와 `findings`가 관련 exact span을 최대 10개 사용 |
 | Raw ZIP SHA-256 | `ada9d7e1c323d283446df3f55bdee0d00bda1fed786785fe98764d58688f38eb` |
-| 완전한 pair / exact-code dedup 후 | `12,630 / 9,122` |
+| 인과 filter 통과 pair / unique pair | `11,540 / 8,191` |
 | train / validation / blind test | `10,000 / 1,000 / 500`, 각 split 1:1 |
 | 모델-visible 누출 / exact-code 중복 | `0 / 0` |
-| exact-target 중복률 / 최대 단일 target | `0.0200 / 0.001217` |
-| 최대 실제 Qwen token / cutoff 초과 | `1,631 / 0` |
+| 누출 감사 범위 | system + user + assistant target; Juliet `good/bad`, dataset, split, private label 대용 신호 포함 |
+| exact-target 중복률 / 최대 단일 target | `0.027478 / 0.000783` |
+| 최대 실제 Qwen token / cutoff 초과 | `1,913 / 0` |
 | 자동 gate | `PASS` |
-| Dataset manifest SHA-256 | `bf6cad0969cc675a65e980b0a0c219e48e9d7465bc3631f21ecb9a19b59467f6` |
-| 수동 검토 파일 | `data/processed/phase-f-sard-grounded-v1/manual_review_100.jsonl` (`present` 50 + `not_observed` 50) |
-| 수동 검토 기록법 | label 또는 evidence 오류이면 해당 boolean을 `true`, 정상이면 `false`; `notes`에 근거 기록 |
-| 현재 판정 | `Manual Review Required`; source-v3 통합·Qwen 학습 금지 |
+| Dataset manifest SHA-256 | `bb25c0d6a350d4053d0c7210624b32cbf0f8d84e2807c5b1b1afa0d7f3e70795` |
+| 수동 검토 파일 | `data/processed/phase-f-sard-grounded-v2/manual_review_100.jsonl` (`present` 50 + `not_observed` 50, 26 CWE) |
+| 가독성 보고서 | `data/processed/phase-f-sard-grounded-v2/manual_review_100.md` |
+| 수동 검토 방법 | 100건을 79개 인과 유형으로 묶어 전부 검토하고, label·경로·exact span·인과 완결성·CWE 구체성·무관 span을 판정 |
+| 수동 검토 결과 | `PASS`; label/evidence 오류 `0/100`, unfinished `0` |
+| 수동 검토 JSONL SHA-256 | `d2ebdcdfe4caef252378fc21edd42939c06e81f01bda3ff7d49b2776231a50d2` |
+| 현재 판정 | `Ready for source-v3 integration`; `approved_for_training=false` |
 
 100행을 모두 기록한 뒤 실행:
 
 ```bash
 uv run python scripts/finalize_sard_juliet_manual_review.py \
-  --dataset-dir data/processed/phase-f-sard-grounded-v1
+  --dataset-dir data/processed/phase-f-sard-grounded-v2
 ```
 
 미기록 값이 하나라도 있으면 명령은 실패합니다. label·근거 오류가 있는
 레코드의 합집합이 5건 이하일 때만 source-v3 통합 후보로 승인합니다.
+이번 v2는 그 gate를 통과했지만, F3 승인본의 split·hash·training config가
+동결되기 전에는 Qwen 학습을 시작하지 않습니다.
 
 ### Qwen 신규 학습 공통 기록
 
