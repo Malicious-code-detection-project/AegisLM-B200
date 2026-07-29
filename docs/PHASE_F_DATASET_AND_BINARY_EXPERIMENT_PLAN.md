@@ -370,15 +370,49 @@ F2가 실패하면 dataset 수를 채우거나 GPU 학습으로 넘어가지 않
 - SHA-256:
   `0419b36cc6c61eaf5f00f6ae8bc88a88cb2535280f66efce5e44ab5e0f88fae4`
 
-따라서 F2는 모델이나 loss 문제가 아니라 **grounded source evidence 공급
-부족**으로 중단합니다. BigVul·PrimeVul의 외부 test 역할은 유지하며,
-다음 작업은 SARD/Juliet function-level good/bad extractor입니다.
+따라서 기존 F1 자료만으로는 모델이나 loss가 아니라 **grounded source
+evidence 공급 부족**으로 중단했습니다. BigVul·PrimeVul의 외부 test
+역할은 유지합니다.
+
+### F2-SARD — Grounded evidence 공급 결과
+
+2026-07-29에 SARD/Juliet C/C++ 1.3 공식 ZIP을 직접 읽는 보수적
+function-level extractor를 구현하고 실제 Qwen tokenizer로 전체
+materialization을 검증했습니다.
+
+- 입력 ZIP SHA-256:
+  `ada9d7e1c323d283446df3f55bdee0d00bda1fed786785fe98764d58688f38eb`
+- `_01`~`_10` 단일 파일형에서 private `POTENTIAL FLAW`/`FIX` 주석으로
+  bad/good 함수를 확인하고, 모델 입력에서는 함수명·주석·dataset 정보를
+  제거
+- 완전한 pair `12,630`, exact-code 중복 제거 후 `9,122`
+- 선택 `5,750` pair: train `5,000`, validation `500`, blind test `250`
+- 최종 레코드: `10,000 / 1,000 / 500`, 각 split present/not_observed 1:1
+- 모델-visible label/provenance 누출 `0`, exact-code 중복률 `0`
+- exact-target 중복률 `0.0200`, 최대 단일 target 비중 `0.001217`
+- 실제 Qwen 전체 chat sequence 최대 `1,631` tokens, cutoff 초과 `0`
+- dataset manifest SHA-256:
+  `bf6cad0969cc675a65e980b0a0c219e48e9d7465bc3631f21ecb9a19b59467f6`
+- 자동 gate: PASS
+- 현재 판정: `manual_review_required`
+
+자동 통과는 학습 승인이 아닙니다. 사용자가
+`manual_review_100.jsonl`의 `operator_label_error`와
+`operator_evidence_error`를 모두 boolean으로 기록한 뒤 다음 명령으로
+오류율 5% 이하를 확인합니다.
+
+```bash
+uv run python scripts/finalize_sard_juliet_manual_review.py \
+  --dataset-dir data/processed/phase-f-sard-grounded-v1
+```
+
+수동 gate까지 통과해야만 SARD 자료를 `phase-f-source-v3`에 통합합니다.
 
 ---
 
 ## F3 — Source Dataset 승인본 구축과 동결
 
-상태: `Blocked by F2`
+상태: `Blocked by F2-SARD manual review`
 
 현재 `phase-f-source-v2`는 실패 분석용으로 동결합니다. 수정본은 덮어쓰지
 않고 다음 경로에 생성합니다.

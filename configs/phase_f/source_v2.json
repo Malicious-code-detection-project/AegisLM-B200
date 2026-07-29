@@ -4,8 +4,8 @@
   "phase_status": {
     "F0": "complete",
     "F1": "complete_group_first_pool_materialized_and_audited",
-    "F2": "blocked_evidence_supply_sard_extractor_required",
-    "F3": "blocked_by_F2_evidence_supply",
+    "F2": "sard_automated_pass_manual_review_required",
+    "F3": "blocked_by_F2_sard_manual_review",
     "F4": "blocked_by_F3",
     "F5": "blocked_by_F3_F4",
     "F6A": "ready_parallel_research",
@@ -19,7 +19,7 @@
       "diversevul": "source_core",
       "bigvul": "verified_pair_cross_dataset_holdout",
       "primevul_v0_1": "paired_cross_dataset_holdout",
-      "sard_juliet_c_cpp_1_3": "raw_build_source_pending_function_extractor",
+      "sard_juliet_c_cpp_1_3": "grounded_source_materialized_manual_review_required",
       "cybersecurity_qa_v2": "provenance_only"
     },
     "dataset_roles": {
@@ -150,7 +150,26 @@
     "maximum_observed_tokens": 6172,
     "automated_quality_gates_for_eligible_records": "pass",
     "quota_gates": "fail",
-    "next_task": "sard_juliet_function_level_good_bad_extractor"
+    "next_task": "complete_sard_juliet_manual_review_then_build_source_v3"
+  },
+  "sard_juliet_grounded_profile": {
+    "profile": "phase-f-sard-grounded-v1",
+    "status": "manual_review_required",
+    "approved_for_training": false,
+    "archive_sha256": "ada9d7e1c323d283446df3f55bdee0d00bda1fed786785fe98764d58688f38eb",
+    "complete_pairs": 12630,
+    "unique_complete_pairs": 9122,
+    "selected_pairs": 5750,
+    "train_records": 10000,
+    "validation_records": 1000,
+    "blind_test_records": 500,
+    "maximum_tokens": 1631,
+    "model_visible_leakage_count": 0,
+    "exact_code_duplicate_rate": 0.0,
+    "exact_target_duplicate_rate": 0.02,
+    "maximum_exact_target_fraction": 0.001217391304347826,
+    "dataset_manifest_sha256": "bf6cad0969cc675a65e980b0a0c219e48e9d7465bc3631f21ecb9a19b59467f6",
+    "next_gate": "manual_review_100_label_and_evidence_error_rate_lte_0_05"
   },
   "token_budget": {
     "tokenizer": "model/base/qwen3-coder-next",

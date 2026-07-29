@@ -67,6 +67,15 @@ from aegislm.datasets.source_audit import (
     audit_source_targets,
     count_source_training_tokens,
 )
+from aegislm.datasets.sard_juliet import (
+    SARD_JULIET_PROFILE,
+    SARD_JULIET_SEED,
+    JulietFunction,
+    extract_juliet_functions,
+    juliet_function_to_source_record,
+    materialize_juliet_profile,
+    summarize_juliet_manual_review,
+)
 
 __all__ = [
     "validate_record",
@@ -117,6 +126,13 @@ __all__ = [
     "build_source_target",
     "derive_patch_findings",
     "count_source_training_tokens",
+    "SARD_JULIET_PROFILE",
+    "SARD_JULIET_SEED",
+    "JulietFunction",
+    "extract_juliet_functions",
+    "juliet_function_to_source_record",
+    "materialize_juliet_profile",
+    "summarize_juliet_manual_review",
     "format_source_prompt",
     "phase_f_record_to_source_record",
     "source_prompt_variant_id",

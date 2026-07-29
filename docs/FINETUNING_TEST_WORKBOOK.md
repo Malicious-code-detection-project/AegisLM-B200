@@ -1441,6 +1441,33 @@ sha256sum \
 | 판정 | `Blocked — evidence supply`; Qwen 학습 금지 |
 | 다음 작업 | SARD/Juliet function-level good/bad + exact evidence extractor |
 
+### F2-SARD grounded source 공급·수동 검토
+
+| 항목 | 기록 |
+| --- | --- |
+| Profile | `phase-f-sard-grounded-v1` |
+| Raw ZIP SHA-256 | `ada9d7e1c323d283446df3f55bdee0d00bda1fed786785fe98764d58688f38eb` |
+| 완전한 pair / exact-code dedup 후 | `12,630 / 9,122` |
+| train / validation / blind test | `10,000 / 1,000 / 500`, 각 split 1:1 |
+| 모델-visible 누출 / exact-code 중복 | `0 / 0` |
+| exact-target 중복률 / 최대 단일 target | `0.0200 / 0.001217` |
+| 최대 실제 Qwen token / cutoff 초과 | `1,631 / 0` |
+| 자동 gate | `PASS` |
+| Dataset manifest SHA-256 | `bf6cad0969cc675a65e980b0a0c219e48e9d7465bc3631f21ecb9a19b59467f6` |
+| 수동 검토 파일 | `data/processed/phase-f-sard-grounded-v1/manual_review_100.jsonl` (`present` 50 + `not_observed` 50) |
+| 수동 검토 기록법 | label 또는 evidence 오류이면 해당 boolean을 `true`, 정상이면 `false`; `notes`에 근거 기록 |
+| 현재 판정 | `Manual Review Required`; source-v3 통합·Qwen 학습 금지 |
+
+100행을 모두 기록한 뒤 실행:
+
+```bash
+uv run python scripts/finalize_sard_juliet_manual_review.py \
+  --dataset-dir data/processed/phase-f-sard-grounded-v1
+```
+
+미기록 값이 하나라도 있으면 명령은 실패합니다. label·근거 오류가 있는
+레코드의 합집합이 5건 이하일 때만 source-v3 통합 후보로 승인합니다.
+
 ### Qwen 신규 학습 공통 기록
 
 | 항목 | Q1 100-step | Q2 250-step | Q3 313-step |

@@ -194,7 +194,7 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 | Candidate | Phase F role | Decision |
 | --- | --- | --- |
 | [PrimeVul](https://github.com/DLVulDet/PrimeVul) | 정제된 vulnerable/benign source와 paired evaluation | `acquired-and-materialized`; v0.1 paired 중 global dedup을 통과한 pair로 cross-dataset test 200건 구성 |
-| [NIST SARD](https://samate.nist.gov/SARD/test-suites/112) / Juliet C/C++ 1.3 | 명시적 weakness, buildable source, 자체 source–binary pair 생성 | `next-task`; 공식 ZIP hash 검증 완료, F2 evidence supply 해소를 위한 function-level good/bad extractor 구현 |
+| [NIST SARD](https://samate.nist.gov/SARD/test-suites/112) / Juliet C/C++ 1.3 | 명시적 weakness, buildable source, 자체 source–binary pair 생성 | `materialized-manual-review-required`; 9,122 unique grounded pair 중 5,750쌍으로 10,000/1,000/500 구성, 자동 gate PASS |
 | [MegaVul](https://github.com/icyrockton/megavul) | CVE/fix commit와 graph representation 보강 | `secondary-candidate`; GPL-3.0과 대용량 crawl 주의 |
 | [CVEfixes](https://arxiv.org/abs/2107.08760) / [MoreFixes](https://github.com/JafarAkhondali/Morefixes) | fixing commit·patch 근거 보강 | `secondary-candidate`; 원 repository license 추적 |
 
@@ -206,7 +206,7 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 ### 권장 확보 순서
 
 1. F2 source contract·code-grounded target·token gate 구현
-2. NIST SARD/Juliet function-level good/bad extractor
+2. NIST SARD/Juliet 고정 100건 수동 label·근거 감사와 source-v3 통합
 3. Assemblage·Decompile-Bench의 metadata 및 소규모 aligned subset
 4. BinKit compiler-robustness subset
 5. EMBER2024 static-feature subset을 별도 malware benchmark로 확보

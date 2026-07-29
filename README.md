@@ -49,11 +49,13 @@ source dataset부터 다시 검증합니다.
 보조 후보이며 Qwen 재학습의 선행 조건이 아닙니다.
 
 2026-07-29 F2 감사에서 source 전용 계약과 실제 Qwen tokenizer gate를
-적용했습니다. 외부 patch pair에서 281건은 자동 품질 gate를 통과했지만,
-core 11,500건은 exact code/patch 근거가 없어 모두 제외됐습니다. 따라서
-F2는 `evidence_supply_blocked`이며 `phase-f-source-v3` 학습은 시작하지
-않습니다. 다음 작업은 확보한 SARD/Juliet에서 함수 단위 good/bad와 exact
-근거를 추출하는 것입니다.
+적용했습니다. 기존 core 11,500건은 exact code/patch 근거가 없어 모두
+제외됐지만, 후속 SARD/Juliet 함수 추출기로 중복 제거 후 9,122개의
+grounded good/bad pair를 확보했습니다. 이 중 고정 seed로 5,750쌍을 골라
+train 10,000건, validation 1,000건, blind test 500건을 만들었고 자동
+품질·수량·2,048-token gate를 모두 통과했습니다. 현재 상태는
+`manual_review_required`입니다. 고정 100건의 label·근거 검토 전에는
+`phase-f-source-v3` 통합이나 Qwen 학습을 시작하지 않습니다.
 
 F1 raw catalog에 이어 group-first pool, 보안 범주화, category sampling,
 reserve와 cross-dataset holdout 구현 및 full materialization 감사를

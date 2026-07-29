@@ -202,7 +202,7 @@ def build_source_target(
         "limitations": [
             "This assessment is limited to the requested CWE and supplied function.",
             (
-                "The reviewed boundary begins with this supplied code span: "
+                "The reviewed boundary includes these supplied code excerpts: "
                 f"{scope_anchor}"
             ),
             "This result does not establish whole-program safety or exploitability.",
@@ -364,8 +364,16 @@ def _iter_strings(value: Any) -> list[str]:
 
 
 def _scope_anchor(code: str) -> str:
-    for line in code.splitlines():
-        stripped = line.strip()
-        if stripped:
-            return stripped[:160]
-    return code[:160]
+    lines = [
+        line.strip()
+        for line in code.splitlines()
+        if line.strip()
+        and line.strip() not in {"{", "}"}
+        and not line.strip().endswith("{")
+    ]
+    if lines and "(" in lines[0] and ")" in lines[0]:
+        lines = lines[1:]
+    body = "\n".join(lines) or code.strip()
+    if len(body) <= 320:
+        return body
+    return f"{body[:160]} ... {body[-160:]}"
