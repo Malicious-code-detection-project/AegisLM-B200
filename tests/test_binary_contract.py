@@ -10,6 +10,7 @@ from aegislm.datasets.binary import (
     BinaryRecordValidationError,
     binary_target_relation_visible,
     build_binary_pair_role_targets,
+    build_binary_pair_strict_role_targets,
     build_binary_pair_targets,
     build_binary_target,
     compact_binary_record,
@@ -483,6 +484,36 @@ def test_binary_role_target_links_selected_buffer_capacity_for_cwe126() -> None:
             item["role"] == "source" and "strlen(dest)" in item["code_span"]
             for item in evidence
         )
+
+
+def test_binary_strict_role_target_rejects_generic_cwe_fallback() -> None:
+    present, fixed = _binary_pair(
+        "CWE-23",
+        "data = recv(fd, path, 100, 0);\nopen(data, 0);",
+        'data = "file.txt";\nopen(data, 0);',
+    )
+
+    with pytest.raises(
+        BinaryRecordValidationError,
+        match="CWE-23 has no strict role extractor",
+    ):
+        build_binary_pair_strict_role_targets(present, fixed)
+
+
+def test_binary_strict_role_target_accepts_complete_cwe_extractor() -> None:
+    present, fixed = _binary_pair(
+        "CWE-121",
+        "char dst[8];\nmemmove(dst, src, 32);",
+        "char dst[32];\nmemmove(dst, src, 8);",
+    )
+
+    present_target, fixed_target = build_binary_pair_strict_role_targets(
+        present,
+        fixed,
+    )
+
+    assert validate_binary_role_output_for_record(present_target, present) == []
+    assert validate_binary_role_output_for_record(fixed_target, fixed) == []
 
 
 def test_binary_role_target_links_external_format_source_and_literal_fix() -> None:

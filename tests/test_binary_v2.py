@@ -124,8 +124,16 @@ def test_binary_v2_review_rejects_unpassed_or_wrong_contract_gate() -> None:
     records, gate = _inputs()
     gate["gate_pass"] = False
 
-    with pytest.raises(PhaseFDatasetError, match="passed tokenizer gate"):
+    with pytest.raises(PhaseFDatasetError, match="passed or review-eligible"):
         build_binary_role_manual_review(records, gate, review_records=4)
+
+    gate["review_eligible"] = True
+    assert (
+        build_binary_role_manual_review(records, gate, review_records=4)["manifest"][
+            "review_record_count"
+        ]
+        == 4
+    )
 
     gate["gate_pass"] = True
     gate["output_contract"] = "aegislm.binary-assessment-output.v1"

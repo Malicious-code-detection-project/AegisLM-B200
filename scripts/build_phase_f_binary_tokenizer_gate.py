@@ -20,6 +20,7 @@ if str(REPO_ROOT) not in sys.path:
 from aegislm.datasets.binary import (  # noqa: E402
     BinaryRecordValidationError,
     build_binary_pair_role_targets,
+    build_binary_pair_strict_role_targets,
     build_binary_pair_targets,
     compact_binary_record,
     format_binary_prompt,
@@ -41,15 +42,17 @@ def build_tokenizer_gate(
     target_contract: str = "v1",
 ) -> dict[str, Any]:
     """Select exact pairs only after both labels fit without truncation."""
-    if target_contract not in {"v1", "v2"}:
+    if target_contract not in {"v1", "v2", "v2-strict"}:
         raise ValueError(f"unsupported target contract: {target_contract}")
-    target_builder = (
-        build_binary_pair_role_targets
-        if target_contract == "v2"
-        else build_binary_pair_targets
-    )
+    target_builder = {
+        "v1": build_binary_pair_targets,
+        "v2": build_binary_pair_role_targets,
+        "v2-strict": build_binary_pair_strict_role_targets,
+    }[target_contract]
     prompt_formatter = (
-        format_binary_role_prompt if target_contract == "v2" else format_binary_prompt
+        format_binary_role_prompt
+        if target_contract in {"v2", "v2-strict"}
+        else format_binary_prompt
     )
     indexed: dict[tuple[str, str], Mapping[str, Any]] = {}
     for records in record_sources:
@@ -143,22 +146,30 @@ def build_tokenizer_gate(
         ),
         "raw_payload_absent": True,
     }
+    review_eligible = (
+        len(eligible_order) >= 50
+        and full_variant_pairs >= minimum_consistency_pairs
+        and gates["raw_payload_absent"]
+    )
     passed = all(gates.values())
     return {
         "schema_version": "aegislm.phase-f-binary-tokenizer-gate.v1",
         "profile": "phase-f-binary-derived-v1",
         "target_policy": (
-            "role-structured-evidence-v2"
+            "strict-cwe-role-evidence-v3"
+            if target_contract == "v2-strict"
+            else "role-structured-evidence-v2"
             if target_contract == "v2"
             else "memory-write-read-linked-evidence-v9"
         ),
         "output_contract": (
             "aegislm.binary-role-assessment-output.v2"
-            if target_contract == "v2"
+            if target_contract in {"v2", "v2-strict"}
             else "aegislm.binary-assessment-output.v1"
         ),
         "decision": "pass" if passed else "fail",
         "gate_pass": passed,
+        "review_eligible": review_eligible,
         "target_relation_policy": relation_gate["target_relation_policy"],
         "required_accepted_pair_count": required_pairs,
         "accepted_pair_count": len(accepted),
@@ -192,7 +203,11 @@ def main() -> None:
     parser.add_argument("--model-dir", type=Path, required=True)
     parser.add_argument("--required-pairs", type=int, default=2450)
     parser.add_argument("--cutoff-len", type=int, default=4096)
-    parser.add_argument("--target-contract", choices=("v1", "v2"), default="v1")
+    parser.add_argument(
+        "--target-contract",
+        choices=("v1", "v2", "v2-strict"),
+        default="v1",
+    )
     parser.add_argument("--output-gate", type=Path, required=True)
     args = parser.parse_args()
     relation_gate = json.loads(args.relation_gate.read_text(encoding="utf-8"))

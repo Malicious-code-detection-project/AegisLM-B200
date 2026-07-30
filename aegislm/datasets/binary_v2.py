@@ -34,8 +34,10 @@ def build_binary_role_manual_review(
         raise PhaseFDatasetError(
             "binary v2 review record count must be positive and even"
         )
-    if gate.get("gate_pass") is not True:
-        raise PhaseFDatasetError("binary v2 review requires a passed tokenizer gate")
+    if gate.get("gate_pass") is not True and gate.get("review_eligible") is not True:
+        raise PhaseFDatasetError(
+            "binary v2 review requires a passed or review-eligible tokenizer gate"
+        )
     if gate.get("output_contract") != BINARY_V2_OUTPUT_CONTRACT:
         raise PhaseFDatasetError("binary v2 review requires the v2 output contract")
 

@@ -1071,6 +1071,12 @@ identifier-overlap이 다시 잘못된 관계를 만들었습니다.
 [Binary Role Target v2 Decision](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
 기록합니다.
 
+strict v3 공급 감사에서 generic fallback을 제거하자
+`1,301/2,924` pair만 eligible이었습니다. 이 pool은 review 가능 조건을
+통과했지만 고정 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
+`FAIL EARLY`했습니다. 따라서 네 CWE를 quarantine하고 남은 extractor
+공급을 다시 산정하는 단계가 다음 실행입니다.
+
 초기의 `2,450 pair × 4 variant × 2 label = 19,600` 전량 학습 가정은
 폐기합니다. compiler variant는 pair당 cutoff 내 하나를
 `613/612/613/612` 수준으로 균형 선택해 총 4,900건을 학습·검증·blind에

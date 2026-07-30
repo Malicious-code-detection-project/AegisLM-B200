@@ -123,6 +123,10 @@ Phase F의 우선순위는 다음과 같다.
   두 고정 review 모두 evidence 오류 `6/100`에서 `FAIL EARLY`
 - generic identifier-overlap fallback으로 2,450 pair를 채우지 않음;
   다음은 CWE별 완전한 role extractor가 있는 범주만 eligible로 재산정
+- strict v3 공급은 `1,301/2,924` pair, review-eligible PASS였지만
+  CWE-124/127/457/690 오류 6건으로 수동 gate `FAIL EARLY`
+- CWE-124/127/457/690은 quarantine; 남은 extractor도 새 수동 gate 전
+  학습 금지
 - 초기 19,600 전량 학습 가정은 폐기; pair당 한 compiler variant를
   균형 선택한 4,900건과 별도 800건 compiler-consistency set으로 구성
 - 수동 target review가 `≤5/100`을 통과하기 전 binary 학습 금지

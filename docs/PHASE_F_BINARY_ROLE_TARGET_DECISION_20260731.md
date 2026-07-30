@@ -71,6 +71,24 @@ r2는 이 여섯 회귀 사례를 교정했지만 다른 CWE에서 같은 구조
 - 고정 seed 100건 수동 evidence error `≤0.05`
 - raw payload 및 object 실행 `0`
 
+## Strict Supply v3 Result
+
+generic fallback을 끄고 12개 CWE extractor만 허용한
+`strict-cwe-role-evidence-v3` 공급 감사 결과는 다음과 같습니다.
+
+- tokenizer-qualified: `1,301/2,924` pair
+- original 2,450-pair quota: FAIL
+- review eligibility: PASS
+- gate SHA-256:
+  `d5787e2a2dcbf24a8694aadbf7d022a2c4ef9d4b4b829fce7feeaf177a365e56`
+- 고정 100건 검토: evidence error `6/100`, `FAIL EARLY`
+- 결정 적용 manifest SHA-256:
+  `4dac96b5fa2d7981559b07adf704f9c871e03b47c02a1c04b008273a98dd60a4`
+
+strict v3는 문제를 CWE-124, CWE-127, CWE-457, CWE-690 extractor로
+좁혔습니다. 이 네 범주는 다음 공급 계산에서 quarantine합니다. 나머지
+extractor도 새 표본으로 다시 검증하기 전에는 학습 승인을 받지 않습니다.
+
 관련 기준은
 [Phase F 계획](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)과
 [수동 검증 워크북](FINETUNING_TEST_WORKBOOK.md)을 따릅니다.

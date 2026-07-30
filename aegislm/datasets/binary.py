@@ -179,7 +179,8 @@ _TARGET_EVIDENCE_PATTERNS = {
     ),
 }
 _MEMORY_COPY = re.compile(
-    r"\b(?:(?:_*(?:w?mem|w?cs|str)(?:cpy|ncpy|cat|ncat)(?:_chk)?)|"
+    r"\b(?:(?:_*(?:w?mem(?:cpy|move)|w?cs(?:cpy|ncpy|cat|ncat)|"
+    r"str(?:cpy|ncpy|cat|ncat))(?:_chk)?)|"
     r"\w*printf|fread|recv|copy)\b",
     re.IGNORECASE,
 )
@@ -192,6 +193,23 @@ _C_DEALLOCATOR = re.compile(r"\bfree\s*\(", re.IGNORECASE)
 _CPP_DEALLOCATOR = re.compile(
     r"\b(?:operator_delete|delete\b)",
     re.IGNORECASE,
+)
+
+BINARY_STRICT_ROLE_CWES = frozenset(
+    {
+        "CWE-121",
+        "CWE-122",
+        "CWE-124",
+        "CWE-126",
+        "CWE-127",
+        "CWE-134",
+        "CWE-190",
+        "CWE-191",
+        "CWE-194",
+        "CWE-195",
+        "CWE-457",
+        "CWE-690",
+    }
 )
 
 
@@ -597,6 +615,45 @@ def build_binary_pair_role_targets(
     )
 
 
+def build_binary_pair_strict_role_targets(
+    present_record: Mapping[str, Any],
+    fixed_record: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build targets only for CWEs with explicit, complete role extractors."""
+    target_cwe = str(present_record["task"]["target_cwe"])
+    if target_cwe not in BINARY_STRICT_ROLE_CWES:
+        raise BinaryRecordValidationError(f"{target_cwe} has no strict role extractor")
+    (
+        unpacked_cwe,
+        present_function,
+        fixed_function,
+    ) = _validate_and_unpack_binary_pair(present_record, fixed_record)
+    present_pseudo = str(present_function["pseudo_c"])
+    fixed_pseudo = str(fixed_function["pseudo_c"])
+    if not binary_target_relation_visible(unpacked_cwe, present_pseudo):
+        raise BinaryRecordValidationError(
+            f"{unpacked_cwe} has no observable target relation"
+        )
+    present_roles = _select_role_evidence(
+        present_pseudo,
+        target_cwe=unpacked_cwe,
+        assessment="present",
+        comparison_pseudo_c=fixed_pseudo,
+        allow_generic_fallback=False,
+    )
+    fixed_roles = _select_role_evidence(
+        fixed_pseudo,
+        target_cwe=unpacked_cwe,
+        assessment="not_observed",
+        comparison_pseudo_c=present_pseudo,
+        allow_generic_fallback=False,
+    )
+    return (
+        _build_binary_role_target(present_record, present_roles),
+        _build_binary_role_target(fixed_record, fixed_roles),
+    )
+
+
 def _validate_and_unpack_binary_pair(
     present_record: Mapping[str, Any],
     fixed_record: Mapping[str, Any],
@@ -728,6 +785,7 @@ def _select_role_evidence(
     target_cwe: str,
     assessment: Literal["present", "not_observed"],
     comparison_pseudo_c: str,
+    allow_generic_fallback: bool = True,
 ) -> list[tuple[str, str]]:
     statements = _pseudo_c_statements(pseudo_c)
     comparison_statements = set(_pseudo_c_statements(comparison_pseudo_c))
@@ -757,7 +815,7 @@ def _select_role_evidence(
         comparison_statements=comparison_statements,
         control_scores=control_scores,
     )
-    if not required:
+    if not required and allow_generic_fallback:
         required = _generic_role_indices(
             statements,
             sink_index=sink_index,
@@ -1138,8 +1196,7 @@ def _numeric_source_indices(
     assignments = [
         index
         for index, line in enumerate(statements)
-        if line not in comparison_statements
-        and any(
+        if any(
             re.match(rf"^{re.escape(identifier)}\s*=", line) for identifier in sink_ids
         )
         and not re.search(r"=\s*0\s*;", line)
@@ -1777,7 +1834,10 @@ def _target_evidence_score(
     target_pattern: re.Pattern[str] | None,
 ) -> int:
     declaration = _looks_like_declaration(line)
-    if target_pattern is None or not target_pattern.search(line):
+    target_match = bool(target_pattern and target_pattern.search(line))
+    if target_cwe in {"CWE-120", "CWE-121", "CWE-122", "CWE-124", "CWE-126", "CWE-127"}:
+        target_match = target_match or bool(_MEMORY_COPY.search(line))
+    if not target_match:
         if target_cwe in {"CWE-124", "CWE-127"} and re.search(
             r"\bdata\s*(?:>=|>)\s*0|\bdata\s*<\s*\d+",
             line,

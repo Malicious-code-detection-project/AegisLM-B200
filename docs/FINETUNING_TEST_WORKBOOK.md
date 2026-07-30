@@ -2342,6 +2342,13 @@ generic fallback 사용은 0이어야 하며 unsupported CWE는 quarantine합니
 실제 eligible 수량에 맞춰 dataset을 줄인 뒤 새 고정 100건에서
 `≤5/100`을 통과해야만 binary materialization과 Qwen 학습을 시작합니다.
 
+strict v3에서 generic fallback을 0으로 만들자 eligible 공급은
+`1,301/2,924` pair가 됐습니다. original quota는 FAIL이지만 50-pair 수동
+검토에는 충분해 `review_eligible=true`로 별도 기록했습니다. 새 검토는
+CWE-124/127의 잘못된 socket sink, CWE-457 fixed helper 선택,
+CWE-690 allocation self-link 등 6건에서 `FAIL EARLY`했습니다. gate SHA는
+`d5787e2a…5e56`, 결정 적용 manifest SHA는 `4dac96b5…60a4`입니다.
+
 r2 탈락은 CWE-476 5쌍과 CWE-563 23쌍을 포함해 총 106쌍이다. r3 탈락은
 CWE-563 전체 13쌍과 O2에서 근거가 소실된 77쌍을 합쳐 총 90쌍이다. 나머지는
 네 compiler variant 중 하나에서 target buffer operation, allocation과

@@ -129,6 +129,12 @@ v2 r1과 r2는 role target builder, 실제 Qwen tokenizer gate, 고정 seed
 인정합니다. 상세 결정은
 [`docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`](docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
 보존합니다.
+
+후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
+허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
+규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
+다시 `FAIL EARLY`했습니다. 해당 네 범주는 quarantine하며, 남은 공급도
+새 수동 gate 전에는 학습에 사용하지 않습니다.
 초기 `2,450 × 4 × 2 = 19,600` 전량 사용 가정은 폐기했습니다. 최종
 학습본은 pair당 cutoff 내 한 variant만 균형 선택해 4,900건을 만들고,
 별도 100-pair × 4-variant consistency set을 둡니다.
