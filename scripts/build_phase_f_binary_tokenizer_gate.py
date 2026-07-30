@@ -19,8 +19,21 @@ if str(REPO_ROOT) not in sys.path:
 
 from aegislm.datasets.binary import (  # noqa: E402
     BinaryRecordValidationError,
+    BINARY_STRICT_ROLE_CWES,
+    BINARY_STRICT_V4_QUARANTINED_CWES,
+    BINARY_STRICT_V4_ROLE_CWES,
+    BINARY_STRICT_V5_QUARANTINED_CWES,
+    BINARY_STRICT_V5_ROLE_CWES,
+    BINARY_STRICT_V6_QUARANTINED_CWES,
+    BINARY_STRICT_V6_ROLE_CWES,
+    BINARY_STRICT_V7_QUARANTINED_CWES,
+    BINARY_STRICT_V7_ROLE_CWES,
     build_binary_pair_role_targets,
     build_binary_pair_strict_role_targets,
+    build_binary_pair_strict_v4_role_targets,
+    build_binary_pair_strict_v5_role_targets,
+    build_binary_pair_strict_v6_role_targets,
+    build_binary_pair_strict_v7_role_targets,
     build_binary_pair_targets,
     compact_binary_record,
     format_binary_prompt,
@@ -42,16 +55,36 @@ def build_tokenizer_gate(
     target_contract: str = "v1",
 ) -> dict[str, Any]:
     """Select exact pairs only after both labels fit without truncation."""
-    if target_contract not in {"v1", "v2", "v2-strict"}:
+    if target_contract not in {
+        "v1",
+        "v2",
+        "v2-strict",
+        "v2-strict-v4",
+        "v2-strict-v5",
+        "v2-strict-v6",
+        "v2-strict-v7",
+    }:
         raise ValueError(f"unsupported target contract: {target_contract}")
     target_builder = {
         "v1": build_binary_pair_targets,
         "v2": build_binary_pair_role_targets,
         "v2-strict": build_binary_pair_strict_role_targets,
+        "v2-strict-v4": build_binary_pair_strict_v4_role_targets,
+        "v2-strict-v5": build_binary_pair_strict_v5_role_targets,
+        "v2-strict-v6": build_binary_pair_strict_v6_role_targets,
+        "v2-strict-v7": build_binary_pair_strict_v7_role_targets,
     }[target_contract]
     prompt_formatter = (
         format_binary_role_prompt
-        if target_contract in {"v2", "v2-strict"}
+        if target_contract
+        in {
+            "v2",
+            "v2-strict",
+            "v2-strict-v4",
+            "v2-strict-v5",
+            "v2-strict-v6",
+            "v2-strict-v7",
+        }
         else format_binary_prompt
     )
     indexed: dict[tuple[str, str], Mapping[str, Any]] = {}
@@ -152,11 +185,19 @@ def build_tokenizer_gate(
         and gates["raw_payload_absent"]
     )
     passed = all(gates.values())
-    return {
+    result = {
         "schema_version": "aegislm.phase-f-binary-tokenizer-gate.v1",
         "profile": "phase-f-binary-derived-v1",
         "target_policy": (
-            "strict-cwe-role-evidence-v3"
+            "strict-cwe-role-evidence-v7"
+            if target_contract == "v2-strict-v7"
+            else "strict-cwe-role-evidence-v6"
+            if target_contract == "v2-strict-v6"
+            else "strict-cwe-role-evidence-v5"
+            if target_contract == "v2-strict-v5"
+            else "strict-cwe-role-evidence-v4"
+            if target_contract == "v2-strict-v4"
+            else "strict-cwe-role-evidence-v3"
             if target_contract == "v2-strict"
             else "role-structured-evidence-v2"
             if target_contract == "v2"
@@ -164,7 +205,15 @@ def build_tokenizer_gate(
         ),
         "output_contract": (
             "aegislm.binary-role-assessment-output.v2"
-            if target_contract in {"v2", "v2-strict"}
+            if target_contract
+            in {
+                "v2",
+                "v2-strict",
+                "v2-strict-v4",
+                "v2-strict-v5",
+                "v2-strict-v6",
+                "v2-strict-v7",
+            }
             else "aegislm.binary-assessment-output.v1"
         ),
         "decision": "pass" if passed else "fail",
@@ -194,6 +243,22 @@ def build_tokenizer_gate(
             "frozen relation-qualified order after exact target and tokenizer gate"
         ),
     }
+    if target_contract == "v2-strict":
+        result["supported_cwes"] = sorted(BINARY_STRICT_ROLE_CWES)
+        result["quarantined_cwes"] = []
+    elif target_contract == "v2-strict-v4":
+        result["supported_cwes"] = sorted(BINARY_STRICT_V4_ROLE_CWES)
+        result["quarantined_cwes"] = sorted(BINARY_STRICT_V4_QUARANTINED_CWES)
+    elif target_contract == "v2-strict-v5":
+        result["supported_cwes"] = sorted(BINARY_STRICT_V5_ROLE_CWES)
+        result["quarantined_cwes"] = sorted(BINARY_STRICT_V5_QUARANTINED_CWES)
+    elif target_contract == "v2-strict-v6":
+        result["supported_cwes"] = sorted(BINARY_STRICT_V6_ROLE_CWES)
+        result["quarantined_cwes"] = sorted(BINARY_STRICT_V6_QUARANTINED_CWES)
+    elif target_contract == "v2-strict-v7":
+        result["supported_cwes"] = sorted(BINARY_STRICT_V7_ROLE_CWES)
+        result["quarantined_cwes"] = sorted(BINARY_STRICT_V7_QUARANTINED_CWES)
+    return result
 
 
 def main() -> None:
@@ -205,7 +270,15 @@ def main() -> None:
     parser.add_argument("--cutoff-len", type=int, default=4096)
     parser.add_argument(
         "--target-contract",
-        choices=("v1", "v2", "v2-strict"),
+        choices=(
+            "v1",
+            "v2",
+            "v2-strict",
+            "v2-strict-v4",
+            "v2-strict-v5",
+            "v2-strict-v6",
+            "v2-strict-v7",
+        ),
         default="v1",
     )
     parser.add_argument("--output-gate", type=Path, required=True)

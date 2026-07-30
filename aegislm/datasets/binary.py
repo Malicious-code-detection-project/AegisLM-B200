@@ -211,6 +211,16 @@ BINARY_STRICT_ROLE_CWES = frozenset(
         "CWE-690",
     }
 )
+BINARY_STRICT_V4_QUARANTINED_CWES = frozenset(
+    {"CWE-124", "CWE-127", "CWE-457", "CWE-690"}
+)
+BINARY_STRICT_V4_ROLE_CWES = BINARY_STRICT_ROLE_CWES - BINARY_STRICT_V4_QUARANTINED_CWES
+BINARY_STRICT_V5_QUARANTINED_CWES = BINARY_STRICT_V4_QUARANTINED_CWES | {"CWE-121"}
+BINARY_STRICT_V5_ROLE_CWES = BINARY_STRICT_ROLE_CWES - BINARY_STRICT_V5_QUARANTINED_CWES
+BINARY_STRICT_V6_QUARANTINED_CWES = BINARY_STRICT_V5_QUARANTINED_CWES | {"CWE-122"}
+BINARY_STRICT_V6_ROLE_CWES = BINARY_STRICT_ROLE_CWES - BINARY_STRICT_V6_QUARANTINED_CWES
+BINARY_STRICT_V7_QUARANTINED_CWES = BINARY_STRICT_V6_QUARANTINED_CWES | {"CWE-126"}
+BINARY_STRICT_V7_ROLE_CWES = BINARY_STRICT_ROLE_CWES - BINARY_STRICT_V7_QUARANTINED_CWES
 
 
 class BinaryPromptMessage(TypedDict):
@@ -652,6 +662,76 @@ def build_binary_pair_strict_role_targets(
         _build_binary_role_target(present_record, present_roles),
         _build_binary_role_target(fixed_record, fixed_roles),
     )
+
+
+def build_binary_pair_strict_v4_role_targets(
+    present_record: Mapping[str, Any],
+    fixed_record: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build strict targets after quarantining v3 manual-failure CWEs."""
+    target_cwe = str(present_record["task"]["target_cwe"])
+    if target_cwe not in BINARY_STRICT_V4_ROLE_CWES:
+        disposition = (
+            "quarantined after strict v3 manual review"
+            if target_cwe in BINARY_STRICT_V4_QUARANTINED_CWES
+            else "has no strict v4 role extractor"
+        )
+        raise BinaryRecordValidationError(f"{target_cwe} {disposition}")
+    return build_binary_pair_strict_role_targets(present_record, fixed_record)
+
+
+def build_binary_pair_strict_v5_role_targets(
+    present_record: Mapping[str, Any],
+    fixed_record: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build strict targets after additionally quarantining CWE-121."""
+    target_cwe = str(present_record["task"]["target_cwe"])
+    if target_cwe not in BINARY_STRICT_V5_ROLE_CWES:
+        disposition = (
+            "quarantined after strict v4 manual review"
+            if target_cwe == "CWE-121"
+            else "quarantined before strict v5"
+            if target_cwe in BINARY_STRICT_V5_QUARANTINED_CWES
+            else "has no strict v5 role extractor"
+        )
+        raise BinaryRecordValidationError(f"{target_cwe} {disposition}")
+    return build_binary_pair_strict_role_targets(present_record, fixed_record)
+
+
+def build_binary_pair_strict_v6_role_targets(
+    present_record: Mapping[str, Any],
+    fixed_record: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build strict targets after additionally quarantining CWE-122."""
+    target_cwe = str(present_record["task"]["target_cwe"])
+    if target_cwe not in BINARY_STRICT_V6_ROLE_CWES:
+        disposition = (
+            "quarantined after strict v5 manual review"
+            if target_cwe == "CWE-122"
+            else "quarantined before strict v6"
+            if target_cwe in BINARY_STRICT_V6_QUARANTINED_CWES
+            else "has no strict v6 role extractor"
+        )
+        raise BinaryRecordValidationError(f"{target_cwe} {disposition}")
+    return build_binary_pair_strict_role_targets(present_record, fixed_record)
+
+
+def build_binary_pair_strict_v7_role_targets(
+    present_record: Mapping[str, Any],
+    fixed_record: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build strict targets after additionally quarantining CWE-126."""
+    target_cwe = str(present_record["task"]["target_cwe"])
+    if target_cwe not in BINARY_STRICT_V7_ROLE_CWES:
+        disposition = (
+            "quarantined after strict v6 manual review"
+            if target_cwe == "CWE-126"
+            else "quarantined before strict v7"
+            if target_cwe in BINARY_STRICT_V7_QUARANTINED_CWES
+            else "has no strict v7 role extractor"
+        )
+        raise BinaryRecordValidationError(f"{target_cwe} {disposition}")
+    return build_binary_pair_strict_role_targets(present_record, fixed_record)
 
 
 def _validate_and_unpack_binary_pair(
@@ -1130,7 +1210,8 @@ def _format_string_role_indices(
     sink = statements[sink_index]
     if assessment == "not_observed":
         if re.search(
-            r"\b\w*printf\s*\([^;]*,\s*L?\"[^\"\\]*(?:\\.[^\"\\]*)*\"",
+            r"\b\w*printf\s*\(\s*(?:[^,]+,\s*)?"
+            r"L?\"[^\"\\]*(?:\\.[^\"\\]*)*\"",
             sink,
             flags=re.IGNORECASE,
         ):

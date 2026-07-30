@@ -2361,3 +2361,31 @@ GCC O2에서 함수 연결이 실패한 CWE-126 세 쌍도 탈락에 포함했�
 주요 정정 원인은 O2에서 `CWE-476` null dereference와 `CWE-563` unused
 assignment가 사라졌는데 generic control flow만으로 PASS를 부여했던
 판정 불일치다.
+
+## Binary Strict Role Target v4–v7 진행 기록
+
+| 단계 | 적격 pair | 고정 100건 결과 | 상태 |
+|---|---:|---:|---|
+| strict v4 | `1,228` | `6/100 FAIL EARLY` | CWE-121 quarantine |
+| strict v5 | `928` | `6/100 FAIL EARLY` | CWE-122 quarantine |
+| strict v6 | `661` | `6/100 FAIL EARLY` | CWE-126 quarantine |
+| strict v7 | `644` | `1/100 PASS` | 품질 승인, 공급 차단 |
+
+strict v7은 CWE-134/190/191/194/195에 한해 target 근거 품질을
+통과했습니다. 그러나 공급 목표 `2,450` pair보다 작으므로
+materialized training JSONL과 binary adapter 학습은 만들지 않습니다.
+운영자는 다음 공급 확대 전까지 `quality-approved / supply-blocked`로
+기록합니다.
+
+증거 hash:
+
+- tokenizer gate:
+  `d9305d43939e355a968217dd426f6cc7ba10426a2a51dabeebfba146216efd35`
+- reviewed JSONL:
+  `53b59d1686d072f1dcf5353531f7b4827c95d3243e320ddd8de89a2308469eef`
+- review manifest:
+  `865789a5f15aaffc1965eb63e8d514cbe018dd53ca8dcf11f6b4d6c67bb96cde`
+
+다음 재개 조건은 동일 5개 CWE의 독립 공급 확대 또는 격리 extractor
+재설계, group split, O3+stripped holdout, validation 400, blind test
+500의 재동결입니다.

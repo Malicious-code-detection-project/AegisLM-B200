@@ -403,6 +403,149 @@ def test_binary_tokenizer_gate_can_apply_strict_v2_role_contract() -> None:
     assert result["target_policy"] == "strict-cwe-role-evidence-v3"
 
 
+def test_binary_tokenizer_gate_applies_v4_quarantine_policy() -> None:
+    records, gate = _inputs()
+    for record in records:
+        record["task"]["target_cwe"] = "CWE-134"
+        if record["metadata"]["label"] == "present":
+            pseudo_c = "fgets(data, 100, stdin);\nprintf(data);"
+        else:
+            pseudo_c = 'fgets(data, 100, stdin);\nprintf("%s", data);'
+        record["analysis"]["functions"][0]["pseudo_c"] = pseudo_c
+    relation_gate = {
+        "target_relation_policy": "observable-target-relation-v1",
+        "qualified_pair_ids": gate["accepted_pair_ids"],
+        "qualified_pair_variants": {
+            pair_id: ["gcc-O0", "gcc-O2", "clang-O0", "clang-O2"]
+            for pair_id in gate["accepted_pair_ids"]
+        },
+    }
+
+    result = build_tokenizer_gate(
+        relation_gate,
+        [records],
+        tokenizer=_Tokenizer(),
+        required_pairs=5,
+        cutoff_len=4096,
+        minimum_consistency_pairs=1,
+        target_contract="v2-strict-v4",
+    )
+
+    assert result["gate_pass"] is True
+    assert result["target_policy"] == "strict-cwe-role-evidence-v4"
+    assert result["quarantined_cwes"] == [
+        "CWE-124",
+        "CWE-127",
+        "CWE-457",
+        "CWE-690",
+    ]
+    assert "CWE-134" in result["supported_cwes"]
+
+
+def test_binary_tokenizer_gate_applies_v5_quarantine_policy() -> None:
+    records, gate = _inputs()
+    for record in records:
+        record["task"]["target_cwe"] = "CWE-134"
+        record["analysis"]["functions"][0]["pseudo_c"] = (
+            "fgets(data, 100, stdin);\nprintf(data);"
+            if record["metadata"]["label"] == "present"
+            else 'fgets(data, 100, stdin);\nprintf("%s", data);'
+        )
+    relation_gate = {
+        "target_relation_policy": "observable-target-relation-v1",
+        "qualified_pair_ids": gate["accepted_pair_ids"],
+        "qualified_pair_variants": {
+            pair_id: ["gcc-O0", "gcc-O2", "clang-O0", "clang-O2"]
+            for pair_id in gate["accepted_pair_ids"]
+        },
+    }
+
+    result = build_tokenizer_gate(
+        relation_gate,
+        [records],
+        tokenizer=_Tokenizer(),
+        required_pairs=5,
+        cutoff_len=4096,
+        minimum_consistency_pairs=1,
+        target_contract="v2-strict-v5",
+    )
+
+    assert result["gate_pass"] is True
+    assert result["target_policy"] == "strict-cwe-role-evidence-v5"
+    assert "CWE-121" in result["quarantined_cwes"]
+    assert "CWE-121" not in result["supported_cwes"]
+
+
+def test_binary_tokenizer_gate_applies_v6_quarantine_policy() -> None:
+    records, gate = _inputs()
+    for record in records:
+        record["task"]["target_cwe"] = "CWE-134"
+        record["analysis"]["functions"][0]["pseudo_c"] = (
+            "fgets(data, 100, stdin);\nprintf(data);"
+            if record["metadata"]["label"] == "present"
+            else 'fgets(data, 100, stdin);\nprintf("%s", data);'
+        )
+    relation_gate = {
+        "target_relation_policy": "observable-target-relation-v1",
+        "qualified_pair_ids": gate["accepted_pair_ids"],
+        "qualified_pair_variants": {
+            pair_id: ["gcc-O0", "gcc-O2", "clang-O0", "clang-O2"]
+            for pair_id in gate["accepted_pair_ids"]
+        },
+    }
+
+    result = build_tokenizer_gate(
+        relation_gate,
+        [records],
+        tokenizer=_Tokenizer(),
+        required_pairs=5,
+        cutoff_len=4096,
+        minimum_consistency_pairs=1,
+        target_contract="v2-strict-v6",
+    )
+
+    assert result["gate_pass"] is True
+    assert result["target_policy"] == "strict-cwe-role-evidence-v6"
+    assert "CWE-122" in result["quarantined_cwes"]
+    assert "CWE-122" not in result["supported_cwes"]
+    assert "CWE-134" in result["supported_cwes"]
+
+
+def test_binary_tokenizer_gate_applies_v7_quarantine_policy() -> None:
+    records, gate = _inputs()
+    for record in records:
+        record["task"]["target_cwe"] = "CWE-134"
+        record["analysis"]["functions"][0]["pseudo_c"] = (
+            "fgets(data, 100, stdin);\nprintf(data);"
+            if record["metadata"]["label"] == "present"
+            else 'fgets(data, 100, stdin);\nprintf("%s", data);'
+        )
+    relation_gate = {
+        "target_relation_policy": "observable-target-relation-v1",
+        "qualified_pair_ids": gate["accepted_pair_ids"],
+        "qualified_pair_variants": {
+            pair_id: ["gcc-O0", "gcc-O2", "clang-O0", "clang-O2"]
+            for pair_id in gate["accepted_pair_ids"]
+        },
+    }
+
+    result = build_tokenizer_gate(
+        relation_gate,
+        [records],
+        tokenizer=_Tokenizer(),
+        required_pairs=5,
+        cutoff_len=4096,
+        minimum_consistency_pairs=1,
+        target_contract="v2-strict-v7",
+    )
+
+    assert result["gate_pass"] is True
+    assert result["target_policy"] == "strict-cwe-role-evidence-v7"
+    assert "CWE-126" in result["quarantined_cwes"]
+    assert "CWE-126" not in result["supported_cwes"]
+    assert "CWE-134" in result["supported_cwes"]
+
+
 def test_relation_gate_preserves_reserve_variants_for_tokenizer_replacement() -> None:
     records, old_gate = _inputs()
 
@@ -456,3 +599,43 @@ def test_binary_review_decisions_are_hash_bound_and_may_stop_early() -> None:
     assert summary["status"] == "fail_early"
     assert summary["error_count"] == 6
     assert summary["unfinished_count"] == 94
+
+
+def test_binary_review_decisions_support_full_review_with_explicit_overrides() -> None:
+    rows = [
+        {
+            "id": "present",
+            "operator_label_error": None,
+            "operator_evidence_error": None,
+            "notes": "",
+        },
+        {
+            "id": "fixed",
+            "operator_label_error": None,
+            "operator_evidence_error": None,
+            "notes": "",
+        },
+    ]
+    decisions = {
+        "review_artifact_sha256": "fixture-sha",
+        "default_decision": {
+            "operator_label_error": False,
+            "operator_evidence_error": False,
+            "notes": "Reviewed jointly with the paired representation.",
+        },
+        "decisions": [
+            {
+                "id": "fixed",
+                "operator_label_error": False,
+                "operator_evidence_error": True,
+                "notes": "The critical range guard is missing.",
+            }
+        ],
+    }
+
+    updated = apply_decisions(rows, decisions, review_sha256="fixture-sha")
+
+    assert updated[0]["operator_evidence_error"] is False
+    assert updated[0]["notes"].startswith("Reviewed jointly")
+    assert updated[1]["operator_evidence_error"] is True
+    assert updated[1]["notes"] == "The critical range guard is missing."

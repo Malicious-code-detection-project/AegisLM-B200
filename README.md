@@ -283,3 +283,17 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/TEST_CRITERIA.md` - Phase C 테스트 기준과 평가 레퍼런스
 
 README에는 프로젝트의 큰 방향과 현재 상태만 유지합니다. 세부 기준, 실험 계획, 기여 규칙, 테스트 기준은 `docs/` 아래 문서에 기록합니다.
+
+### Phase F binary strict 공급 판정 (2026-07-31)
+
+generic fallback을 제거한 role target을 반복 감사해
+CWE-121/122/124/126/127/457/690을 quarantine했습니다. 남은
+CWE-134/190/191/194/195 공급은 `644` pair이며, 고정 100건 수동 검토는
+오류 `1/100`으로 품질 gate를 통과했습니다.
+
+다만 목표 `2,450` pair에는 미달하므로 이 공급은
+`quality-approved / supply-blocked` seed로만 동결합니다. 현 단계에서는
+binary materialization과 adapter 학습을 시작하지 않습니다. 세부 이력과
+artifact hash는
+[binary role target 결정문](docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
+보존합니다.

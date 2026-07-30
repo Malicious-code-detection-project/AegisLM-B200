@@ -11,6 +11,10 @@ from aegislm.datasets.binary import (
     binary_target_relation_visible,
     build_binary_pair_role_targets,
     build_binary_pair_strict_role_targets,
+    build_binary_pair_strict_v4_role_targets,
+    build_binary_pair_strict_v5_role_targets,
+    build_binary_pair_strict_v6_role_targets,
+    build_binary_pair_strict_v7_role_targets,
     build_binary_pair_targets,
     build_binary_target,
     compact_binary_record,
@@ -514,6 +518,78 @@ def test_binary_strict_role_target_accepts_complete_cwe_extractor() -> None:
 
     assert validate_binary_role_output_for_record(present_target, present) == []
     assert validate_binary_role_output_for_record(fixed_target, fixed) == []
+
+
+def test_binary_strict_v4_quarantines_manual_failure_cwes() -> None:
+    present, fixed = _binary_pair(
+        "CWE-124",
+        "data = -1;\nbuffer[data] = 1;",
+        "if (data >= 0) {\nbuffer[data] = 1;",
+    )
+
+    with pytest.raises(
+        BinaryRecordValidationError,
+        match="CWE-124 quarantined after strict v3 manual review",
+    ):
+        build_binary_pair_strict_v4_role_targets(present, fixed)
+
+
+def test_binary_strict_v4_retains_supported_extractors() -> None:
+    present, fixed = _binary_pair(
+        "CWE-134",
+        "fgets(data, 100, stdin);\nprintf(data);",
+        'fgets(data, 100, stdin);\nprintf("%s", data);',
+    )
+
+    present_target, fixed_target = build_binary_pair_strict_v4_role_targets(
+        present,
+        fixed,
+    )
+
+    assert validate_binary_role_output_for_record(present_target, present) == []
+    assert validate_binary_role_output_for_record(fixed_target, fixed) == []
+
+
+def test_binary_strict_v5_quarantines_cwe121() -> None:
+    present, fixed = _binary_pair(
+        "CWE-121",
+        "char dst[8];\nmemcpy(dst, src, 32);",
+        "char dst[32];\nmemcpy(dst, src, 8);",
+    )
+
+    with pytest.raises(
+        BinaryRecordValidationError,
+        match="CWE-121 quarantined after strict v4 manual review",
+    ):
+        build_binary_pair_strict_v5_role_targets(present, fixed)
+
+
+def test_binary_strict_v6_quarantines_cwe122() -> None:
+    present, fixed = _binary_pair(
+        "CWE-122",
+        "char *dst = malloc(8);\nmemcpy(dst, src, 32);",
+        "char *dst = malloc(32);\nmemcpy(dst, src, 32);",
+    )
+
+    with pytest.raises(
+        BinaryRecordValidationError,
+        match="CWE-122 quarantined after strict v5 manual review",
+    ):
+        build_binary_pair_strict_v6_role_targets(present, fixed)
+
+
+def test_binary_strict_v7_quarantines_cwe126() -> None:
+    present, fixed = _binary_pair(
+        "CWE-126",
+        "char src[8];\nmemcpy(dst, src, 32);",
+        "char src[32];\nmemcpy(dst, src, 32);",
+    )
+
+    with pytest.raises(
+        BinaryRecordValidationError,
+        match="CWE-126 quarantined after strict v6 manual review",
+    ):
+        build_binary_pair_strict_v7_role_targets(present, fixed)
 
 
 def test_binary_role_target_links_external_format_source_and_literal_fix() -> None:

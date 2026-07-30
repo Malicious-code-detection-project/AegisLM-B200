@@ -26,8 +26,20 @@ def apply_decisions(
     if decision_set.get("review_artifact_sha256") != review_sha256:
         raise ValueError("decision set does not match the review artifact SHA-256")
     indexed = {str(row["id"]): dict(row) for row in rows}
-    decisions = decision_set.get("decisions")
-    if not isinstance(decisions, list) or not decisions:
+    default_decision = decision_set.get("default_decision")
+    if default_decision is not None:
+        label_error, evidence_error, notes = _validate_decision_fields(
+            default_decision,
+            record_id="default_decision",
+        )
+        for row in indexed.values():
+            row["operator_label_error"] = label_error
+            row["operator_evidence_error"] = evidence_error
+            row["notes"] = notes
+    decisions = decision_set.get("decisions", [])
+    if not isinstance(decisions, list):
+        raise ValueError("decisions must be a list")
+    if default_decision is None and not decisions:
         raise ValueError("decision set must contain at least one explicit decision")
     seen: set[str] = set()
     for decision in decisions:
@@ -39,17 +51,29 @@ def apply_decisions(
         seen.add(record_id)
         if record_id not in indexed:
             raise ValueError(f"unknown review ID: {record_id}")
-        label_error = decision.get("operator_label_error")
-        evidence_error = decision.get("operator_evidence_error")
-        notes = decision.get("notes")
-        if not isinstance(label_error, bool) or not isinstance(evidence_error, bool):
-            raise ValueError(f"{record_id}: both error decisions must be boolean")
-        if not isinstance(notes, str) or not notes.strip():
-            raise ValueError(f"{record_id}: notes must record the review basis")
+        label_error, evidence_error, notes = _validate_decision_fields(
+            decision,
+            record_id=record_id,
+        )
         indexed[record_id]["operator_label_error"] = label_error
         indexed[record_id]["operator_evidence_error"] = evidence_error
-        indexed[record_id]["notes"] = notes.strip()
+        indexed[record_id]["notes"] = notes
     return [indexed[str(row["id"])] for row in rows]
+
+
+def _validate_decision_fields(
+    decision: dict[str, Any],
+    *,
+    record_id: str,
+) -> tuple[bool, bool, str]:
+    label_error = decision.get("operator_label_error")
+    evidence_error = decision.get("operator_evidence_error")
+    notes = decision.get("notes")
+    if not isinstance(label_error, bool) or not isinstance(evidence_error, bool):
+        raise ValueError(f"{record_id}: both error decisions must be boolean")
+    if not isinstance(notes, str) or not notes.strip():
+        raise ValueError(f"{record_id}: notes must record the review basis")
+    return label_error, evidence_error, notes.strip()
 
 
 def main() -> None:

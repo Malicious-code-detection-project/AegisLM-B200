@@ -92,3 +92,57 @@ extractor도 새 표본으로 다시 검증하기 전에는 학습 승인을 받
 관련 기준은
 [Phase F 계획](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)과
 [수동 검증 워크북](FINETUNING_TEST_WORKBOOK.md)을 따릅니다.
+
+## Strict Supply v4–v7 Result
+
+strict v3의 실패 CWE를 한 번에 숨기지 않고, 매 iteration마다 실패 범주만
+추가 quarantine한 뒤 새 고정 seed 100건을 다시 검토했습니다.
+
+| Iteration | 새 quarantine | 적격 pair | 수동 검토 | 결론 |
+|---|---|---:|---:|---|
+| strict v4 | CWE-124/127/457/690 | `1,228` | `6/100 FAIL EARLY` | CWE-121 근거 불완전 |
+| strict v5 | + CWE-121 | `928` | `6/100 FAIL EARLY` | CWE-122 근거 불완전 |
+| strict v6 | + CWE-122 | `661` | `6/100 FAIL EARLY` | CWE-126 근거 불완전 |
+| strict v7 | + CWE-126 | `644` | `1/100 PASS` | 5개 CWE 한정 품질 승인 |
+
+v4의 CWE-121은 source length와 `strlen/wcslen` 파생 길이를, v5의
+CWE-122는 실제 allocation capacity 또는 wide-string length 계산을,
+v6의 CWE-126은 실제 read length를 만드는 `strlen/wcslen`을 누락했습니다.
+이 범주는 학습 수량을 맞추기 위해 되살리지 않습니다.
+
+strict v7의 지원 범위와 수량은 다음과 같습니다.
+
+- CWE-134: `140` pair
+- CWE-190: `299` pair
+- CWE-191: `175` pair
+- CWE-194: `18` pair
+- CWE-195: `12` pair
+- 합계: `644/2,450` pair
+
+수동 검토의 유일한 오류는 CWE-190 fixed case가 실제
+`sqrt(UINT_MAX)` 범위 검사를 누락하고 앞선 부호 정규화 조건만 인용한
+것입니다. 오류율은 `0.01`로 허용 기준 `≤0.05`를 통과했습니다.
+
+재현용 SHA-256은 다음과 같습니다.
+
+- strict v7 tokenizer gate:
+  `d9305d43939e355a968217dd426f6cc7ba10426a2a51dabeebfba146216efd35`
+- 판정 적용 수동 검토 JSONL:
+  `53b59d1686d072f1dcf5353531f7b4827c95d3243e320ddd8de89a2308469eef`
+- 최종 review manifest:
+  `865789a5f15aaffc1965eb63e8d514cbe018dd53ca8dcf11f6b4d6c67bb96cde`
+
+## Final Decision
+
+strict v7은 target 품질 gate는 통과했지만 공급량 gate
+`644 < 2,450`을 통과하지 못했습니다. 따라서 이 644 pair는
+`quality-approved / supply-blocked` seed로 동결합니다.
+
+- binary-derived materialization: 보류
+- binary adapter 학습: 시작하지 않음
+- raw executable/object 실행: `0`
+- 다음 작업: 동일 5개 CWE의 독립 pair 공급 확대 또는 격리된 CWE
+  extractor의 관계 완전성 재설계
+
+추가 공급이 목표량에 도달하더라도 split, O3+stripped robustness,
+validation 400, blind test 500을 다시 동결하기 전에는 학습하지 않습니다.

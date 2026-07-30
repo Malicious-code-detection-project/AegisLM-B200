@@ -1,0 +1,16 @@
+{
+  "review_artifact_sha256": "8990c974a059c33f3b2bc58beebf640008967ec6a4aef723c5ab2c9cef97f668",
+  "default_decision": {
+    "operator_label_error": false,
+    "operator_evidence_error": false,
+    "notes": "Reviewed jointly with the paired pseudo-C representation; the scoped label and role-to-sink evidence are supported by the supplied function."
+  },
+  "decisions": [
+    {
+      "id": "binary-b0-4a280f7fac8bd928-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-190 not_observed cites only the sign-normalization branch and omits the subsequent sqrt(UINT_MAX) range check that actually guards the multiplication."
+    }
+  ]
+}

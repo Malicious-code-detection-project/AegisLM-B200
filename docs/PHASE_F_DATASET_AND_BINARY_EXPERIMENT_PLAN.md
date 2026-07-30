@@ -1823,3 +1823,21 @@ candidate 단계에서 제외한다. 자동 triage는 승인 도구가 아니며
 학습하는 것이 아니라, 먼저 최대 2,000 pair의 실제 공급량과 provenance를
 감사하고 function/pair 단위 split, `O3 + stripped` robustness holdout,
 validation 400·blind test 500을 동결하는 것이다.
+
+## 2026-07-31 Binary Strict Supply 최종 판정
+
+role-structured target의 반복 감사 결과, CWE-124/127/457/690,
+CWE-121/122/126을 순차 quarantine했습니다. 남은 strict v7 공급은
+CWE-134/190/191/194/195의 `644` pair입니다.
+
+- 자동 구조·tokenizer gate: `644/644` 적격
+- 원래 공급 목표: `644/2,450`, FAIL
+- 고정 seed 수동 검토: `1/100`, PASS
+- materialization 승인: 품질 기준만 승인
+- adapter 학습 승인: 공급량 부족으로 불승인
+- raw object 실행: `0`
+
+이는 B1의 “2,000쌍을 확보하지 못하면 저신뢰 데이터를 채우지 않는다”는
+중단 기준을 적용한 결과입니다. 644 pair는 향후 공급 확대의 seed와
+extractor 회귀 benchmark로 보존하며, 현 시점 binary adapter 학습에는
+사용하지 않습니다.

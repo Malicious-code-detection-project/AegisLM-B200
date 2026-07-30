@@ -28,7 +28,7 @@
 | [EVALUATION_PLAN.md](EVALUATION_PLAN.md) | Phase D/E 평가 계획, 점수화 기준, JSON/HTML 리포트 형식 |
 | [FINETUNING_TEST_WORKBOOK.md](FINETUNING_TEST_WORKBOOK.md) | B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록란, NuriLab 연결 가설, 120B 후보 |
 | [PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md) | Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary 절대 gate와 실행 순서 |
-| [PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md) | Binary role target v2 r1/r2 자동 공급 PASS·수동 FAIL과 strict CWE extractor 전환 결정 |
+| [PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md) | Binary role target v2 실패, strict v4–v7 quarantine, 644-pair 품질 승인·공급 차단 결정 |
 | [SOURCE_MANUAL_REVIEW_RUBRIC.md](SOURCE_MANUAL_REVIEW_RUBRIC.md) | Source target의 label·실행 경로·exact span·인과관계 수동 검토 기준 |
 | [EXPERIMENT_LOG_TEMPLATE.md](EXPERIMENT_LOG_TEMPLATE.md) | baseline/adapter 평가 결과를 같은 형식으로 기록하기 위한 템플릿 |
 | [PHASE_D_EXIT_CRITERIA.md](PHASE_D_EXIT_CRITERIA.md) | Phase D 완료 조건과 Phase E tiny SFT PoC 착수 gate |

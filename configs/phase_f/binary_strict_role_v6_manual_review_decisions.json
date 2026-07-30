@@ -1,0 +1,41 @@
+{
+  "review_artifact_sha256": "109b642bc8b51032b740bc71bbf4ec10e599e8f7a67e0d81a45dd879e947c5fa",
+  "decisions": [
+    {
+      "id": "binary-b0-073013ac264e5737-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 present omits __n = strlen(dest), the operation that derives a 99-byte read from the 50-byte source buffer."
+    },
+    {
+      "id": "binary-b0-74a2a1bca2339658-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 not_observed omits __n = strlen(dest), so the target does not show why the same 99-byte read is within the fixed 100-byte source buffer."
+    },
+    {
+      "id": "binary-b0-af6861764c452706-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 present omits sVar2 = wcslen(dest), which supplies the 99-element read length applied to the shorter wide-character source."
+    },
+    {
+      "id": "binary-b0-966fd90b0ecd4d25-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 not_observed omits sVar2 = wcslen(dest), so the evidence does not connect the 100-element source bound to the actual memmove length."
+    },
+    {
+      "id": "binary-b0-34bc121888766360-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 present omits __n = strlen(dest), the code-visible basis for reading 99 bytes from dataBadBuffer[50]."
+    },
+    {
+      "id": "binary-b0-7b50e74bc2b70289-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 not_observed omits __n = strlen(dest), which is required to justify that dataGoodBuffer[100] covers the copy length."
+    }
+  ]
+}

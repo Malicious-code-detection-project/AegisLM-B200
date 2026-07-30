@@ -347,3 +347,14 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
 - GitHub Actions 기반 문서/테스트 CI 검토
 - CODEOWNERS 도입 여부 검토
 - branch protection 설정 검토
+
+## 11. Phase F Binary Strict Gate 현황
+
+- strict v7 지원 범위는 CWE-134/190/191/194/195이다.
+- 고정 seed 100건 수동 검토는 오류 `1/100`으로 품질 gate를 통과했다.
+- 적격 공급은 `644/2,450` pair이므로 binary adapter 학습은 승인하지 않는다.
+- 격리된 CWE를 수량 확보 목적으로 다시 포함하지 않는다.
+- 644 pair는 `quality-approved / supply-blocked` seed와 회귀
+  benchmark로만 보존한다.
+- 상세 근거는
+  `docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`를 따른다.
