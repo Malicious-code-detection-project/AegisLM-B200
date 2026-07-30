@@ -48,6 +48,12 @@ validator를 필수조건으로 사용합니다. 재현 가능한 Clang+Ghidra �
 canary는 금지 상태입니다. 다음 작업은 flat evidence line 선택을
 source/control/sink/bound 관계가 명시된 versioned role-structured
 contract로 교체하고 새 고정 100건 수동 검토를 통과하는 것입니다.
+
+`aegislm.binary-role-assessment-output.v2` schema와 semantic validator는
+구현을 시작했습니다. evidence ID·exact span·role과 sink-directed
+relation을 검증하며, v1 target artifact를 변경하지 않습니다. 남은 순서는
+v2 target builder, tokenizer/supply gate, model-ready materialization,
+고정 100건 수동 review입니다.
 NuriLab·RAG/MCP와 GPT-OSS는 기존 순서대로 뒤에 둡니다.
 
 ## 최종 연구 질문

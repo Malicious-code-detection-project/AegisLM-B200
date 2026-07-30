@@ -27,6 +27,7 @@ from aegislm.datasets.binary import (
     format_binary_prompt,
     validate_binary_output,
     validate_binary_output_for_record,
+    validate_binary_role_output_for_record,
     validate_binary_record,
 )
 from aegislm.datasets.phase_f import (
@@ -161,6 +162,7 @@ __all__ = [
     "validate_binary_record",
     "validate_binary_output",
     "validate_binary_output_for_record",
+    "validate_binary_role_output_for_record",
     "format_binary_prompt",
     "CATALOG_SCHEMA_VERSION",
     "MANIFEST_SCHEMA_VERSION",

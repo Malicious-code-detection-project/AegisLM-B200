@@ -1344,7 +1344,7 @@ Phase F 상세 기준은
 | GPT-OSS-20B 보조 실험 | `Blocked` | F5 Qwen 결론 이후 이식성 확인 |  | Qwen 선행 조건 아님 |
 | F6-A binary 조사 | `Pass` | 후보·license·local source·toolchain inventory | `binary_candidate_inventory.json` | 외부 payload download 0 |
 | F6-B B0 100 pair | `Rerun` | strict re-audit에서 최초 승인 100 중 CWE-563 1 pair 추가 격리 | strict summary SHA `fde1e20b…b9f` | 엄격 기준 99/145; 부족분은 F7에서 대체 |
-| F7 binary adapter | `Running` | target v1–v5·v7·v9 수동 FAIL; contract 재설계 | v9 gate SHA `2292e38f…364c`; 수동 `6/100` FAIL | flat evidence → role-structured contract |
+| F7 binary adapter | `Running` | target v1–v5·v7·v9 수동 FAIL; v2 contract 구현 | v9 gate SHA `2292e38f…364c`; 수동 `6/100` FAIL | role schema/validator 완료 → target builder |
 | F8 NuriLab/RAG/MCP | `Blocked` | binary adapter 독립 gate 통과 |  |  |
 | F9 최종 결정 | `Not Started` | 채택/Source만/재학습/모델 변경/중단/Phase G |  |  |
 

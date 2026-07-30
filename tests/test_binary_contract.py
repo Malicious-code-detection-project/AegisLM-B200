@@ -15,6 +15,7 @@ from aegislm.datasets.binary import (
     format_binary_prompt,
     validate_binary_record,
     validate_binary_output_for_record,
+    validate_binary_role_output_for_record,
 )
 from aegislm.evaluation import BinaryThresholds, Prediction, evaluate_binary_predictions
 from aegislm.inference.binary import run_binary_inference
@@ -180,6 +181,144 @@ def test_binary_present_target_requires_findings() -> None:
 
     assert "findings: present assessment requires observable evidence" in (
         validate_binary_output_for_record(target, record)
+    )
+
+
+def _role_output(
+    assessment: str,
+    evidence: list[dict[str, str]],
+    relations: list[dict[str, str]],
+) -> dict:
+    return {
+        "scope": {
+            "target_cwe": "CWE-120",
+            "binary_format": "ELF",
+            "architecture": "x86_64",
+        },
+        "assessment": assessment,
+        "findings": [
+            {
+                "function_id": "function-1",
+                "representation": "pseudo_c",
+                "evidence": evidence,
+                "relations": relations,
+                "confidence": "high",
+            }
+        ],
+        "limitations": ["Scoped to supplied pseudo-C."],
+        "recommendations": ["Confirm with deterministic analysis."],
+    }
+
+
+def test_binary_role_output_requires_grounded_roles_linked_to_sink() -> None:
+    record = _record()
+    record["analysis"]["functions"][0]["pseudo_c"] = (
+        "data = recv(fd, source, 100, 0);\ncopy(dst, data);"
+    )
+    output = _role_output(
+        "present",
+        [
+            {
+                "evidence_id": "source-1",
+                "role": "source",
+                "code_span": "data = recv(fd, source, 100, 0);",
+                "explanation": "External data enters the operation.",
+            },
+            {
+                "evidence_id": "sink-1",
+                "role": "sink",
+                "code_span": "copy(dst, data);",
+                "explanation": "The supplied operation consumes that data.",
+            },
+        ],
+        [
+            {
+                "from_evidence_id": "source-1",
+                "to_evidence_id": "sink-1",
+                "relationship": "flows_to",
+            }
+        ],
+    )
+
+    assert validate_binary_role_output_for_record(output, record) == []
+
+    output["findings"][0]["evidence"][0]["code_span"] = "unsupported source"
+    assert (
+        "findings.0.evidence.0.code_span: not an exact supplied evidence span"
+        in validate_binary_role_output_for_record(output, record)
+    )
+
+
+def test_binary_role_output_rejects_missing_or_incompatible_sink_relation() -> None:
+    record = _record()
+    record["analysis"]["functions"][0]["pseudo_c"] = (
+        "if (data == NULL) return;\ncopy(dst, data);"
+    )
+    output = _role_output(
+        "not_observed",
+        [
+            {
+                "evidence_id": "guard-1",
+                "role": "control",
+                "code_span": "if (data == NULL) return;",
+                "explanation": "The null guard prevents the unsafe use.",
+            },
+            {
+                "evidence_id": "sink-1",
+                "role": "sink",
+                "code_span": "copy(dst, data);",
+                "explanation": "This is the constrained use.",
+            },
+        ],
+        [
+            {
+                "from_evidence_id": "guard-1",
+                "to_evidence_id": "sink-1",
+                "relationship": "flows_to",
+            }
+        ],
+    )
+
+    errors = validate_binary_role_output_for_record(output, record)
+
+    assert (
+        "findings.0.relations.0.relationship: incompatible with control role" in errors
+    )
+    assert "findings.0.relations: no required role is linked to a sink" in errors
+
+    output["findings"][0]["relations"][0]["relationship"] = "constrains"
+    assert validate_binary_role_output_for_record(output, record) == []
+
+
+def test_binary_role_output_rejects_unknown_relation_reference() -> None:
+    record = _record()
+    output = _role_output(
+        "present",
+        [
+            {
+                "evidence_id": "source-1",
+                "role": "source",
+                "code_span": "copy(dst, src);",
+                "explanation": "Supplied source operation.",
+            },
+            {
+                "evidence_id": "sink-1",
+                "role": "sink",
+                "code_span": "copy(dst, src);",
+                "explanation": "Supplied sink operation.",
+            },
+        ],
+        [
+            {
+                "from_evidence_id": "missing",
+                "to_evidence_id": "sink-1",
+                "relationship": "flows_to",
+            }
+        ],
+    )
+
+    assert "findings.0.relations.0.from_evidence_id: unknown" in (
+        validate_binary_role_output_for_record(output, record)
     )
 
 

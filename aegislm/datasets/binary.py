@@ -13,10 +13,14 @@ from jsonschema import Draft202012Validator
 from aegislm.schemas import (
     BINARY_ANALYSIS_RECORD_SCHEMA,
     BINARY_ASSESSMENT_OUTPUT_SCHEMA,
+    BINARY_ROLE_ASSESSMENT_OUTPUT_SCHEMA,
 )
 
 _BINARY_RECORD_VALIDATOR = Draft202012Validator(BINARY_ANALYSIS_RECORD_SCHEMA)
 _BINARY_OUTPUT_VALIDATOR = Draft202012Validator(BINARY_ASSESSMENT_OUTPUT_SCHEMA)
+_BINARY_ROLE_OUTPUT_VALIDATOR = Draft202012Validator(
+    BINARY_ROLE_ASSESSMENT_OUTPUT_SCHEMA
+)
 _FORBIDDEN_PAYLOAD_KEYS = {
     "raw_bytes",
     "bytes",
@@ -295,6 +299,118 @@ def validate_binary_output_for_record(
             errors.append(
                 f"findings.{index}.observation: no exact supplied evidence fragment"
             )
+    return errors
+
+
+def validate_binary_role_output_for_record(
+    output: Mapping[str, Any],
+    record: Mapping[str, Any],
+) -> list[str]:
+    """Validate the v2 role graph, exact spans, scope, and linked sink evidence."""
+    errors = [
+        _format_schema_error(error)
+        for error in sorted(
+            _BINARY_ROLE_OUTPUT_VALIDATOR.iter_errors(dict(output)),
+            key=lambda item: list(item.absolute_path),
+        )
+    ]
+    if errors:
+        return errors
+    validate_binary_record(record)
+    artifact = cast(Mapping[str, Any], record["artifact"])
+    task = cast(Mapping[str, Any], record["task"])
+    analysis = cast(Mapping[str, Any], record["analysis"])
+    scope = cast(Mapping[str, Any], output["scope"])
+    expected_scope = {
+        "target_cwe": task["target_cwe"],
+        "binary_format": artifact["format"],
+        "architecture": artifact["architecture"],
+    }
+    for key, expected in expected_scope.items():
+        if scope.get(key) != expected:
+            errors.append(f"scope.{key}: does not match the supplied record")
+
+    functions = {
+        str(item["function_id"]): cast(Mapping[str, Any], item)
+        for item in cast(list[Mapping[str, Any]], analysis["functions"])
+    }
+    assessment = str(output["assessment"])
+    findings = cast(list[Mapping[str, Any]], output["findings"])
+    if assessment in {"present", "not_observed"} and not findings:
+        errors.append(
+            f"findings: {assessment} assessment requires linked role evidence"
+        )
+    required_source_roles = (
+        {"source", "control", "bound"}
+        if assessment == "present"
+        else {"control", "bound", "remediation"}
+    )
+    relationship_by_role = {
+        "source": "flows_to",
+        "control": "constrains",
+        "bound": "bounds",
+        "remediation": "remediates",
+    }
+    for finding_index, finding in enumerate(findings):
+        prefix = f"findings.{finding_index}"
+        function_id = str(finding["function_id"])
+        function = functions.get(function_id)
+        if function is None:
+            errors.append(f"{prefix}.function_id: not present in supplied evidence")
+            continue
+        representation = str(finding["representation"])
+        evidence = cast(list[Mapping[str, Any]], finding["evidence"])
+        by_id: dict[str, Mapping[str, Any]] = {}
+        for evidence_index, item in enumerate(evidence):
+            evidence_id = str(item["evidence_id"])
+            if evidence_id in by_id:
+                errors.append(
+                    f"{prefix}.evidence.{evidence_index}.evidence_id: duplicate"
+                )
+            by_id[evidence_id] = item
+            code_span = str(item["code_span"])
+            if not _evidence_span_is_grounded(
+                code_span,
+                function,
+                representation=representation,
+            ):
+                errors.append(
+                    f"{prefix}.evidence.{evidence_index}.code_span: "
+                    "not an exact supplied evidence span"
+                )
+        relations = cast(list[Mapping[str, Any]], finding["relations"])
+        linked_source_roles: set[str] = set()
+        for relation_index, relation in enumerate(relations):
+            relation_prefix = f"{prefix}.relations.{relation_index}"
+            from_id = str(relation["from_evidence_id"])
+            to_id = str(relation["to_evidence_id"])
+            source = by_id.get(from_id)
+            target = by_id.get(to_id)
+            if source is None:
+                errors.append(f"{relation_prefix}.from_evidence_id: unknown")
+            if target is None:
+                errors.append(f"{relation_prefix}.to_evidence_id: unknown")
+            if source is None or target is None:
+                continue
+            source_role = str(source["role"])
+            target_role = str(target["role"])
+            relationship = str(relation["relationship"])
+            if target_role != "sink":
+                errors.append(f"{relation_prefix}: relation must terminate at a sink")
+            expected_relationship = relationship_by_role.get(source_role)
+            if expected_relationship != relationship:
+                errors.append(
+                    f"{relation_prefix}.relationship: incompatible with "
+                    f"{source_role} role"
+                )
+            if target_role == "sink" and expected_relationship == relationship:
+                linked_source_roles.add(source_role)
+        if "sink" not in {str(item["role"]) for item in evidence}:
+            errors.append(f"{prefix}.evidence: missing sink role")
+        if assessment in {"present", "not_observed"} and not (
+            linked_source_roles & required_source_roles
+        ):
+            errors.append(f"{prefix}.relations: no required role is linked to a sink")
     return errors
 
 
@@ -1629,6 +1745,29 @@ def _observation_is_grounded(
             if len(str(value).strip()) >= 4
         ]
     return any(fragment in observation for fragment in fragments)
+
+
+def _evidence_span_is_grounded(
+    code_span: str,
+    function: Mapping[str, Any],
+    *,
+    representation: str,
+) -> bool:
+    if representation == "pseudo_c":
+        return code_span in str(function["pseudo_c"])
+    if representation == "assembly":
+        return code_span in {
+            str(value).strip()
+            for value in cast(list[Any], function["assembly_evidence"])
+        }
+    if representation == "static_feature":
+        features = cast(Mapping[str, Any], function["static_features"])
+        return code_span in {
+            str(value).strip()
+            for values in features.values()
+            for value in cast(list[Any], values)
+        }
+    return False
 
 
 def _format_schema_error(error: Any) -> str:

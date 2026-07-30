@@ -114,7 +114,11 @@ Phase F의 우선순위는 다음과 같다.
   gate를 통과했지만 수동 100건에서 capacity·loop bound·null guard·
   negative offset 누락 6건으로 `FAIL EARLY`
 - frozen queue는 모두 소진됐으며 flat evidence target으로 binary
-  adapter를 학습하지 않음; 다음은 role-structured evidence contract
+  adapter를 학습하지 않음
+- `aegislm.binary-role-assessment-output.v2` schema와 semantic validator를
+  추가해 exact span, role, sink-directed relation을 강제
+- 다음은 v2 role-structured target builder → tokenizer gate → 고정
+  100건 수동 review 순서
 - 초기 19,600 전량 학습 가정은 폐기; pair당 한 compiler variant를
   균형 선택한 4,900건과 별도 800건 compiler-consistency set으로 구성
 - 수동 target review가 `≤5/100`을 통과하기 전 binary 학습 금지

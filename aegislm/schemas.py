@@ -653,3 +653,126 @@ BINARY_ASSESSMENT_OUTPUT_SCHEMA: dict[str, object] = {
         },
     },
 }
+
+BINARY_ROLE_ASSESSMENT_OUTPUT_SCHEMA: dict[str, object] = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "aegislm.binary-role-assessment-output.v2",
+    "title": "AegisLM Binary Role Assessment Output v2",
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "scope",
+        "assessment",
+        "findings",
+        "limitations",
+        "recommendations",
+    ],
+    "properties": {
+        "scope": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["target_cwe", "binary_format", "architecture"],
+            "properties": {
+                "target_cwe": {"type": "string", "pattern": "^CWE-[0-9]+$"},
+                "binary_format": {"type": "string", "enum": list(BINARY_FORMATS)},
+                "architecture": {"type": "string", "minLength": 1},
+            },
+        },
+        "assessment": {"type": "string", "enum": list(BINARY_ASSESSMENTS)},
+        "findings": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": [
+                    "function_id",
+                    "representation",
+                    "evidence",
+                    "relations",
+                    "confidence",
+                ],
+                "properties": {
+                    "function_id": {"type": "string", "minLength": 1},
+                    "representation": {
+                        "type": "string",
+                        "enum": list(BINARY_REPRESENTATIONS),
+                    },
+                    "evidence": {
+                        "type": "array",
+                        "minItems": 2,
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": [
+                                "evidence_id",
+                                "role",
+                                "code_span",
+                                "explanation",
+                            ],
+                            "properties": {
+                                "evidence_id": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+                                },
+                                "role": {
+                                    "type": "string",
+                                    "enum": [
+                                        "source",
+                                        "control",
+                                        "sink",
+                                        "bound",
+                                        "remediation",
+                                    ],
+                                },
+                                "code_span": {"type": "string", "minLength": 1},
+                                "explanation": {"type": "string", "minLength": 1},
+                            },
+                        },
+                    },
+                    "relations": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": [
+                                "from_evidence_id",
+                                "to_evidence_id",
+                                "relationship",
+                            ],
+                            "properties": {
+                                "from_evidence_id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                },
+                                "to_evidence_id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                },
+                                "relationship": {
+                                    "type": "string",
+                                    "enum": [
+                                        "flows_to",
+                                        "constrains",
+                                        "bounds",
+                                        "remediates",
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                    "confidence": {"type": "string", "enum": list(CONFIDENCE_LEVELS)},
+                },
+            },
+        },
+        "limitations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1},
+        },
+        "recommendations": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+        },
+    },
+}

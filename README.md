@@ -109,6 +109,16 @@ bound, null guard, negative offset 누락 6건으로 다시 `FAIL EARLY`했습�
 따라서 binary adapter 학습은 승인하지 않으며 다음 작업은 flat evidence
 문장 선택을 role-structured evidence contract로 교체하는 것입니다.
 raw payload와 object 실행은 계속 0입니다.
+
+다음 iteration의 첫 단계로
+`aegislm.binary-role-assessment-output.v2` schema와 semantic validator를
+추가했습니다. 각 evidence는 고유 ID, exact code span,
+`source/control/sink/bound/remediation` role을 가지며, relation은 반드시
+sink에서 끝나고 role에 맞는 `flows_to/constrains/bounds/remediates`
+관계를 사용해야 합니다. present와 not_observed 출력은 각각 필요한 role이
+sink에 실제 연결되지 않으면 실패합니다. 기존 v1 target builder와
+평가 artifact는 재현성을 위해 그대로 유지하며, 다음 구현은 v2 target
+builder와 100건 수동 gate입니다.
 초기 `2,450 × 4 × 2 = 19,600` 전량 사용 가정은 폐기했습니다. 최종
 학습본은 pair당 cutoff 내 한 variant만 균형 선택해 4,900건을 만들고,
 별도 100-pair × 4-variant consistency set을 둡니다.
