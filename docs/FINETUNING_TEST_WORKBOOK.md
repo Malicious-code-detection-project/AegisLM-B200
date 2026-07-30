@@ -2389,3 +2389,23 @@ materialized training JSONL과 binary adapter 학습은 만들지 않습니다.
 다음 재개 조건은 동일 5개 CWE의 독립 공급 확대 또는 격리 extractor
 재설계, group split, O3+stripped holdout, validation 400, blind test
 500의 재동결입니다.
+
+## ARVO Metadata Feasibility 기록
+
+strict v7 공급 부족 뒤 기존 frozen queue가 소진됐음을 확인하고 ARVO
+v3 metadata DB만 확보했습니다. PoC와 실행파일을 사용한 평가가 아니라,
+실패한 buffer extractor를 복구할 patch 후보를 고르는 단계입니다.
+
+| 기록 항목 | 값 |
+|---|---|
+| raw DB | `data/raw_data/arvo/v3.0.0/arvo.db` |
+| DB SHA-256 | `331184ca807c2f136f98dac9f1df94c893f4ee2fdf9329dca517ff88e72f97ce` |
+| 전체 metadata | `6,138` |
+| 선택 | heap/stack read/write 각 50건, 총 `200` |
+| disposition | 전부 `quarantine` |
+| raw payload read | `0` |
+| Docker pull / object 실행 | `0 / 0` |
+| 현재 판정 | `manual_feasibility_ready`, training 불승인 |
+
+수동 검토자는 crash type을 CWE 정답으로 복사하지 않고 patch 전후의
+allocation, source length, read/write sink가 실제로 연결되는지 확인합니다.

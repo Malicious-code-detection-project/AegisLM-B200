@@ -358,3 +358,7 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
   benchmark로만 보존한다.
 - 상세 근거는
   `docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`를 따른다.
+- 다음 binary feasibility는 ARVO v3 metadata 200건의 patch↔CWE 수동
+  검토다. crash type을 gold CWE로 자동 변환하지 않는다.
+- PoC, crash output, reproducer command를 읽거나 Docker image·object를
+  실행하지 않는다.

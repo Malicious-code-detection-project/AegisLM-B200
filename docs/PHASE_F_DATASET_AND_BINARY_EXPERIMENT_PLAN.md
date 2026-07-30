@@ -1841,3 +1841,38 @@ CWE-134/190/191/194/195의 `644` pair입니다.
 중단 기준을 적용한 결과입니다. 644 pair는 향후 공급 확대의 seed와
 extractor 회귀 benchmark로 보존하며, 현 시점 binary adapter 학습에는
 사용하지 않습니다.
+
+## ARVO Buffer Extractor 복구 Feasibility
+
+기존 4,643-pair frozen queue는 recovery r6까지 소진되었고, BigVul과
+PrimeVul의 승인 CWE verified pair를 모두 합쳐도 약 281쌍뿐입니다.
+따라서 strict v7 부족분 1,806쌍을 기존 source corpus로 채우지 않습니다.
+
+ARVO v3 metadata DB를 새 raw source로 확보했습니다. 이 release는
+6,138개의 C/C++ 재현 항목을 포함하지만 sanitizer crash type은 CWE gold
+label이 아니므로 전부 quarantine에서 시작합니다.
+
+metadata-only audit 결과:
+
+| 후보 family | 전체 metadata 후보 | feasibility 선택 |
+|---|---:|---:|
+| heap buffer read | `1,731` | `50` |
+| heap buffer write | `565` | `50` |
+| stack buffer read | `202` | `50` |
+| stack buffer write | `177` | `50` |
+| 합계 | `2,675` | `200` |
+
+- selection seed: `20260731`
+- ARVO DB SHA-256:
+  `331184ca807c2f136f98dac9f1df94c893f4ee2fdf9329dca517ff88e72f97ce`
+- metadata audit SHA-256:
+  `b562ac2dc2882c6a70219d0b57bf2fd0603807064fca3c8f02ae3d60c35e8a66`
+- PoC·crash output·reproducer command read: `0`
+- Docker image pull·reproducer/object execution: `0`
+- training approval: `false`
+
+다음 gate는 200건의 patch URL과 fix commit이 실제 buffer
+allocation/source length/read-write sink 관계를 보존하는지 수동 확인하는
+것입니다. crash type만으로 CWE-121/122/126을 부여하지 않습니다.
+patch↔CWE 오류율이 5%를 초과하면 source extraction과 mapping을
+재설계하고 binary compile/decompile 단계로 진행하지 않습니다.

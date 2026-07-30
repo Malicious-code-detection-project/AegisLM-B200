@@ -130,6 +130,13 @@ v2 r1과 r2는 role target builder, 실제 Qwen tokenizer gate, 고정 seed
 [`docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`](docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
 보존합니다.
 
+다음 binary 작업으로 ARVO v3 metadata 6,138건을 안전하게 감사해
+heap/stack buffer read·write 각 50건, 총 200건의 quarantine feasibility
+set을 동결했습니다. 이는 실패한 CWE-121/122/126 extractor를 실제
+patch 관계로 재설계하기 위한 후보이며, crash type을 CWE gold로 간주하지
+않습니다. PoC/raw payload 읽기, Docker image pull, reproducer와 object
+실행은 모두 0이고 학습 승인은 여전히 false입니다.
+
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
 허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
 규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
