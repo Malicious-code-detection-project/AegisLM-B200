@@ -1,0 +1,48 @@
+{
+  "schema_version": "aegislm.phase-f-binary-manual-review-decisions.v1",
+  "review_artifact_sha256": "5dc7e10c56978ca835dd4641ac436ea9cd279cd709daba362daef91f7ab76b74",
+  "review_policy": {
+    "maximum_error_count": 5,
+    "early_stop_on_sixth_error": true,
+    "label_error_meaning": "The scoped present/not_observed assessment is not supported by the supplied pseudo-C.",
+    "evidence_error_meaning": "The target finding does not expose the target-CWE relation needed to teach or justify the assessment."
+  },
+  "decisions": [
+    {
+      "id": "binary-b0-c41d20e8bd139ac3-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 not_observed target cites the 49-byte source initialization but omits a destination boundary tied to the subsequent copy."
+    },
+    {
+      "id": "binary-b0-67838fcc8a149b45-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 not_observed target again cites the reduced source only; it does not expose the copy sink and destination capacity relation."
+    },
+    {
+      "id": "binary-b0-055f878d41c11bb0-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 not_observed target cites wmemset(..., 0x31) and a terminator but omits the heap destination and swprintf/copy operation."
+    },
+    {
+      "id": "binary-b0-40fd9673ef227486-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-457 not_observed target cites control-flow loops and a read but omits the per-element initialization needed to justify the label."
+    },
+    {
+      "id": "binary-b0-2823bab4080cbeb9-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-457 not_observed target contains only printIntLine on a recovered pointer expression and exposes no initialization."
+    },
+    {
+      "id": "binary-b0-3a6aeffe624b2669-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 not_observed target cites only the 49-byte source initialization and terminator; the heap destination and snprintf sink are absent."
+    }
+  ]
+}

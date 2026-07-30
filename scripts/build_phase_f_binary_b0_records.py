@@ -18,6 +18,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from aegislm.datasets.binary import (  # noqa: E402
+    binary_target_relation_visible,
     format_binary_prompt,
     validate_binary_record,
 )
@@ -46,14 +47,20 @@ def build_records(
     if len(accepted) != int(gate["required_accepted_pair_count"]):
         raise ValueError("B0 gate does not contain the required accepted pair supply")
 
+    selected_variants = _selected_variants(gate, accepted)
+    relation_audited = (
+        gate.get("target_relation_policy") == "observable-target-relation-v1"
+    )
     reviews: dict[tuple[str, str], dict[str, Any]] = {}
     for entry in review_entries:
         pair_id = str(entry["pair_id"])
         if pair_id not in accepted:
             continue
-        if entry["operator_decision"] != "pass":
+        if entry["operator_decision"] != "pass" and not relation_audited:
             raise ValueError(f"accepted pair has non-pass review: {pair_id}")
         variant = f"{entry['compiler']}-{entry['optimization']}"
+        if variant not in selected_variants[pair_id]:
+            continue
         key = (pair_id, variant)
         if key in reviews:
             raise ValueError(f"duplicate review variant: {pair_id}/{variant}")
@@ -65,6 +72,8 @@ def build_records(
         if pair_id not in accepted or not bool(item["compile_success"]):
             continue
         variant = f"{item['compiler']}-{item['optimization']}"
+        if variant not in selected_variants[pair_id]:
+            continue
         key = (pair_id, variant)
         if key in objects:
             raise ValueError(f"duplicate compiled variant: {pair_id}/{variant}")
@@ -73,7 +82,7 @@ def build_records(
     expected_variants = {
         (pair_id, variant)
         for pair_id in accepted
-        for variant in ("gcc-O0", "gcc-O2", "clang-O0", "clang-O2")
+        for variant in selected_variants[pair_id]
     }
     if set(reviews) != expected_variants:
         raise ValueError(
@@ -97,6 +106,21 @@ def build_records(
             ("not_observed", "not_observed_pseudo_c"),
         ):
             pseudo_c = sanitize_pseudo_c(str(review[pseudo_field]))
+            if label == "present" and not binary_target_relation_visible(
+                str(review["target_cwe"]),
+                pseudo_c,
+            ):
+                raise ValueError(
+                    "selected variant lacks observable target relation: "
+                    f"{pair_id}/{variant}"
+                )
+            if label == "present" and pseudo_c == sanitize_pseudo_c(
+                str(review["not_observed_pseudo_c"])
+            ):
+                raise ValueError(
+                    "selected variant has no present/not_observed distinction: "
+                    f"{pair_id}/{variant}"
+                )
             features = static_extractor(object_path, label)
             opaque_group = hashlib.sha256(f"{pair_id}:{label}".encode()).hexdigest()[
                 :16
@@ -172,16 +196,23 @@ def build_records(
             records.append(record)
 
     groups = Counter(str(record["metadata"]["compiler_group_id"]) for record in records)
-    expected_records = len(accepted) * 8
+    expected_records = sum(len(variants) * 2 for variants in selected_variants.values())
+    expected_group_sizes = {
+        "binary-group-"
+        + hashlib.sha256(f"{pair_id}:{label}".encode()).hexdigest()[:16]: len(variants)
+        for pair_id, variants in selected_variants.items()
+        for label in ("present", "not_observed")
+    }
     audit = {
         "schema_version": "aegislm.phase-f-binary-b0-record-audit.v1",
         "accepted_pair_count": len(accepted),
-        "variant_count": len(accepted) * 4,
+        "variant_count": sum(len(value) for value in selected_variants.values()),
         "record_count": len(records),
         "expected_record_count": expected_records,
         "compiler_group_count": len(groups),
-        "compiler_groups_with_four_variants": sum(
-            value == 4 for value in groups.values()
+        "compiler_groups_with_expected_variants": sum(
+            value == expected_group_sizes.get(group_id)
+            for group_id, value in groups.items()
         ),
         "schema_validation_rate": 1.0,
         "prompt_leakage_count": len(leakage),
@@ -201,11 +232,33 @@ def build_records(
         "gate_pass": (
             len(records) == expected_records
             and len(groups) == len(accepted) * 2
-            and all(value == 4 for value in groups.values())
+            and groups == Counter(expected_group_sizes)
             and not leakage
         ),
     }
     return records, audit
+
+
+def _selected_variants(
+    gate: dict[str, Any],
+    accepted: frozenset[str],
+) -> dict[str, tuple[str, ...]]:
+    allowed = {"gcc-O0", "gcc-O2", "clang-O0", "clang-O2"}
+    configured = gate.get("accepted_pair_variants")
+    if configured is None:
+        return {
+            pair_id: ("gcc-O0", "gcc-O2", "clang-O0", "clang-O2")
+            for pair_id in accepted
+        }
+    if not isinstance(configured, dict) or set(configured) != set(accepted):
+        raise ValueError("accepted_pair_variants must cover every accepted pair")
+    result: dict[str, tuple[str, ...]] = {}
+    for pair_id in accepted:
+        values = tuple(str(value) for value in configured[pair_id])
+        if not values or len(values) != len(set(values)) or not set(values) <= allowed:
+            raise ValueError(f"invalid selected variants for pair: {pair_id}")
+        result[pair_id] = values
+    return result
 
 
 def extract_static_features(object_path: Path, label: str) -> dict[str, list[str]]:

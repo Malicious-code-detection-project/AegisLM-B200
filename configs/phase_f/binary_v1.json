@@ -29,6 +29,20 @@
     "train_records_max": 4000,
     "validation_records": 400,
     "blind_test_records": 500,
+    "cutoff_len": 4096,
+    "right_truncation": false,
+    "target_relation_policy": "observable-target-relation-v1",
+    "target_policy": "memory-write-read-linked-evidence-v9",
+    "selection_order": [
+      "target_relation_gate",
+      "actual_qwen_tokenizer_gate",
+      "pair_first_split",
+      "manual_target_review_100",
+      "binary_canary"
+    ],
+    "manual_target_review_records": 100,
+    "manual_label_or_evidence_error_rate_max": 0.05,
+    "approved_for_training_before_manual_review": false,
     "robustness_optimization": "O3",
     "robustness_stripped": true,
     "compiler_consistency_functions": 100

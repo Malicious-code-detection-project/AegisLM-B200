@@ -20,8 +20,13 @@ from aegislm.datasets.formatting import (
 from aegislm.datasets.binary import (
     BINARY_SYSTEM_PROMPT,
     BinaryRecordValidationError,
+    binary_target_relation_visible,
+    build_binary_pair_targets,
+    build_binary_target,
+    compact_binary_record,
     format_binary_prompt,
     validate_binary_output,
+    validate_binary_output_for_record,
     validate_binary_record,
 )
 from aegislm.datasets.phase_f import (
@@ -82,6 +87,14 @@ from aegislm.datasets.source_v3 import (
     SOURCE_V3_SEED,
     promote_source_v3,
 )
+from aegislm.datasets.binary_v1 import (
+    BINARY_V1_CUTOFF_LEN,
+    BINARY_V1_PROFILE,
+    BINARY_V1_SEED,
+    freeze_binary_v1,
+    prepare_binary_v1,
+    summarize_binary_manual_review,
+)
 from aegislm.datasets.source_decision import (
     SOURCE_DECISION_PROFILE,
     SOURCE_DECISION_SYSTEM_PROMPT,
@@ -141,8 +154,13 @@ __all__ = [
     "SFTSafetyLevelError",
     "BINARY_SYSTEM_PROMPT",
     "BinaryRecordValidationError",
+    "binary_target_relation_visible",
+    "build_binary_pair_targets",
+    "build_binary_target",
+    "compact_binary_record",
     "validate_binary_record",
     "validate_binary_output",
+    "validate_binary_output_for_record",
     "format_binary_prompt",
     "CATALOG_SCHEMA_VERSION",
     "MANIFEST_SCHEMA_VERSION",
@@ -185,6 +203,12 @@ __all__ = [
     "SOURCE_V3_PROFILE",
     "SOURCE_V3_SEED",
     "promote_source_v3",
+    "BINARY_V1_CUTOFF_LEN",
+    "BINARY_V1_PROFILE",
+    "BINARY_V1_SEED",
+    "prepare_binary_v1",
+    "freeze_binary_v1",
+    "summarize_binary_manual_review",
     "SOURCE_DECISION_PROFILE",
     "SOURCE_DECISION_SYSTEM_PROMPT",
     "build_source_decision_artifact",

@@ -1344,8 +1344,8 @@ Phase F 상세 기준은
 | GPT-OSS-20B 보조 실험 | `Blocked` | F5 Qwen 결론 이후 이식성 확인 |  | Qwen 선행 조건 아님 |
 | F6-A binary 조사 | `Pass` | 후보·license·local source·toolchain inventory | `binary_candidate_inventory.json` | 외부 payload download 0 |
 | F6-B B0 100 pair | `Rerun` | strict re-audit에서 최초 승인 100 중 CWE-563 1 pair 추가 격리 | strict summary SHA `fde1e20b…b9f` | 엄격 기준 99/145; 부족분은 F7에서 대체 |
-| F7 binary adapter | `Running` | 네 차례 500-pair 확대와 누적 supply gate | r4 batch SHA `4931b170…1bd6`; supply SHA `f7cbac10…1212` | r4 419/500 승인, 누적 1,940/2,395; 다섯 번째 500-pair batch 승인 |
-| F8 NuriLab/RAG/MCP | `Blocked` | source·binary 독립 gate 통과 |  |  |
+| F7 binary adapter | `Running` | target v1–v5·v7·v9 수동 FAIL; contract 재설계 | v9 gate SHA `2292e38f…364c`; 수동 `6/100` FAIL | flat evidence → role-structured contract |
+| F8 NuriLab/RAG/MCP | `Blocked` | binary adapter 독립 gate 통과 |  |  |
 | F9 최종 결정 | `Not Started` | 채택/Source만/재학습/모델 변경/중단/Phase G |  |  |
 
 ### F1 실행
@@ -2207,11 +2207,11 @@ target-preservation과 누출 감사를 수행하고, 운영자는 애매한 예
 F7 진입·중단 결정을 승인한다. F7에서는 2,000 pair를 억지로 채우지
 않으며 검증된 공급량이 부족하면 B0 결과만 보존한다.
 
-#### F7 엄격 재감사와 네 차례 500-pair 확대 기록
+#### F7 엄격 재감사와 최종 2,450-pair 공급 기록
 
 | 항목 | 기록 |
 | --- | --- |
-| 상태 | `Pass — fifth 500-pair scale authorized` |
+| 상태 | `Superseded — 1차 공급 PASS, target v1 수동 gate FAIL` |
 | 구조 적격 공급 | `4,643 pair` |
 | pilot compile / decompile / link | `1,000/1,000` / `999/1,000` / `999/1,000` |
 | strict re-audit pilot 승인 / 탈락 | `198 / 52` |
@@ -2228,11 +2228,18 @@ F7 진입·중단 결정을 승인한다. F7에서는 2,000 pair를 억지로 �
 | 네 번째 500-pair compile / decompile·link | `2,000/2,000` / `1,996/2,000` |
 | 네 번째 500-pair 승인 / 탈락 | `419 / 81` |
 | r4 batch target-preservation `≥0.90` | `Fail`: `0.838`; 탈락 81 pair는 교체 |
-| 누적 검토 / 승인 / 탈락 | `2,395 / 1,940 / 455` |
-| Wilson 95% 승인률 하한 | `0.79382` |
-| 추가 필요 승인 / 하한 기준 예상 검토 | `510 / 643` |
-| 남은 공급 / 공급 margin | `2,248 / 1,605` |
-| 다음 queue | `500 pair`; SHA `7d0fdaf0…996f` |
+| 다섯 번째 500-pair compile / decompile·link | `2,000/2,000` / `1,998/2,000` |
+| 다섯 번째 500-pair 승인 / 탈락 | `394 / 106`; batch gate `Fail` (`0.788`) |
+| r5 누적 검토 / 승인 / 탈락 | `2,895 / 2,334 / 561` |
+| r5 Wilson 95% 승인률 하한 | `0.79142` |
+| 추가 필요 승인 / 하한 기준 예상 검토 | `116 / 147` |
+| tail queue | `160 pair`; SHA `0b97337c…82f3` |
+| tail compile / decompile·link | `640/640` / `640/640` |
+| tail 승인 / 탈락 | `121 / 39`; batch gate `Fail` (`0.75625`) |
+| 최종 검토 / qualified / 탈락 | `3,055 / 2,455 / 600` |
+| 1차 선택 / verified reserve | `2,450 / 5`; target 생성 전 공급 판정 |
+| 최종 gate SHA | `b45a2118a6ca16aa89e901f7ffda9fd1bb212557e51f877a3bb821c106773f53` |
+| 초기 normalized record 목표 | `19,600`; 전량 학습 가정 폐기 |
 | decompile 병렬 wall / artifact | 약 `23.1분` / 약 `106.9 MB` |
 | 500-pair 단순 예상 | 약 `46.3분` / 약 `213.8 MB`, 수동 검토 제외 |
 | raw payload / object 실행 | `0 / 0` |
@@ -2240,8 +2247,71 @@ F7 진입·중단 결정을 승인한다. F7에서는 2,000 pair를 억지로 �
 각 batch의 `0.90` 기준 실패는 해당 batch를 전부 승인할 수 없다는 뜻이다.
 공급 gate는 탈락 후보를 버리고도 최종 2,450 verified pair를 확보할
 여유가 있는지를 별도로 판정한다. 이번에는 공급 gate가 통과했으므로
-다음 500-pair batch로 진행하며, 완료 후 같은 방식으로 수용률과 margin을
-재계산한다.
+tail 160 pair로 필요한 공급만 채웠다. 품질을 통과한 초과 5쌍은
+verified reserve로 보존했지만, 이 판정만으로 model-ready target을
+승인하지 않는다.
+
+#### F7 target v1 수동 실패와 v2 복구 기록
+
+| 항목 | 기록 |
+| --- | --- |
+| relation-qualified | `2,536` |
+| target v1 tokenizer 적격 / 선택 / reserve | `2,488 / 2,450 / 38` |
+| Qwen cutoff | `4,096`, right truncation 금지 |
+| model-ready split | train `4,000`, validation `400`, blind `500` |
+| consistency set | `100 pair / 800 records` |
+| 최대 token / cutoff 초과 | `3,981 / 0` |
+| 자동 gate | 전체 PASS |
+| 수동 review artifact SHA | `28bce9b7…c040` |
+| 수동 판정 | 명백한 evidence error `6`, 허용 `5`; `FAIL EARLY` |
+| 최종 manifest / SHA256SUMS | `fccbcf25…d090` / `d118f766…d1c2` |
+| 학습 승인 | `false` |
+| v2 정책 | `pair-contrast-target-evidence-v2` |
+| v2 기존 공급 | `2,438/2,450`; 12 부족 |
+| recovery r3 뒤 v2 공급 | `2,450/2,479`; 자동 PASS |
+| v2 수동 판정 | 6-error 조기 FAIL |
+| v3 / v4 수동 판정 | 각 고정 100건에서 6-error 조기 FAIL |
+| v2 / v3 / v4 manifest SHA | `f8718d07…d696` / `c77a484f…994f` / `e0ca8a07…a7d6` |
+| v5 정책 | `strict-pair-grounded-evidence-v5` |
+| v5 최초 엄격 공급 | `2,247/2,450`; 203 부족 |
+| recovery r4 / r5 | `400 / 64 pair`; relation-qualified `253 / 45` 추가 |
+| v5 최종 공급 | `2,450/2,477`; tokenizer gate PASS |
+| v5 최종 tokenizer gate SHA | `ed561365…ad2d` |
+| v5 자동 model-ready gate | 전체 PASS; train `4,000`, validation `400`, blind `500`, consistency `100/800` |
+| v5 수동 판정 | fixed remediation–sink 근거 오류 6건; `FAIL EARLY` |
+| v5 최종 manifest SHA | `37d1f6be…6f3` |
+| v6 정책 / 공급 | `complete-fixed-role-evidence-v6`; `2,123/2,450`, 327 부족 |
+| v6 tokenizer gate SHA | `d336bce0…9773` |
+| v7 정책 / 기존 공급 | `decompiler-normalized-role-evidence-v7`; `2,329/2,450`, 121 부족 |
+| recovery r6 queue | 마지막 `260 pair`; SHA `a7a8bab1…6350` |
+| r6 compile / symbol link / 실행 | `1,040/1,040` / `1,040/1,040` / `0` |
+| r6 compile summary SHA | `8481da0c…f4d` |
+| r6 decompile / function link | `1,040/1,040` / `1,040/1,040` |
+| r6 decompile summary SHA | `31079233…b3a0` |
+| r6 relation-qualified | `176/260`; review SHA `a65153a0…669d` |
+| v7 최종 공급 / 자동 gate | `2,450/2,468`; PASS |
+| v7 수동 감사 | CWE-457 초기화 변수와 다른 helper sink 연결 오류 발견; 폐기 |
+| v8 동일 변수 연결 공급 | `2,326/2,450`; 124 부족, frozen queue 소진 |
+| v9 memory write→read 공급 | `2,450/2,498`; 자동 gate PASS |
+| v9 tokenizer gate SHA | `2292e38f…364c` |
+| v9 수동 판정 | capacity·loop bound·null guard·negative offset 누락 6건; `FAIL EARLY` |
+| 다음 실행 | flat evidence line 선택을 role-structured evidence contract로 교체 |
+
+명백한 오류 6건은 label을 임의 변경한 것이 아니라, 출력 finding이
+target CWE 관계를 노출하지 못한 evidence 오류입니다. 6번째 오류에서
+100건 검토를 조기 종료하며 나머지 94건을 자동 정상 처리하지 않습니다.
+v1은 실패 증거로 보존하고 binary canary에는 사용하지 않습니다.
+
+v2–v5·v7·v9 실패 기록을 덮어쓰지 않습니다. v6는 fixed remediation과
+실제 constrained sink를 모두 요구하면서 공급 부족을 드러냈습니다. v7은
+기준을 낮춘 것이 아니라 Ghidra의 최적화·이름 변형
+(`operator_new__`, `std::ifstream::open`, 상수 직접 사용)과 명시적인
+buffer-capacity/bounded-copy 관계를 동일 근거로 정규화한 정책입니다.
+v8·v9은 동일 변수와 memory write/read 연결을 추가했지만 flat evidence
+배열만으로 capacity·loop bound·guard·offset 역할을 항상 보존하지
+못했습니다. 다음 target은 각 line에 role을 부여하고 관계를 구조화해야
+합니다. 새 model-ready dataset과 수동 100건 검토가 모두 PASS하기 전까지
+GPU 학습은 금지합니다.
 
 r2 탈락은 CWE-476 5쌍과 CWE-563 23쌍을 포함해 총 106쌍이다. r3 탈락은
 CWE-563 전체 13쌍과 O2에서 근거가 소실된 77쌍을 합쳐 총 90쌍이다. 나머지는

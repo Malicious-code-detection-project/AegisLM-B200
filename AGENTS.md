@@ -88,11 +88,36 @@ Phase F의 우선순위는 다음과 같다.
   static-feature linkage 1.00, prompt provenance/label/source-symbol 누출 0
 - F7 구조 적격 공급 4,643 pair를 동결하고 엄격 정책으로 과거
   250-pair pilot을 198/250, B0를 99/145로 정정
-- 네 번째 500-pair 확대 배치는 compile 2,000/2,000,
-  decompile·function link 1,996/2,000
-- target preservation은 r1 420/500, r2 394/500, r3 410/500, r4 419/500
-- 누적 승인/검토는 1,940/2,395, Wilson 95% 하한 공급 margin은 1,605
-  pair로 다섯 번째 500-pair batch를 승인
+- 다섯 차례 500-pair 확대의 target preservation은 r1 `420/500`,
+  r2 `394/500`, r3 `410/500`, r4 `419/500`, r5 `394/500`
+- r5까지 누적 승인/검토는 `2,334/2,895`; Wilson gate에 따라 tail을
+  500이 아닌 160 pair로 제한
+- tail은 compile·decompile·function link `640/640`, 엄격 승인
+  `121/160`; 1차 target-preservation qualified `2,455`
+- 실제 pseudo-C relation recovery r1·r2 뒤 qualified `2,536`; target v1
+  + Qwen tokenizer gate는 `2,488`, 선택 `2,450`, reserve `38`
+- target v1 model-ready data는 자동 gate를 통과했지만 수동 100건에서
+  명백한 evidence error 6건으로 `FAIL EARLY`; 학습 승인 false
+- target v2·v3·v4도 고정 수동 검토에서 각각 여섯 번째 오류에 도달해
+  `FAIL EARLY`; 실패 artifact와 hash-bound 결정을 보존
+- `strict-pair-grounded-evidence-v5`는 recovery r4·r5 뒤 공급
+  `2,450/2,477`과 자동 gate를 통과했지만 수동 100건에서 evidence
+  error 6건으로 다시 `FAIL EARLY`
+- `complete-fixed-role-evidence-v6`는 remediation과 constrained sink를
+  모두 요구하며 공급 `2,123/2,450`으로 FAIL
+- Ghidra 표현 정규화를 추가한
+  `decompiler-normalized-role-evidence-v7`은 recovery r6 뒤 공급
+  `2,450/2,468`과 자동 gate를 통과했지만 수동 연결 오류 발견
+- `linked-role-evidence-v8`은 동일 변수 연결을 강제해 공급
+  `2,326/2,450`으로 FAIL
+- `memory-write-read-linked-evidence-v9`은 공급 `2,450/2,498`과 자동
+  gate를 통과했지만 수동 100건에서 capacity·loop bound·null guard·
+  negative offset 누락 6건으로 `FAIL EARLY`
+- frozen queue는 모두 소진됐으며 flat evidence target으로 binary
+  adapter를 학습하지 않음; 다음은 role-structured evidence contract
+- 초기 19,600 전량 학습 가정은 폐기; pair당 한 compiler variant를
+  균형 선택한 4,900건과 별도 800건 compiler-consistency set으로 구성
+- 수동 target review가 `≤5/100`을 통과하기 전 binary 학습 금지
 - Q2 250-step과 313-step 연장은 개선 근거가 없어 미실행
 - GPT-OSS 20B는 Qwen 결론 이후 보조 이식성 실험으로만 진행
 - source와 binary-derived adapter를 서로 분리해 절대평가

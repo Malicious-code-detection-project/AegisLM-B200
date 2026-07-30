@@ -70,13 +70,48 @@ static-feature linkage `1.00`, prompt provenance·gold label·source symbol
 재감사에서 격리된 1쌍을 포함하지 않습니다.
 
 F7은 구조 적격 4,643 pair의 전체 queue를 동결했습니다. 엄격 정책으로
-과거 250-pair pilot을 `198/250`, B0를 `99/145`로 정정했습니다. 네 차례
-500-pair 확대 배치의 target-preservation은 각각 `420/500`,
-`394/500`, `410/500`, `419/500`이었습니다. 네 번째 배치는 compile
-`2,000/2,000`, decompile·function link `1,996/2,000`을 기록했습니다.
-현재 누적은 `1,940/2,395`이며 Wilson 95% 승인률 하한 `0.79382`에서도
-목표 2,450 pair 확보 후 1,605 pair의 공급 여유가 남아 다섯 번째
-500-pair 배치를 승인했습니다.
+과거 250-pair pilot을 `198/250`, B0를 `99/145`로 정정하고, 다섯 차례
+500-pair 확대에서 각각 `420`, `394`, `410`, `419`, `394`쌍을
+승인했습니다. 누적 `2,334/2,895` 뒤 Wilson 공급 계산으로 500쌍을
+반복하지 않고 tail 160쌍만 추가했고, compile·decompile·function link
+`640/640`, 엄격 승인 `121/160`을 기록했습니다. 최종 검토
+`3,055`쌍 중 `2,455`쌍이 1차 보존 조건을 통과했습니다. 이후 실제
+pseudo-C target 관계를 재검사하고 recovery r1·r2를 합쳐 relation-qualified
+`2,536`쌍을 확보했습니다. Qwen tokenizer·target v1 gate에서는
+`2,488`쌍이 남아 2,450쌍을 동결했지만, 자동 gate PASS 뒤 고정 100건
+수동 검토가 명백한 근거 오류 6건에서 조기 FAIL했습니다. 이 dataset은
+학습 금지이며 `approved_for_training=false`입니다.
+
+후속 target v2·v3·v4는 pair contrast와 CWE별 remediation 관계를
+강화했지만, 고정 100건에서 각각 여섯 번째 명백한 label/evidence 오류에
+도달해 모두 `FAIL EARLY`로 동결했습니다. 이후
+`strict-pair-grounded-evidence-v5`는 recovery r4 400쌍과 r5 64쌍으로
+공급 `2,450/2,477`을 확보했고 model-ready 자동 gate도 통과했지만,
+고정 100건에서 다시 명백한 evidence 오류 6건으로 `FAIL EARLY`했습니다.
+주요 오류는 fixed 쪽의 remediation만 인용하고 실제 constrained sink를
+누락한 경우였습니다.
+
+`complete-fixed-role-evidence-v6`는 remediation과 sink가 함께 관찰되는
+pair만 허용해 `2,123/2,450`으로 공급 gate에 실패했습니다. 실제 탈락
+pseudo-C를 감사해 Ghidra가 출력한 `operator_new__`,
+`std::ifstream::open`, 상수 직접 사용, buffer-capacity 관계를 정규화한
+`decompiler-normalized-role-evidence-v7`을 추가했습니다. 기존 공급에서
+`2,329/2,450`이 통과했고 frozen queue의 마지막 260쌍을 recovery r6로
+처리해 relation-qualified 176쌍을 추가했습니다. compile·decompile·function
+link는 `1,040/1,040`, object 실행은 `0`입니다.
+
+v7은 공급 `2,450/2,468`과 자동 model-ready gate를 통과했지만 수동
+검토에서 CWE-457의 초기화 변수와 다른 sink를 연결하는 오류가 드러났습니다.
+v8은 동일 변수 연결을 강제해 공급 `2,326/2,450`으로 실패했습니다.
+memory write와 같은 base의 read를 연결하는 v9은 공급 `2,450/2,498`과
+자동 gate를 통과했지만, 새 고정 100건에서 destination capacity, loop
+bound, null guard, negative offset 누락 6건으로 다시 `FAIL EARLY`했습니다.
+따라서 binary adapter 학습은 승인하지 않으며 다음 작업은 flat evidence
+문장 선택을 role-structured evidence contract로 교체하는 것입니다.
+raw payload와 object 실행은 계속 0입니다.
+초기 `2,450 × 4 × 2 = 19,600` 전량 사용 가정은 폐기했습니다. 최종
+학습본은 pair당 cutoff 내 한 variant만 균형 선택해 4,900건을 만들고,
+별도 100-pair × 4-variant consistency set을 둡니다.
 
 Phase E에서는 Qwen3-Coder-Next 80B LoRA를 학습하고 adapter 저장·재로드,
 merge, vLLM serving, 5건 smoke와 500건 절대평가까지 완료했습니다. 인프라

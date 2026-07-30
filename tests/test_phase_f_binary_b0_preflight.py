@@ -84,3 +84,12 @@ def test_binary_b0_preflight_passes_when_all_gates_are_available(
     assert result["f6a_candidate_inventory_pass"]
     assert result["f6b_b0_ready"]
     assert result["blockers"] == []
+
+
+def test_ghidra_exporter_includes_juliet_helper_functions() -> None:
+    source = Path("scripts/ghidra/ExportJulietFunctions.java").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'name.startsWith("bad")' in source
+    assert 'name.startsWith("good")' in source

@@ -1,4 +1,5 @@
 from scripts.build_phase_f_binary_b0_records import (
+    _selected_variants,
     extract_imports,
     extract_labeled_assembly,
     prompt_leakage,
@@ -39,3 +40,20 @@ def test_prompt_leakage_detects_private_boundaries() -> None:
         "source symbol",
         "Juliet label symbol",
     ]
+
+
+def test_selected_variants_supports_relation_audited_single_variant_pairs() -> None:
+    selected = _selected_variants(
+        {
+            "accepted_pair_variants": {
+                "pair-1": ["clang-O0"],
+                "pair-2": ["gcc-O2", "clang-O2"],
+            }
+        },
+        frozenset({"pair-1", "pair-2"}),
+    )
+
+    assert selected == {
+        "pair-1": ("clang-O0",),
+        "pair-2": ("gcc-O2", "clang-O2"),
+    }

@@ -35,16 +35,19 @@ flowchart LR
 | F5 | `Complete — lifecycle PASS with constrained decoding` | 두 BF16 merge·vLLM TP2 완료; guided JSON Schema와 semantic validator에서 전체 gate PASS |
 | F6-A | `Complete` | 후보·license·local source·toolchain inventory 동결 |
 | F6-B | `Complete — strict re-audit 99/145` | 최초 100 pair 중 CWE-563 1 pair 추가 격리; 부족분은 F7에서 대체 |
-| F7 | `Running — four 500-pair batches complete` | 누적 승인 1,940/2,395, Wilson 하한 공급 margin 1,605 pair; 다섯 번째 500-pair batch 승인 |
-| F8 | `Blocked by F5/F7` | 독립 adapter 결과 필요 |
+| F7 | `Running — target v1–v5·v7·v9 manual FAIL; contract redesign` | v7·v9 자동 PASS 뒤 수동 6-error FAIL; v8 공급 2,326/2,450; frozen queue 소진 |
+| F8 | `Blocked by F7 adapter` | binary adapter 독립 절대평가 필요 |
 | F9 | `Not Started` | 앞 단계 결과 필요 |
 
 Q1R10 decision과 Q1R11 evidence의 신규 blind 500건 model-only 평가와
 각 adapter의 BF16 merge·vLLM TP2 lifecycle을 완료했습니다. Evidence
 serving은 `response_format=json_schema` constrained decoding과 semantic
 validator를 필수조건으로 사용합니다. 재현 가능한 Clang+Ghidra 환경과
-1-pair extractor smoke까지 동결했습니다. 다음 작업은 최적화 후에도 target
-CWE가 보존되는 후보를 먼저 선별한 뒤 F6-B B0 100 pair를 실행하는 것입니다.
+1-pair extractor smoke와 relation·tokenizer lifecycle까지 검증했습니다.
+그러나 target v1–v5·v7·v9 수동 근거 gate가 실패했으므로 binary adapter
+canary는 금지 상태입니다. 다음 작업은 flat evidence line 선택을
+source/control/sink/bound 관계가 명시된 versioned role-structured
+contract로 교체하고 새 고정 100건 수동 검토를 통과하는 것입니다.
 NuriLab·RAG/MCP와 GPT-OSS는 기존 순서대로 뒤에 둡니다.
 
 ## 최종 연구 질문
@@ -853,7 +856,7 @@ pseudo-C 또는 제한된 assembly에서 관찰되는 경우에만 100-pair mani
 
 ## F7 — Binary Dataset v1과 별도 Adapter
 
-상태: `Running — four 500-pair batches complete / supply gate PASS`
+상태: `Running — target v1–v4 manual gate FAIL / strict v5 recovery`
 
 - pair 최대 2,000
 - before `present`: 최대 2,000
@@ -874,10 +877,10 @@ Source adapter와 섞지 않고 별도 학습·평가합니다.
 
 검증된 pair가 부족하면 저신뢰 데이터로 채우지 않고 B0 결과만 남깁니다.
 
-### F7 공급량, 엄격 재감사와 네 차례 500-pair 확대 판정
+### F7 공급량, 엄격 재감사와 최종 2,450-pair 판정
 
 F6-B에서 사용한 후보를 포함해 구조 적격 4,643 pair의 결정적 queue를
-동결했다. 250-pair pilot 뒤 네 차례 500-pair 확대 배치를 GCC·Clang ×
+동결했다. 250-pair pilot 뒤 다섯 차례 500-pair 확대 배치를 GCC·Clang ×
 `O0/O2`로 compile·decompile했다. 첫 확대 배치 검토 중 동일한
 최적화 소실 사례가 과거에는 PASS와 FAIL로 섞여 있음을 발견해
 `strict-target-evidence-v1` 정책을 과거 B0와 pilot에도 소급 적용했다.
@@ -899,23 +902,166 @@ F6-B에서 사용한 후보를 포함해 구조 적격 4,643 pair의 결정적 q
 | 세 번째 500-pair 승인 / 탈락 | `410/90`, 승인률 `0.820` |
 | 네 번째 500-pair compile / decompile·link | `2,000/2,000` / `1,996/2,000` |
 | 네 번째 500-pair 승인 / 탈락 | `419/81`, 승인률 `0.838` |
-| 누적 검토 / 승인 / 탈락 | `2,395 / 1,940 / 455` |
-| 누적 관측 승인률 | `0.81002` |
-| Wilson 95% 승인률 하한 | `0.79382` |
-| 추가 필요 승인 / 하한 기준 예상 검토 | `510 / 643` |
-| 남은 구조 공급 / 공급 margin | `2,248 / 1,605` |
+| 다섯 번째 500-pair compile / decompile·link | `2,000/2,000` / `1,998/2,000` |
+| 다섯 번째 500-pair 승인 / 탈락 | `394/106`, 승인률 `0.788` |
+| r5 누적 검토 / 승인 / 탈락 | `2,895 / 2,334 / 561` |
+| r5 Wilson 95% 승인률 하한 | `0.79142` |
+| 추가 필요 승인 / 하한 기준 예상 검토 | `116 / 147` |
+| tail 160 compile / decompile·link | `640/640` / `640/640` |
+| tail 160 승인 / 탈락 | `121/39`, 승인률 `0.75625` |
+| 최종 검토 / qualified / 탈락 | `3,055 / 2,455 / 600` |
+| 최종 선택 / verified reserve | `2,450 / 5` |
+| normalized record 목표 | `19,600`: 2,450 pair × 4 variant × 2 label |
 | raw payload·object 실행 | `0 / 0` |
 
-250-pair pilot과 네 500-pair 확대 batch는 모두 `0.90`
+### F7 model-ready target v1 실패와 v2 복구
+
+1차 target-preservation은 compiler 최적화 뒤 present/fixed 구분이 남는지
+확인했지만, 실제 SFT target이 그 관계를 정확히 인용하는지는 보장하지
+않았습니다. 따라서 학습 직전 다음 gate를 추가했습니다.
+
+1. decompiler comment를 제외한 target-specific relation 검사
+2. present/fixed가 서로 다른 compiler variant만 승인
+3. 실제 Qwen tokenizer로 system+user+assistant 전체 계산
+4. right truncation 없이 cutoff `4,096`
+5. pair-first split 뒤 고정 100건 수동 target 검토
+
+relation recovery r1·r2를 포함한 결과는 다음과 같습니다.
+
+| 항목 | 결과 |
+| --- | --- |
+| relation-qualified | `2,536 pair` |
+| target v1 + tokenizer 적격 | `2,488 pair` |
+| target v1 선택 / reserve | `2,450 / 38` |
+| normalized candidate record | `14,242`, 누출 0 |
+| model-ready split | train `4,000`, validation `400`, blind `500` |
+| compiler consistency | `100 pair / 800 records` |
+| 최대 token / cutoff 초과 | `3,981 / 0` |
+| split overlap / schema·semantic error / prompt 누출 | `0 / 0 / 0` |
+| 자동 gate | `PASS` |
+| 수동 target 검토 | `FAIL EARLY`: 명백한 evidence error `6`, 허용 `5` |
+| 최종 학습 승인 | `false` |
+
+오류는 CWE-195에 NUL 초기화만 인용하거나, CWE-127에
+`printWLine(dest)`만 인용하고, CWE-36에 CR/LF 제거만 인용하는 등
+라벨이 아니라 target evidence가 해당 CWE 관계를 가르치지 못한
+사례입니다. 자동 PASS를 이유로 학습하지 않고 v1을 실패 artifact로
+동결했습니다.
+
+v2는 같은 compiler variant의 present/fixed를 함께 읽고, target-specific
+문장 중 pair 차이를 우선하는
+`pair-contrast-target-evidence-v2`를 사용합니다. buffer copy의 wide·checked
+variant, signedness conversion, underread/underwrite offset, allocation과
+deallocation 관계를 우선합니다. 기존 relation pool에 v2를 적용하면
+`2,438`쌍만 통과해 목표보다 12쌍 부족했습니다. 규칙을 느슨하게 하지
+않고 남은 frozen queue에서 64쌍 recovery r3를 추가합니다.
+
+recovery r3 뒤 v2 자동 공급은 `2,450/2,479`로 통과했지만 수동
+100건에서 범위 guard, `free`, fixed path, safe signedness assignment,
+literal format 근거 누락이 6건 확인돼 조기 FAIL했습니다. v3와 v4는
+각각 source→sink와 CWE별 remediation 관계를 보강했으나, 새로운 고정
+100건에서도 여섯 번째 명백한 오류에 도달해 실패 artifact로
+동결했습니다.
+
+| iteration | tokenizer gate SHA | 최종 manifest SHA | 수동 판정 |
+| --- | --- | --- | --- |
+| v2 | `7a85a427…9d11` | `f8718d07…d696` | 6-error 조기 FAIL |
+| v3 | `53bf91ec…f6a9` | `c77a484f…994f` | 6-error 조기 FAIL |
+| v4 | `fe82c821…df46` | `e0ca8a07…a7d6` | 6-error 조기 FAIL |
+
+v5 `strict-pair-grounded-evidence-v5`는 다음 조건을 추가합니다.
+
+- present 쪽 target operation이 CWE별 최소 점수에 미달하면 제외
+- fixed 쪽에 강한 remediation line 또는 pair-unique 안전 operation이
+  없으면 제외
+- optimizer가 fixed 함수를 `return;`만 남긴 사례와 underread boundary가
+  사라진 사례를 수량 확보에 사용하지 않음
+- 중복 evidence line을 제거하고 source-size, sink, guard, release,
+  fixed assignment 관계를 함께 기록
+
+v5를 relation v5의 `2,510`쌍에 적용한 결과 `2,247`쌍만 통과해 목표보다
+203쌍 부족했습니다. tokenizer gate SHA-256은
+`651433bdfdede847ebe1f69dc0612eb7c4b42bfc3de69eebdc032e5b5e2005ea`입니다.
+기준을 낮추지 않고 frozen queue의 다음 400쌍을 recovery r4로
+동결했습니다. queue SHA-256은
+`858145ffa4ce779d9146a00281e911bfc584906b3fa07f3281f69f6491d8b9fb`이며,
+compile은 `1,600/1,600`, symbol link는 `1,600/1,600`, object 실행은
+`0`입니다. compile summary SHA-256은
+`32a6140dd8589c6c6e58b4efd8d14b87d82e413ea9b6fbf3536fe5691f341ee0`이며,
+Ghidra 4-shard decompile과 relation 재검사를 완료해 253쌍을 추가했습니다.
+recovery r5 64쌍에서도 compile·decompile·link `256/256`과 relation
+45쌍을 추가해 v5 공급은 최종 `2,450/2,477`로 PASS했습니다. 최종 v5
+tokenizer gate SHA-256은
+`ed561365cf46bbd95d347b3d745278aedb7f8baa181097be5800f9758d3ead2d`입니다.
+
+v5 model-ready dataset은 train 4,000건, validation 400건, blind 500건,
+100-pair/800-record consistency set과 모든 자동 gate를 통과했습니다.
+그러나 새 고정 100건 수동 검토에서 fixed remediation만 인용하고 실제
+constrained sink를 누락한 오류가 6건 발생해 다시 `FAIL EARLY`했습니다.
+최종 manifest SHA-256은
+`37d1f6bec3ea478aee1404cea044a1474c343d86343ede663721b995123b96f3`입니다.
+
+v6 `complete-fixed-role-evidence-v6`는 fixed target에 remediation과 실제
+sink가 함께 보일 것을 요구했습니다. 기존 relation 2,748쌍에 적용했을 때
+2,123쌍만 남아 목표보다 327쌍 부족했습니다. 남은 frozen 후보 260쌍을
+모두 성공시켜도 수량을 채울 수 없으므로 즉시 추가 decompile하지 않고
+탈락 pseudo-C를 CWE별로 감사했습니다.
+
+감사 결과 기준 자체가 아니라 디컴파일러 표현을 놓친 false reject가
+확인됐습니다. `operator_new__`, `std::ifstream::open`, 초기화 상수의
+직접 sink 전달, 명시적인 destination capacity와 bounded-copy 관계를
+같은 보안 근거로 정규화한
+`decompiler-normalized-role-evidence-v7`을 추가했습니다. v7은 기존
+공급에서 `2,329/2,450`을 통과해 부족분을 121쌍으로 줄였습니다. 이에
+마지막 frozen queue 260쌍을 recovery r6로 동결했습니다. queue SHA-256은
+`a7a8bab1fbcc24d08dccfe5546a45d8efb0d96dbbffcbfd462c87919768d6350`이며,
+compile·decompile·symbol/function link는 모두 `1,040/1,040`, object
+실행은 `0`입니다. relation-qualified 176쌍을 추가해 v7 공급은
+`2,450/2,468`로 PASS했습니다.
+
+v7 model-ready 자동 gate 뒤 첫 수동 사례에서 CWE-457 fixed target이
+초기화된 `data`와 다른 helper의 `anon_var` read를 묶는 연결 오류를
+확인했습니다. v8 `linked-role-evidence-v8`은 동일 변수 연결을 강제했지만
+공급이 `2,326/2,450`으로 내려갔습니다. 탈락 감사에서 fixed memory write와
+같은 base의 read가 명확한 사례를 구조적으로 연결한
+v9 `memory-write-read-linked-evidence-v9`은 공급 `2,450/2,498`과 자동
+model-ready gate를 통과했습니다. tokenizer gate SHA-256은
+`2292e38f06ed5c356c9dfc7d9c258d5ecbbaaad178ee852eba9747456c86364c`입니다.
+
+그러나 새 고정 100건 수동 검토에서 다음 명백한 evidence 오류 6건에
+도달해 v9도 `FAIL EARLY`했습니다.
+
+- fixed bounded copy에서 destination capacity 누락
+- CWE-457의 write/read 횟수를 결정하는 loop bound 누락
+- CWE-690 fixed에서 null guard와 constrained use 누락
+- CWE-124 present에서 negative destination offset 누락
+
+따라서 frozen queue 소진 여부와 무관하게 flat evidence line 선택 정책은
+학습 target으로 승인하지 않습니다. 다음 iteration은 line을 더 추가하는
+heuristic이 아니라 `source / control / sink / bound / remediation` role과
+그 관계를 출력 계약에 명시하는 versioned role-structured evidence
+contract입니다. 이 계약과 새 고정 100건이 통과하기 전 binary adapter
+학습은 계속 금지합니다.
+
+초기의 `2,450 pair × 4 variant × 2 label = 19,600` 전량 학습 가정은
+폐기합니다. compiler variant는 pair당 cutoff 내 하나를
+`613/612/613/612` 수준으로 균형 선택해 총 4,900건을 학습·검증·blind에
+배분하고, 4-variant를 모두 보유한 100 pair는 800건 consistency set으로
+별도 보관합니다. 새 고정 100건 수동 오류가 5건 이하일 때만
+`approved_for_training=true`로 전환합니다.
+
+250-pair pilot과 다섯 500-pair 확대 batch는 모두 `0.90`
 target-preservation 기준에 미달했으므로 탈락 pair를 교체 대상으로
 제외한다. 두 번째 batch의 106개 탈락에는 CWE-476·CWE-563 전체와
 O2에서 buffer operation, allocation/free, unchecked dereference 또는
 mismatched deallocation이 사라진 개별 pair가 포함된다. 이는 저신뢰
 후보를 자동 승인하지 않기 위한 candidate-quality gate다. 반면 최종
 2,450 verified pair를 확보할 수 있는지 판단하는 supply gate는 Wilson
-하한에서도 통과했다. 두 판정을 혼동하지 않고, 500-pair 단위로
-compile→decompile→명시 검토를 반복하며 매 batch 뒤 공급률과 잔여
-margin을 다시 계산한다.
+하한에서도 통과했다. r5 뒤에는 필요한 승인 116쌍에 9% 운영 여유를 더한
+tail 160쌍만 실행했다. Tail 자체의 0.90 batch gate는 실패했지만
+121쌍을 추가 확보해 qualified 2,455쌍이 되었고, 동결 queue 순서로
+2,450쌍을 선택했다. 초과 합격 5쌍은 품질 판정을 바꾸지 않고 verified
+reserve로 보존한다.
 
 250-pair pilot의 4개 병렬 decompile shard는 artifact mtime 기준 약
 `1,388.6초`(23.1분), 중복 merged artifact를 포함해 약 `106.9 MB`였다.
@@ -957,7 +1103,7 @@ margin을 다시 계산한다.
 
 ## F8 — NuriLab 호환성과 Handoff
 
-상태: `Blocked by F5/F7`
+상태: `Blocked by F7 target manual gate`
 
 NuriLab 또는 승인된 offline extractor가 다음 normalized record를
 생성합니다.

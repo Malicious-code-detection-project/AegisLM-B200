@@ -89,14 +89,17 @@ public class ExportJulietFunctions extends GhidraScript {
     }
 
     private String labelFor(String name) {
-        if (name.equals("bad") || name.endsWith("_bad")) {
+        if (
+            name.equals("bad")
+                || name.endsWith("_bad")
+                || name.startsWith("bad")
+        ) {
             return "present";
         }
         if (
             name.equals("good")
                 || name.endsWith("_good")
-                || name.startsWith("goodB2G")
-                || name.startsWith("goodG2B")
+                || name.startsWith("good")
         ) {
             return "not_observed";
         }
