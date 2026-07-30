@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from scripts.run_phase_f_binary_b0_compile_canary import _extract_members
+from scripts.run_phase_f_binary_b0_compile_canary import (
+    _extract_members,
+    _select_candidates,
+)
 
 
 def test_extract_members_limits_content_and_blocks_traversal(tmp_path: Path) -> None:
@@ -42,3 +45,17 @@ def test_candidate_fixture_is_json_serializable() -> None:
     }
 
     assert json.loads(json.dumps(fixture))["object_execution_count"] == 0
+
+
+def test_select_candidates_accepts_b0_primary_and_f7_pilot() -> None:
+    manifest = {
+        "candidates": [
+            {"pair_id": "accepted", "queue": "accepted"},
+            {"pair_id": "b0", "queue": "primary"},
+            {"pair_id": "f7", "queue": "pilot"},
+        ]
+    }
+
+    selected = _select_candidates(manifest, limit=2)
+
+    assert [row["pair_id"] for row in selected] == ["b0", "f7"]

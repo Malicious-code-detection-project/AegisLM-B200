@@ -29,11 +29,11 @@ def compile_canary(
         raise ValueError(f"output directory is not empty: {output_dir}")
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest = json.loads(candidate_manifest.read_text(encoding="utf-8"))
-    candidates = [row for row in manifest["candidates"] if row["queue"] == "primary"][
-        :limit
-    ]
+    candidates = _select_candidates(manifest, limit=limit)
     if len(candidates) < limit:
-        raise ValueError("candidate manifest does not contain enough primary pairs")
+        raise ValueError(
+            "candidate manifest does not contain enough primary or pilot pairs"
+        )
 
     extracted = output_dir / "extracted"
     source_root = extracted / "C"
@@ -170,6 +170,19 @@ def compile_canary(
         encoding="utf-8",
     )
     return summary
+
+
+def _select_candidates(
+    manifest: dict[str, Any],
+    *,
+    limit: int,
+) -> list[dict[str, Any]]:
+    """Accept both the B0 primary queue and F7 pilot/scale queues."""
+    return [
+        row
+        for row in manifest["candidates"]
+        if row.get("queue") in {"primary", "pilot"}
+    ][:limit]
 
 
 def _extract_members(
