@@ -56,22 +56,25 @@ recommendation은 일반적인 재확인 문구입니다. 따라서 calibration,
 decoding과 AegisLM semantic validator를 배포 필수조건으로 고정합니다.
 이 조건에서 decision과 evidence의 전체 절대 gate가 통과했습니다.
 
-F6-A binary 후보·서버 preflight와 F6-B B0 100-pair gate도 완료했습니다.
+F6-A binary 후보·서버 preflight와 F6-B B0 lifecycle을 완료했습니다.
 SARD/Juliet CC0 원천과 사용자 영역의 GCC·Clang 18·Ghidra 12.1.2
-toolchain을 동결했습니다. 후보 145쌍을 GCC·Clang × `O0/O2`로
-compile·decompile하고 target CWE 보존을 명시적으로 검토해 45쌍을
-탈락시켰습니다. 최종 승인 100쌍·400 variant는 모두 function link와
-target-preservation gate를 통과했습니다.
+toolchain을 동결했습니다. 최초 B0 판정은 후보 145쌍 중 100쌍을
+승인했지만, F7의 더 엄격한 target-evidence 정책을 소급 적용하면서
+`CWE-563` 1쌍을 추가 격리했습니다. 따라서 엄격 재감사 기준 B0는
+99쌍 승인·46쌍 탈락이며, 부족분은 F7 공급에서 대체합니다.
 
-승인 pair는 present/not_observed를 분리한 normalized record 800건으로
-materialize했습니다. schema, pseudo-C, bounded assembly, static-feature
-linkage는 모두 `1.00`이고, prompt provenance·gold label·source symbol
-누출과 raw payload·object 실행은 `0`입니다. F6-B는 `Pass`입니다.
-F7은 구조 적격 4,643 pair의 전체 queue를 동결하고 250-pair pilot을
-완료했습니다. 명시 검토에서 206 pair를 승인하고 44 pair를 제외했으며,
-과거 B0 결과를 합친 누적 승인/검토는 `306/395`입니다. Wilson 95% 하한
-기준으로도 목표 2,450 pair를 채우고 1,314 pair의 공급 여유가 있어
-500-pair 단위 확대를 승인했습니다.
+최초 승인 pair는 present/not_observed를 분리한 normalized record
+800건으로 materialize했고 schema, pseudo-C, bounded assembly,
+static-feature linkage `1.00`, prompt provenance·gold label·source symbol
+누출과 raw payload·object 실행 `0`을 확인했습니다. 다만 최종 데이터에는
+재감사에서 격리된 1쌍을 포함하지 않습니다.
+
+F7은 구조 적격 4,643 pair의 전체 queue를 동결했습니다. 엄격 정책으로
+과거 250-pair pilot을 `198/250`, B0를 `99/145`로 정정하고, 첫 500-pair
+확대 배치에서 compile `2,000/2,000`, decompile·function link
+`1,997/2,000`, target-preservation `420/500`을 확인했습니다. 현재 누적은
+`717/895`이며 Wilson 95% 승인률 하한 `0.77370`에서도 목표 2,450 pair
+확보 후 1,508 pair의 공급 여유가 남아 다음 500-pair 배치를 승인했습니다.
 
 Phase E에서는 Qwen3-Coder-Next 80B LoRA를 학습하고 adapter 저장·재로드,
 merge, vLLM serving, 5건 smoke와 500건 절대평가까지 완료했습니다. 인프라
@@ -166,7 +169,7 @@ Qwen3-Coder-Next 80B에서 학습, adapter 저장·로드, merge, 실제 API ser
 별개로 precision, recall, FPR, schema gate를 통과하지 못해 현재 adapter는
 채택하지 않습니다.
 
--> **Phase F: dataset 재설계 + source lifecycle PASS / binary F7 pilot**
+-> **Phase F: dataset 재설계 + source lifecycle PASS / binary F7 scale audit**
 
 기존 33만 건을 확대하지 않고 catalog→eligible manifest→materialized JSONL
 세 계층으로 재구성합니다. 구조 검사를 통과한 데이터에 대해 코드 근거가

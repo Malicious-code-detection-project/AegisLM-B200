@@ -81,14 +81,17 @@ Phase F의 우선순위는 다음과 같다.
 - evidence serving은 guided JSON Schema constrained decoding과
   AegisLM semantic validator를 필수조건으로 사용
 - F6-A binary candidate/toolchain inventory는 PASS
-- F6-B B0는 사용자 영역 Clang 18·Ghidra 12.1.2에서 145 pair를 검토해
-  100 pair·400 compiler variant를 승인하고 PASS로 종료
+- F6-B B0 최초 판정은 145 pair 중 100 pair 승인으로 종료했지만, F7의
+  엄격 target-evidence 정책을 소급 적용해 CWE-563 1 pair를 추가 격리
+- 엄격 재감사 기준 B0는 99/145이며 부족분은 F7 공급에서 대체
 - 승인 pair의 normalized binary record 800건은 schema·pseudo-C·assembly·
   static-feature linkage 1.00, prompt provenance/label/source-symbol 누출 0
-- F7 구조 적격 공급 4,643 pair를 동결하고 250-pair pilot을 명시 검토해
-  206 pair를 승인, 44 pair를 제외
-- 과거 B0를 합친 누적 승인/검토는 306/395, Wilson 95% 하한 공급
-  margin은 1,314 pair로 다음 500-pair batch를 승인
+- F7 구조 적격 공급 4,643 pair를 동결하고 엄격 정책으로 과거
+  250-pair pilot을 198/250, B0를 99/145로 정정
+- 첫 500-pair 확대 배치는 compile 2,000/2,000,
+  decompile·function link 1,997/2,000, target preservation 420/500
+- 누적 승인/검토는 717/895, Wilson 95% 하한 공급 margin은 1,508
+  pair로 다음 500-pair batch를 승인
 - Q2 250-step과 313-step 연장은 개선 근거가 없어 미실행
 - GPT-OSS 20B는 Qwen 결론 이후 보조 이식성 실험으로만 진행
 - source와 binary-derived adapter를 서로 분리해 절대평가

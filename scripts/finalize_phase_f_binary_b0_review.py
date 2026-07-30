@@ -15,7 +15,7 @@ def finalize_review(
     decisions: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Require an explicit pair policy and produce variant/pair gate metrics."""
-    policies = _expand_pair_policies(decisions)
+    policies = _expand_pair_policies(decisions, entries)
     finalized: list[dict[str, Any]] = []
     seen_pairs: set[str] = set()
     for entry in entries:
@@ -83,10 +83,16 @@ def finalize_review(
     return finalized, summary
 
 
-def _expand_pair_policies(decisions: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _expand_pair_policies(
+    decisions: dict[str, Any],
+    entries: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
     """Support the detailed v1 format and a compact, still-explicit v2 format."""
     if "pairs" in decisions:
         return decisions["pairs"]
+
+    if "cwe_pass" in decisions or "cwe_fail" in decisions:
+        return _expand_cwe_policies(decisions, entries)
 
     passed = decisions.get("pass_pair_ids")
     failed = decisions.get("failed_pairs")
@@ -118,6 +124,97 @@ def _expand_pair_policies(decisions: dict[str, Any]) -> dict[str, dict[str, Any]
             "notes": notes,
         }
     return policies
+
+
+def _expand_cwe_policies(
+    decisions: dict[str, Any],
+    entries: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Expand an artifact-bound CWE policy with explicit pair-level failures."""
+    pair_cwes: dict[str, str] = {}
+    for entry in entries:
+        pair_id = str(entry["pair_id"])
+        target_cwe = str(entry["target_cwe"])
+        previous = pair_cwes.setdefault(pair_id, target_cwe)
+        if previous != target_cwe:
+            raise ValueError(f"pair has conflicting target CWE values: {pair_id}")
+
+    expected_count = decisions.get("review_pair_count")
+    if expected_count != len(pair_cwes):
+        raise ValueError(
+            "review pair count mismatch: "
+            f"expected={expected_count}, actual={len(pair_cwes)}"
+        )
+    expected_sha256 = decisions.get("review_pair_index_sha256")
+    actual_sha256 = _pair_index_sha256(pair_cwes)
+    if expected_sha256 != actual_sha256:
+        raise ValueError(
+            "review pair index hash mismatch: "
+            f"expected={expected_sha256}, actual={actual_sha256}"
+        )
+
+    cwe_pass = decisions.get("cwe_pass")
+    cwe_fail = decisions.get("cwe_fail")
+    pair_fail = decisions.get("pair_fail")
+    if (
+        not isinstance(cwe_pass, list)
+        or not isinstance(cwe_fail, dict)
+        or not isinstance(pair_fail, dict)
+    ):
+        raise ValueError("CWE decisions require cwe_pass, cwe_fail, and pair_fail")
+    pass_cwes = {str(target_cwe) for target_cwe in cwe_pass}
+    fail_cwes = {str(target_cwe) for target_cwe in cwe_fail}
+    overlap = sorted(pass_cwes & fail_cwes)
+    if overlap:
+        raise ValueError(
+            "CWE values cannot be both pass and fail: " + ", ".join(overlap)
+        )
+
+    observed_cwes = set(pair_cwes.values())
+    missing_cwes = sorted(observed_cwes - pass_cwes - fail_cwes)
+    unused_cwes = sorted((pass_cwes | fail_cwes) - observed_cwes)
+    if missing_cwes:
+        raise ValueError("missing CWE review policies: " + ", ".join(missing_cwes))
+    if unused_cwes:
+        raise ValueError("unused CWE review policies: " + ", ".join(unused_cwes))
+
+    pass_notes = decisions.get(
+        "pass_notes",
+        "Explicit operator review confirmed target preservation across all variants.",
+    )
+    policies: dict[str, dict[str, Any]] = {}
+    for pair_id, target_cwe in pair_cwes.items():
+        if target_cwe in fail_cwes:
+            notes = cwe_fail[target_cwe]
+            if not isinstance(notes, str) or not notes.strip():
+                raise ValueError(f"failed CWE requires review notes: {target_cwe}")
+            policies[pair_id] = {"default": "fail", "notes": notes}
+        else:
+            policies[pair_id] = {
+                "default": "pass",
+                "notes": pass_notes,
+            }
+
+    for pair_id, notes in pair_fail.items():
+        pair_id = str(pair_id)
+        if pair_id not in pair_cwes:
+            raise ValueError(f"unused failed pair policy: {pair_id}")
+        if pair_cwes[pair_id] in fail_cwes:
+            raise ValueError(
+                f"pair-level failure duplicates a failed CWE policy: {pair_id}"
+            )
+        if not isinstance(notes, str) or not notes.strip():
+            raise ValueError(f"failed pair requires review notes: {pair_id}")
+        policies[pair_id] = {"default": "fail", "notes": notes}
+    return policies
+
+
+def _pair_index_sha256(pair_cwes: dict[str, str]) -> str:
+    payload = "".join(
+        f"{pair_id}\t{target_cwe}\n"
+        for pair_id, target_cwe in sorted(pair_cwes.items())
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def main() -> None:

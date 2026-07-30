@@ -1343,8 +1343,8 @@ Phase F 상세 기준은
 | F5-M1 최종 merge·vLLM | `Pass` | 두 채택 adapter를 각각 BF16 merge 후 vLLM TP2 검증 | `f5-m1-merged-vllm` | evidence는 constrained JSON Schema+semantic validator 필수 |
 | GPT-OSS-20B 보조 실험 | `Blocked` | F5 Qwen 결론 이후 이식성 확인 |  | Qwen 선행 조건 아님 |
 | F6-A binary 조사 | `Pass` | 후보·license·local source·toolchain inventory | `binary_candidate_inventory.json` | 외부 payload download 0 |
-| F6-B B0 100 pair | `Pass` | 145 pair 검토, 45 pair 탈락, 최종 100 pair·400 variant 승인 | gate SHA `73ade0fb…b8dd`; records SHA `737a9e39…e18c` | normalized 800건, prompt 누출·실행 payload 0 |
-| F7 binary adapter | `Running` | 250-pair pilot과 누적 supply gate | pilot review SHA `9bd9d026…6e60`; supply SHA `d58a5aad…6bed` | 206/250 승인, 누적 306/395; 다음 500-pair batch 승인 |
+| F6-B B0 100 pair | `Rerun` | strict re-audit에서 최초 승인 100 중 CWE-563 1 pair 추가 격리 | strict summary SHA `fde1e20b…b9f` | 엄격 기준 99/145; 부족분은 F7에서 대체 |
+| F7 binary adapter | `Running` | 첫 500-pair 확대와 누적 supply gate | batch SHA `2c0d09ae…d06d`; supply SHA `782a9cde…44fc` | 420/500 승인, 누적 717/895; 다음 500-pair batch 승인 |
 | F8 NuriLab/RAG/MCP | `Blocked` | source·binary 독립 gate 통과 |  |  |
 | F9 최종 결정 | `Not Started` | 채택/Source만/재학습/모델 변경/중단/Phase G |  |  |
 
@@ -2207,26 +2207,35 @@ target-preservation과 누출 감사를 수행하고, 운영자는 애매한 예
 F7 진입·중단 결정을 승인한다. F7에서는 2,000 pair를 억지로 채우지
 않으며 검증된 공급량이 부족하면 B0 결과만 보존한다.
 
-#### F7 250-pair pilot과 공급 gate 기록
+#### F7 엄격 재감사와 첫 500-pair 확대 기록
 
 | 항목 | 기록 |
 | --- | --- |
-| 상태 | `Pass — supply scale authorized` |
+| 상태 | `Pass — next 500-pair scale authorized` |
 | 구조 적격 공급 | `4,643 pair` |
 | pilot compile / decompile / link | `1,000/1,000` / `999/1,000` / `999/1,000` |
-| pilot 승인 / 탈락 | `206 / 44` |
-| pilot batch target-preservation `≥0.90` | `Fail`: `0.824`; 탈락 44 pair는 교체 |
-| 누적 검토 / 승인 / 탈락 | `395 / 306 / 89` |
-| Wilson 95% 승인률 하한 | `0.73095` |
-| 추가 필요 승인 / 하한 기준 예상 검토 | `2,144 / 2,934` |
-| 남은 공급 / 공급 margin | `4,248 / 1,314` |
-| 다음 queue | `500 pair`; SHA `20d1af82…18bd` |
+| strict re-audit pilot 승인 / 탈락 | `198 / 52` |
+| strict re-audit B0 승인 / 탈락 | `99 / 46` |
+| 첫 500-pair compile / decompile·link | `2,000/2,000` / `1,997/2,000` |
+| 첫 500-pair 승인 / 탈락 | `420 / 80` |
+| batch target-preservation `≥0.90` | `Fail`: `0.840`; 탈락 80 pair는 교체 |
+| 누적 검토 / 승인 / 탈락 | `895 / 717 / 178` |
+| Wilson 95% 승인률 하한 | `0.77370` |
+| 추가 필요 승인 / 하한 기준 예상 검토 | `1,733 / 2,240` |
+| 남은 공급 / 공급 margin | `3,748 / 1,508` |
+| 다음 queue | `500 pair`; SHA `8dfccb03…7c16` |
 | decompile 병렬 wall / artifact | 약 `23.1분` / 약 `106.9 MB` |
 | 500-pair 단순 예상 | 약 `46.3분` / 약 `213.8 MB`, 수동 검토 제외 |
 | raw payload / object 실행 | `0 / 0` |
 
-batch의 `0.90` 기준 실패는 해당 250개를 전부 승인할 수 없다는 뜻이다.
+batch의 `0.90` 기준 실패는 해당 batch를 전부 승인할 수 없다는 뜻이다.
 공급 gate는 탈락 후보를 버리고도 최종 2,450 verified pair를 확보할
 여유가 있는지를 별도로 판정한다. 이번에는 공급 gate가 통과했으므로
 다음 500-pair batch로 진행하며, 완료 후 같은 방식으로 수용률과 margin을
 재계산한다.
+
+엄격 재감사는 과거 결과를 삭제하지 않고 새 summary로 supersede한다.
+과거 `306/395`는 비교용 이력이며 이후 공급 계산에는 `297/395`만 사용한다.
+주요 정정 원인은 O2에서 `CWE-476` null dereference와 `CWE-563` unused
+assignment가 사라졌는데 generic control flow만으로 PASS를 부여했던
+판정 불일치다.
