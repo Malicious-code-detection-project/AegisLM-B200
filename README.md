@@ -70,11 +70,12 @@ static-feature linkage `1.00`, prompt provenance·gold label·source symbol
 재감사에서 격리된 1쌍을 포함하지 않습니다.
 
 F7은 구조 적격 4,643 pair의 전체 queue를 동결했습니다. 엄격 정책으로
-과거 250-pair pilot을 `198/250`, B0를 `99/145`로 정정하고, 첫 500-pair
-확대 배치에서 compile `2,000/2,000`, decompile·function link
-`1,997/2,000`, target-preservation `420/500`을 확인했습니다. 현재 누적은
-`717/895`이며 Wilson 95% 승인률 하한 `0.77370`에서도 목표 2,450 pair
-확보 후 1,508 pair의 공급 여유가 남아 다음 500-pair 배치를 승인했습니다.
+과거 250-pair pilot을 `198/250`, B0를 `99/145`로 정정했습니다. 첫 번째와
+두 번째 500-pair 확대 배치는 모두 compile `2,000/2,000`,
+decompile·function link `1,997/2,000`을 기록했고, target-preservation은
+각각 `420/500`, `394/500`이었습니다. 현재 누적은 `1,111/1,395`이며
+Wilson 95% 승인률 하한 `0.77448`에서도 목표 2,450 pair 확보 후
+1,519 pair의 공급 여유가 남아 세 번째 500-pair 배치를 승인했습니다.
 
 Phase E에서는 Qwen3-Coder-Next 80B LoRA를 학습하고 adapter 저장·재로드,
 merge, vLLM serving, 5건 smoke와 500건 절대평가까지 완료했습니다. 인프라

@@ -35,7 +35,7 @@ flowchart LR
 | F5 | `Complete — lifecycle PASS with constrained decoding` | 두 BF16 merge·vLLM TP2 완료; guided JSON Schema와 semantic validator에서 전체 gate PASS |
 | F6-A | `Complete` | 후보·license·local source·toolchain inventory 동결 |
 | F6-B | `Complete — strict re-audit 99/145` | 최초 100 pair 중 CWE-563 1 pair 추가 격리; 부족분은 F7에서 대체 |
-| F7 | `Running — first 500-pair batch complete` | 누적 승인 717/895, Wilson 하한 공급 margin 1,508 pair; 다음 500-pair batch 승인 |
+| F7 | `Running — two 500-pair batches complete` | 누적 승인 1,111/1,395, Wilson 하한 공급 margin 1,519 pair; 세 번째 500-pair batch 승인 |
 | F8 | `Blocked by F5/F7` | 독립 adapter 결과 필요 |
 | F9 | `Not Started` | 앞 단계 결과 필요 |
 
@@ -853,7 +853,7 @@ pseudo-C 또는 제한된 assembly에서 관찰되는 경우에만 100-pair mani
 
 ## F7 — Binary Dataset v1과 별도 Adapter
 
-상태: `Running — first 500-pair batch complete / supply gate PASS`
+상태: `Running — two 500-pair batches complete / supply gate PASS`
 
 - pair 최대 2,000
 - before `present`: 최대 2,000
@@ -874,11 +874,11 @@ Source adapter와 섞지 않고 별도 학습·평가합니다.
 
 검증된 pair가 부족하면 저신뢰 데이터로 채우지 않고 B0 결과만 남깁니다.
 
-### F7 공급량, 엄격 재감사와 첫 500-pair 확대 판정
+### F7 공급량, 엄격 재감사와 두 차례 500-pair 확대 판정
 
 F6-B에서 사용한 후보를 포함해 구조 적격 4,643 pair의 결정적 queue를
-동결했다. 250-pair pilot 뒤 첫 500-pair 확대 배치를 GCC·Clang ×
-`O0/O2`로 compile·decompile했다. 확대 배치 검토 중 동일한
+동결했다. 250-pair pilot 뒤 두 차례 500-pair 확대 배치를 GCC·Clang ×
+`O0/O2`로 compile·decompile했다. 첫 확대 배치 검토 중 동일한
 최적화 소실 사례가 과거에는 PASS와 FAIL로 섞여 있음을 발견해
 `strict-target-evidence-v1` 정책을 과거 B0와 pilot에도 소급 적용했다.
 이 정책에서는 target-specific operation 또는 present/not_observed
@@ -893,20 +893,25 @@ F6-B에서 사용한 후보를 포함해 구조 적격 4,643 pair의 결정적 q
 | 엄격 재감사 B0 승인 / 탈락 | `99/46` |
 | 첫 500-pair compile / decompile·link | `2,000/2,000` / `1,997/2,000` |
 | 첫 500-pair 승인 / 탈락 | `420/80`, 승인률 `0.840` |
-| 누적 검토 / 승인 / 탈락 | `895 / 717 / 178` |
-| 누적 관측 승인률 | `0.80112` |
-| Wilson 95% 승인률 하한 | `0.77370` |
-| 추가 필요 승인 / 하한 기준 예상 검토 | `1,733 / 2,240` |
-| 남은 구조 공급 / 공급 margin | `3,748 / 1,508` |
+| 두 번째 500-pair compile / decompile·link | `2,000/2,000` / `1,997/2,000` |
+| 두 번째 500-pair 승인 / 탈락 | `394/106`, 승인률 `0.788` |
+| 누적 검토 / 승인 / 탈락 | `1,395 / 1,111 / 284` |
+| 누적 관측 승인률 | `0.79642` |
+| Wilson 95% 승인률 하한 | `0.77448` |
+| 추가 필요 승인 / 하한 기준 예상 검토 | `1,339 / 1,729` |
+| 남은 구조 공급 / 공급 margin | `3,248 / 1,519` |
 | raw payload·object 실행 | `0 / 0` |
 
-250-pair pilot과 첫 500-pair 확대 batch는 각각 `0.90`
+250-pair pilot과 두 500-pair 확대 batch는 모두 `0.90`
 target-preservation 기준에 미달했으므로 탈락 pair를 교체 대상으로
-제외한다. 이는 저신뢰 후보를 자동 승인하지 않기 위한 candidate-quality
-gate다. 반면 최종 2,450 verified pair를 확보할 수 있는지 판단하는
-supply gate는 Wilson 하한에서도 통과했다. 두 판정을 혼동하지 않고,
-500-pair 단위로 compile→decompile→명시 검토를 반복하며 매 batch 뒤
-공급률과 잔여 margin을 다시 계산한다.
+제외한다. 두 번째 batch의 106개 탈락에는 CWE-476·CWE-563 전체와
+O2에서 buffer operation, allocation/free, unchecked dereference 또는
+mismatched deallocation이 사라진 개별 pair가 포함된다. 이는 저신뢰
+후보를 자동 승인하지 않기 위한 candidate-quality gate다. 반면 최종
+2,450 verified pair를 확보할 수 있는지 판단하는 supply gate는 Wilson
+하한에서도 통과했다. 두 판정을 혼동하지 않고, 500-pair 단위로
+compile→decompile→명시 검토를 반복하며 매 batch 뒤 공급률과 잔여
+margin을 다시 계산한다.
 
 250-pair pilot의 4개 병렬 decompile shard는 artifact mtime 기준 약
 `1,388.6초`(23.1분), 중복 merged artifact를 포함해 약 `106.9 MB`였다.
@@ -919,10 +924,16 @@ supply gate는 Wilson 하한에서도 통과했다. 두 판정을 혼동하지 �
   `26eb2d76f6d8bde2ac5cfa9df064dff7ec10989abe72b1cea6985fc9ccc8b223`
 - 첫 500-pair review summary SHA-256:
   `2c0d09ae26f94610ef28450a973d3112197e61c723c87b062ffdb98d17c0d06d`
+- 두 번째 500-pair compile summary SHA-256:
+  `60c7e673ac5623c63011534be175afb61fb7c8f387cd1ef537fc2fb390ed742f`
+- 두 번째 500-pair decompile summary SHA-256:
+  `3476f170e939c79f5bb6c081e512a48c9d14f2a766b3a7115e33e42a6ec565c2`
+- 두 번째 500-pair review summary SHA-256:
+  `ad4e87f2e0b519c216a0533a6388cc3b2cba6dde9d87d36e4db666b0803eaa30`
 - 누적 supply outcome SHA-256:
-  `782a9cdeeba1e5efd4fdceb3103f8f39ae1fb0564d0793ddbd33393ff4ab44fc`
+  `ba604d93b612f985687270ae2e4bfb1966cd774d28e4015045d9dec18498998b`
 - 다음 500-pair queue SHA-256:
-  `8dfccb0302b36bad34af15fcbf9ad548048ef003098ae856fc36b25999fe7c16`
+  `307f96f08fec8b5b506d9aed5318e2147e3b4439ce075c281f9ad0baa026f707`
 - resource summary SHA-256:
   `dd349e488a2c9a25c1527c97c1f744d415aa1d5f4006212c29d7f7b43c424f70`
 
