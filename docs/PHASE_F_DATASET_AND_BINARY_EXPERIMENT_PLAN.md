@@ -1876,3 +1876,27 @@ allocation/source length/read-write sink 관계를 보존하는지 수동 확인
 것입니다. crash type만으로 CWE-121/122/126을 부여하지 않습니다.
 patch↔CWE 오류율이 5%를 초과하면 source extraction과 mapping을
 재설계하고 binary compile/decompile 단계로 진행하지 않습니다.
+
+### ARVO Patch Gate 최종 결과
+
+공개 GitHub 개발자 패치만 허용하고 repository+commit을 중복 제거한 뒤
+각 family 50건, 총 200건을 다시 동결했습니다.
+
+- supported-host metadata 후보: `2,144/2,675`
+- review queue: `200/200`, 고유 patch identity `200`
+- 자동 제외: Git binary patch `13`, C/C++ source hunk 없음 `5`
+- 수동 오류 예산: `10/200`
+- 확정 오류: `11/200`
+- 최소 오류율: `5.5%`
+- 결과: `FAIL EARLY`
+- training approval: `false`
+- PoC/raw payload read, Docker/object/reproducer 실행: 모두 `0`
+
+남은 189건이 모두 정상이어도 5% gate를 회복할 수 없으므로 검토를
+중단했습니다. ARVO crash family mapping은 supply로 사용하지 않으며
+binary compile/decompile로 진행하지 않습니다. 다음 공급 감사는
+patch-localized CWE 후보인 MegaVul/CVEfixes와 representation alignment
+후보인 Assemblage/Decompile-Bench를 서로 분리합니다. 자세한 판정과
+artifact hash는
+[ARVO patch gate 결정문](PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
+보존합니다.

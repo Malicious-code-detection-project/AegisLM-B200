@@ -52,32 +52,16 @@ def audit_arvo_metadata(
         family_counts[family] += 1
         if not _metadata_candidate_eligible(row):
             continue
-        candidate = {
-            "candidate_cwe": ARVO_FAMILY_CWE[family],
-            "crash_family": family,
-            "crash_type": str(row["crash_type"]),
-            "disposition": "quarantine",
-            "disposition_reason": "manual_patch_and_cwe_mapping_required",
-            "fix_commit": str(row["fix_commit"]),
-            "language": str(row["language"]).lower(),
-            "local_id": int(row["localId"]),
-            "patch_url": str(row["patch_url"]),
-            "project": str(row["project"]),
-            "repo_addr": str(row["repo_addr"]),
-            "sanitizer": str(row["sanitizer"]),
-            "severity": str(row["severity"] or ""),
-        }
-        eligible[family].append(candidate)
+        eligible[family].append(_candidate_from_row(row, family))
 
     selected: list[dict[str, Any]] = []
     selected_counts: dict[str, int] = {}
     for family in sorted(ARVO_FAMILY_CWE):
-        family_rows = _select_project_diverse(
+        family_rows = rank_arvo_project_diverse(
             eligible.get(family, []),
             seed=seed,
             family=family,
-            quota=family_quota,
-        )
+        )[:family_quota]
         selected.extend(family_rows)
         selected_counts[family] = len(family_rows)
 
@@ -118,6 +102,49 @@ def audit_arvo_metadata(
     }
 
 
+def list_arvo_metadata_candidates(database: Path) -> list[dict[str, Any]]:
+    """Return every safe metadata candidate without reading payload columns."""
+    candidates: list[dict[str, Any]] = []
+    for row in _load_safe_rows(database):
+        family = _crash_family(str(row["crash_type"]))
+        if family is not None and _metadata_candidate_eligible(row):
+            candidates.append(_candidate_from_row(row, family))
+    return candidates
+
+
+def rank_arvo_project_diverse(
+    rows: Sequence[dict[str, Any]],
+    *,
+    seed: int,
+    family: str,
+) -> list[dict[str, Any]]:
+    """Rank all rows deterministically while cycling through projects."""
+    by_project: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        by_project[str(row["project"])].append(row)
+    ranked_projects = sorted(
+        by_project,
+        key=lambda project: _rank(seed, family, project),
+    )
+    for project in ranked_projects:
+        by_project[project].sort(
+            key=lambda row: _rank(seed, family, project, str(row["local_id"]))
+        )
+
+    ranked: list[dict[str, Any]] = []
+    round_index = 0
+    while True:
+        added = False
+        for project in ranked_projects:
+            project_rows = by_project[project]
+            if round_index < len(project_rows):
+                ranked.append(project_rows[round_index])
+                added = True
+        if not added:
+            return ranked
+        round_index += 1
+
+
 def _load_safe_rows(database: Path) -> list[dict[str, Any]]:
     uri = f"{database.resolve().as_uri()}?mode=ro"
     query = f"SELECT {', '.join(ARVO_QUERIED_COLUMNS)} FROM arvo"  # noqa: S608
@@ -138,6 +165,27 @@ def _metadata_candidate_eligible(row: Mapping[str, Any]) -> bool:
     )
 
 
+def _candidate_from_row(
+    row: Mapping[str, Any],
+    family: str,
+) -> dict[str, Any]:
+    return {
+        "candidate_cwe": ARVO_FAMILY_CWE[family],
+        "crash_family": family,
+        "crash_type": str(row["crash_type"]),
+        "disposition": "quarantine",
+        "disposition_reason": "manual_patch_and_cwe_mapping_required",
+        "fix_commit": str(row["fix_commit"]),
+        "language": str(row["language"]).lower(),
+        "local_id": int(row["localId"]),
+        "patch_url": str(row["patch_url"]),
+        "project": str(row["project"]),
+        "repo_addr": str(row["repo_addr"]),
+        "sanitizer": str(row["sanitizer"]),
+        "severity": str(row["severity"] or ""),
+    }
+
+
 def _crash_family(crash_type: str) -> str | None:
     normalized = crash_type.lower()
     for prefix, family in (
@@ -149,42 +197,6 @@ def _crash_family(crash_type: str) -> str | None:
         if normalized.startswith(prefix):
             return family
     return None
-
-
-def _select_project_diverse(
-    rows: Sequence[dict[str, Any]],
-    *,
-    seed: int,
-    family: str,
-    quota: int,
-) -> list[dict[str, Any]]:
-    by_project: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for row in rows:
-        by_project[str(row["project"])].append(row)
-    ranked_projects = sorted(
-        by_project,
-        key=lambda project: _rank(seed, family, project),
-    )
-    for project in ranked_projects:
-        by_project[project].sort(
-            key=lambda row: _rank(seed, family, project, str(row["local_id"]))
-        )
-
-    selected: list[dict[str, Any]] = []
-    round_index = 0
-    while len(selected) < quota:
-        added = False
-        for project in ranked_projects:
-            project_rows = by_project[project]
-            if round_index < len(project_rows):
-                selected.append(project_rows[round_index])
-                added = True
-                if len(selected) == quota:
-                    break
-        if not added:
-            break
-        round_index += 1
-    return selected
 
 
 def _rank(seed: int, *parts: str) -> str:

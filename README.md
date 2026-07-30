@@ -137,6 +137,15 @@ patch 관계로 재설계하기 위한 후보이며, crash type을 CWE gold로 �
 않습니다. PoC/raw payload 읽기, Docker image pull, reproducer와 object
 실행은 모두 0이고 학습 승인은 여전히 false입니다.
 
+후속 공개 개발자 패치 gate에서는 고유 patch 200건을 확보했지만 수동
+검토에서 확정 오류가 `11/200`으로 허용 예산 10건을 초과해
+`FAIL EARLY`했습니다. Git binary patch 13건과 C/C++ source hunk가 없는
+패치 5건은 queue 생성 단계에서 제외했습니다. ARVO crash family를
+CWE-121/122/126 gold로 변환하지 않으며 binary adapter 학습도 시작하지
+않습니다. 상세 근거는
+[`docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md`](docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
+보존합니다.
+
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
 허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
 규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
@@ -281,6 +290,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/ABSOLUTE_EVALUATION.md` - label-blind 코드 challenge, adapter 서빙, 절대평가 gate
 - `docs/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
 - `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
+- `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` - ARVO 200건 공개 개발자 패치 수집, 수동 `FAIL EARLY`, 학습 불승인 결정
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽

@@ -22,6 +22,7 @@ Project NuriLab과 협업 방식과 보안 철학은 공유하지만, 이 저장
 | label-blind 코드 challenge와 절대평가 gate | `docs/ABSOLUTE_EVALUATION.md` |
 | B200 수동 파인튜닝 검증 실행·기록 워크북 | `docs/FINETUNING_TEST_WORKBOOK.md` |
 | Phase F 데이터 재설계·binary-derived 실험 정본 | `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` |
+| ARVO patch↔buffer-family 수동 gate 결정 | `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` |
 | source label·근거 수동 검토 기준 | `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md` |
 | baseline/adapter 평가 결과 기록 템플릿 | `docs/EXPERIMENT_LOG_TEMPLATE.md` |
 | Phase D 완료 조건과 Phase E 착수 gate | `docs/PHASE_D_EXIT_CRITERIA.md` |
@@ -358,7 +359,10 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
   benchmark로만 보존한다.
 - 상세 근거는
   `docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`를 따른다.
-- 다음 binary feasibility는 ARVO v3 metadata 200건의 patch↔CWE 수동
-  검토다. crash type을 gold CWE로 자동 변환하지 않는다.
+- ARVO 공개 개발자 패치 200건 수동 gate는 오류 `11/200`으로
+  `FAIL EARLY`했다. crash type을 gold CWE로 자동 변환하지 않는다.
+- ARVO는 binary adapter 학습 supply로 승인하지 않는다.
+- 다음 공급 감사는 MegaVul/CVEfixes의 patch-localized CWE와
+  Assemblage/Decompile-Bench의 alignment 역할을 분리한다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.

@@ -17,6 +17,21 @@
       "stack_buffer_write": "CWE-121 candidate"
     }
   },
+  "patch_review": {
+    "supported_hosts": [
+      "github.com"
+    ],
+    "max_patch_bytes": 5242880,
+    "require_unique_repository_commit": true,
+    "require_reviewable_c_cpp_hunk": true,
+    "reject_git_binary_patch": true,
+    "required_records": 200,
+    "maximum_error_rate": 0.05,
+    "result": "fail_early",
+    "confirmed_errors": 11,
+    "error_budget": 10,
+    "approved_for_training": false
+  },
   "safety": {
     "read_poc": false,
     "read_crash_output": false,

@@ -2405,7 +2405,42 @@ v3 metadata DB만 확보했습니다. PoC와 실행파일을 사용한 평가가
 | disposition | 전부 `quarantine` |
 | raw payload read | `0` |
 | Docker pull / object 실행 | `0 / 0` |
-| 현재 판정 | `manual_feasibility_ready`, training 불승인 |
+| metadata 판정 | `manual_feasibility_ready`, training 불승인 |
 
 수동 검토자는 crash type을 CWE 정답으로 복사하지 않고 patch 전후의
 allocation, source length, read/write sink가 실제로 연결되는지 확인합니다.
+
+### ARVO 공개 개발자 패치 및 수동 Gate 결과
+
+| 기록 항목 | 값 |
+|---|---|
+| supported host | `github.com` commit patch only |
+| patch max size | `5 MiB` |
+| 최종 queue | family별 50건, 총 `200` |
+| 고유 repository+commit | `200/200` |
+| 자동 제외 | Git binary patch `13`; C/C++ source hunk 없음 `5` |
+| 수동 오류 예산 | `10/200` |
+| 확정 오류 | `11/200` |
+| 최소 오류율 | `5.5%` |
+| 최종 판정 | `FAIL EARLY` |
+| training 승인 | `false` |
+| raw payload / PoC read | `0 / 0` |
+| Docker / reproducer / object 실행 | `0 / 0 / 0` |
+
+오류 11건이 확인된 시점에 남은 189건을 모두 정상으로 가정해도 5%를
+초과하므로 추가 검토를 중단했습니다. 미검토 레코드는 PASS가 아닙니다.
+
+증거 hash:
+
+- review manifest:
+  `3926e39e1d3ac430a590a393f2ab7828f071f4fa709010972d0a8af385f932d1`
+- readable queue:
+  `68ab5f303d3db7b3da9188018c6abe935e267a541e4ffed8ceff4a96627c8bbb`
+- operator decisions:
+  `8e70104439f29e7b1538d9aab70318b8aeeba5ff81a4b14fcdfb17342b6d3308`
+- final decision:
+  `9dcbf615a03a0e073c1bf03512ade2de939a1b5f01e3d64239ed76a4e53d72c3`
+
+다음 단계는 ARVO 재라벨링이 아닙니다. patch-localized CWE 공급 후보
+MegaVul/CVEfixes와 source–binary alignment 후보 Assemblage/
+Decompile-Bench를 별도 gate로 평가합니다.

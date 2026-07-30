@@ -169,7 +169,7 @@ metadata benchmark로 나눕니다.
 | Candidate | Phase F role | Decision |
 | --- | --- | --- |
 | BigVul buildable patch pair | target CWE before/after binary pair | `primary-if-verified` |
-| [ARVO v3](https://github.com/n132/ARVO-Meta/releases/tag/v3.0.0) | 재현 가능한 C/C++ vulnerable/fixed patch와 buffer extractor 복구 | `metadata-acquired`; 6,138건 DB SHA 고정, 200건 quarantine feasibility, PoC/image/object 실행 금지 |
+| [ARVO v3](https://github.com/n132/ARVO-Meta/releases/tag/v3.0.0) | 재현 가능한 C/C++ vulnerable/fixed patch와 buffer extractor 복구 | `manual-gate-failed`; 200건 중 오류 11건으로 `FAIL EARLY`, crash family→CWE 변환·학습 금지 |
 | [Assemblage](https://assemblage-dataset.net/) | source-built PE/ELF와 compiler variant | `feasibility-candidate` |
 | [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–binary–decompile representation | `feasibility-candidate` |
 | [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `benchmark-candidate` |
@@ -189,6 +189,13 @@ metadata DB의 SHA-256은
 `331184ca807c2f136f98dac9f1df94c893f4ee2fdf9329dca517ff88e72f97ce`입니다.
 PoC, crash output, reproducer command는 읽지 않았고 Docker image pull과
 object 실행도 수행하지 않았습니다.
+
+공개 개발자 패치 200건을 별도 수집해 검토했지만 확정 오류
+`11/200`으로 5% gate를 초과했습니다. Git binary patch 13건과 C/C++
+source hunk가 없는 패치 5건은 queue에서 자동 제외했습니다. ARVO는
+현 상태에서 binary SFT label 공급원이 아니며, 상세 결과는
+[ARVO patch gate 결정문](PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)을
+따릅니다.
 
 SOREL-20M full 약 8 TB download는 현재 shared storage를 거의 소진하므로
 시작하지 않습니다. EMBER2024도 초기 SFT에 섞지 않고 독립된
@@ -217,9 +224,10 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 1. [완료] F2 source contract·code-grounded target·token gate 구현
 2. [완료] NIST SARD/Juliet 고정 100건 수동 label·근거 감사
 3. SARD 통과 자료를 `phase-f-source-v3`으로 통합·동결
-4. ARVO 200건 buffer patch↔CWE 수동 feasibility
-5. Assemblage·Decompile-Bench의 metadata 및 소규모 aligned subset
-6. BinKit compiler-robustness subset
-7. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
+4. [실패 종료] ARVO 200건 buffer patch↔CWE 수동 feasibility
+5. MegaVul·CVEfixes patch-localized CWE 공급 metadata preflight
+6. Assemblage·Decompile-Bench의 metadata 및 소규모 aligned subset
+7. BinKit compiler-robustness subset
+8. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
 
 전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.
