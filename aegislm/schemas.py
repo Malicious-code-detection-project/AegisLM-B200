@@ -25,6 +25,85 @@ SOURCE_EVIDENCE_LEVELS = (
     "analyzer_grounded",
 )
 
+SOURCE_COMPACT_EVIDENCE_OUTPUT_SCHEMA: dict[str, object] = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "aegislm.source-compact-evidence.v1",
+    "title": "AegisLM Source Compact Evidence v1",
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "schema_version",
+        "assessment",
+        "evidence_spans",
+        "confidence",
+    ],
+    "properties": {
+        "schema_version": {"const": "aegislm.source-compact-evidence.v1"},
+        "assessment": {"type": "string", "enum": list(SOURCE_ASSESSMENTS)},
+        "evidence_spans": {
+            "type": "array",
+            "maxItems": 8,
+            "uniqueItems": True,
+            "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000,
+            },
+        },
+        "confidence": {
+            "type": "string",
+            "enum": list(CONFIDENCE_LEVELS),
+        },
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {"assessment": {"enum": ["present", "not_observed"]}},
+                "required": ["assessment"],
+            },
+            "then": {"properties": {"evidence_spans": {"minItems": 1}}},
+        },
+        {
+            "if": {
+                "properties": {"assessment": {"const": "uncertain"}},
+                "required": ["assessment"],
+            },
+            "then": {"properties": {"evidence_spans": {"maxItems": 0}}},
+        },
+    ],
+}
+
+SOURCE_EVIDENCE_LINES_OUTPUT_SCHEMA: dict[str, object] = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "aegislm.source-evidence-lines.v1",
+    "title": "AegisLM Source Evidence Line Ranges v1",
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["schema_version", "evidence_ranges", "confidence"],
+    "properties": {
+        "schema_version": {"const": "aegislm.source-evidence-lines.v1"},
+        "evidence_ranges": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "uniqueItems": True,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["start_line", "end_line"],
+                "properties": {
+                    "start_line": {"type": "integer", "minimum": 1},
+                    "end_line": {"type": "integer", "minimum": 1},
+                },
+            },
+        },
+        "confidence": {
+            "type": "string",
+            "enum": list(CONFIDENCE_LEVELS),
+        },
+    },
+}
+
 OUTPUT_CONTRACT_SCHEMA: dict[str, object] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "AegisLM Phase C Output Contract",
@@ -303,7 +382,7 @@ SOURCE_VULNERABILITY_OUTPUT_SCHEMA: dict[str, object] = {
                     "code_spans": {
                         "type": "array",
                         "minItems": 1,
-                        "maxItems": 10,
+                        "maxItems": 8,
                         "items": {
                             "type": "string",
                             "minLength": 1,
@@ -334,7 +413,7 @@ SOURCE_VULNERABILITY_OUTPUT_SCHEMA: dict[str, object] = {
                     "code_spans": {
                         "type": "array",
                         "minItems": 1,
-                        "maxItems": 10,
+                        "maxItems": 8,
                         "items": {
                             "type": "string",
                             "minLength": 1,

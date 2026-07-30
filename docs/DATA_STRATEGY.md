@@ -416,6 +416,27 @@ target·token gate를 통과한 학습 승인본은 아닙니다.
 setup·guard·effect exact span을 복구했습니다. `phase-f-sard-grounded-v2`는
 source assessment v2 계약, system/user/assistant 전체 누출 감사, 실제 Qwen
 2,048-token gate와 고정 100건 검토를 통과해
-`ready_for_source_v3_integration` 상태입니다. 이 자료는 F3 통합 후보이며,
-F3 manifest와 training config를 동결하기 전까지
-`approved_for_training=false`를 유지합니다.
+`ready_for_source_v3_integration` 상태로 F3 입력에 사용했습니다. F3
+`phase-f-source-v3`은 입력 hash, group/content split, prompt/target
+round-trip, 실제 Qwen 2,048-token gate, challenge/gold 분리와 결정적
+재빌드를 통과해 `approved_for_training=true`로 동결됐습니다.
+
+2026-07-30에는 기존 blind 500건 중 개발 과정에서 노출된 20 ID를 모든
+prediction artifact의 union으로 제거한
+`phase-f-source-untouched-blind-480-v1`을 동결했습니다. 480건은
+positive/negative `240/240`이며 challenge, gold, private records와 노출
+ID hash를 별도 manifest에 기록했습니다. 이 집합은 Q1R10→Q1R9 최종
+평가에 사용해 gold가 공개됐으므로 다시 blind로 사용하지 않습니다.
+
+이전 frozen inventory에서는 미선택 unique pair를 `2,441`개로 추정했습니다.
+현재 extractor revision에서 기존 group ID와 code hash를 모두 제외한 뒤
+실제로 사용할 수 있는 unique pair는 `2,217`개로 재확인됐습니다. 이 중
+250쌍만 `phase-f-source-fresh-blind-500-v1`에 사용했습니다. 기존 5,750
+group 및 11,500 code와 overlap은 각각 `0`입니다. 수량을 맞추기 위해
+quarantine record나 기존 평가 record를 재사용하지 않습니다.
+
+이 신규 500건은 Q1R11 dev100 통과 뒤 Q1R10→Q1R11 최종 blind에 한 번
+사용했고 전체 two-stage gate를 통과했습니다. Gold가 공개됐으므로 이제
+`frozen_evaluation_evidence`로 보존하며 후속 adapter 선택이나 threshold
+조정의 blind set으로 재사용하지 않습니다. 남은 eligible pair를 자동으로
+모두 test로 승격하지 않고 reserve 상태로 유지합니다.

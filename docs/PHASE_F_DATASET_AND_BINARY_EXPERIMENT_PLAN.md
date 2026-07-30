@@ -29,19 +29,23 @@ flowchart LR
 | --- | --- | --- |
 | F0 | `Complete` | Phase E infrastructure PASS / quality FAIL |
 | F1 | `Complete` | r2 group-first pool·taxonomy·reserve·2개 cross-dataset 재현성 감사 통과 |
-| F2 | `Complete` | source output v2, causal evidence builder, Qwen token gate, 고정 100건 수동 검토 `0/100` 오류 |
-| F3 | `Ready` | 승인된 `phase-f-sard-grounded-v2`를 `phase-f-source-v3`으로 구축·동결 |
-| F4 | `Blocked by F3` | 승인 challenge 필요 |
-| F5 | `Blocked by F3/F4` | 신규 YAML·checkpoint guard도 필요 |
-| F6-A | `Ready — 병행 조사 가능` | GPU 불필요 |
-| F6-B | `Blocked by F5` | source adapter 판정 후 실행 |
-| F7 | `Blocked by F6-B` | 검증된 binary pair 필요 |
+| F2 | `Complete` | line-range evidence 계약과 strict renderer를 확정하고 Q1R11에서 최종 검증 |
+| F3 | `Complete` | `phase-f-source-v3` 전체 gate·결정적 재빌드 hash 통과, 학습 승인 |
+| F4 | `Complete — smoke FAIL` | base·legacy 모두 source-v2 schema `0/20`; oracle `20/20` PASS |
+| F5 | `Complete — lifecycle PASS with constrained decoding` | 두 BF16 merge·vLLM TP2 완료; guided JSON Schema와 semantic validator에서 전체 gate PASS |
+| F6-A | `Complete` | 후보·license·local source·toolchain inventory 동결 |
+| F6-B | `Pass — B0 100-pair gate` | 145 pair 검토 후 100 pair·400 variant 승인, normalized record 800건 감사 PASS |
+| F7 | `Running — 250-pair pilot complete` | 누적 승인 306/395, Wilson 하한 공급 margin 1,314 pair; 다음 500-pair batch 승인 |
 | F8 | `Blocked by F5/F7` | 독립 adapter 결과 필요 |
 | F9 | `Not Started` | 앞 단계 결과 필요 |
 
-현재 다음 작업은 GPT-OSS 학습이나 Qwen 학습 시작이 아닙니다.
-**F2 통과 자료로 F3 `phase-f-source-v3` 승인본을 구축·동결하고, 그
-challenge로 F4 base/legacy adapter 절대 기준선을 만드는 것**입니다.
+Q1R10 decision과 Q1R11 evidence의 신규 blind 500건 model-only 평가와
+각 adapter의 BF16 merge·vLLM TP2 lifecycle을 완료했습니다. Evidence
+serving은 `response_format=json_schema` constrained decoding과 semantic
+validator를 필수조건으로 사용합니다. 재현 가능한 Clang+Ghidra 환경과
+1-pair extractor smoke까지 동결했습니다. 다음 작업은 최적화 후에도 target
+CWE가 보존되는 후보를 먼저 선별한 뒤 F6-B B0 100 pair를 실행하는 것입니다.
+NuriLab·RAG/MCP와 GPT-OSS는 기존 순서대로 뒤에 둡니다.
 
 ## 최종 연구 질문
 
@@ -428,7 +432,7 @@ uv run python scripts/finalize_sard_juliet_manual_review.py \
 
 ## F3 — Source Dataset 승인본 구축과 동결
 
-상태: `Ready — F2 automated/manual gate PASS`
+상태: `Complete — approved_for_training`
 
 현재 `phase-f-source-v2`는 실패 분석용으로 동결합니다. 수정본은 덮어쓰지
 않고 다음 경로에 생성합니다.
@@ -479,11 +483,41 @@ record가 부족하면 실제 수량을 줄여 동결합니다.
 - 동일 seed 재생성 hash 일치
 - artifact hash 동결 후 학습 중 데이터 변경 금지
 
+### F3 실제 결과 — 2026-07-29
+
+실행:
+
+```bash
+.venv/bin/python scripts/build_phase_f_source_v3.py \
+  --source-dir data/processed/phase-f-sard-grounded-v2 \
+  --output-dir data/processed/phase-f-source-v3 \
+  --tokenizer model/base/qwen3-coder-next
+```
+
+| 항목 | 결과 |
+| --- | ---: |
+| train / validation / challenge / gold | `10,000 / 1,000 / 500 / 500` |
+| class balance | train `5,000/5,000`, validation `500/500`, test `250/250` |
+| group / content / record ID split overlap | `0 / 0 / 0` |
+| canonical → prompt → target round-trip 오류 | `0` |
+| 최대 token | 전체 `1,913`, validation `1,905`, test `1,504` |
+| model-visible provenance 누출 | `0` |
+| 입력 F2 manifest | `bb25c0d6...70795` |
+| F3 manifest | `5b630984...cb8b` |
+| F3 `SHA256SUMS` | `38f62f2d...8b00` |
+| 결정적 재빌드 | 전체 `SHA256SUMS` byte-for-byte 일치 |
+| 최종 판정 | `PASS`; `approved_for_training=true` |
+
+절대경로는
+`/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v3`
+입니다. `challenge.jsonl`만 inference에 전달하며 `gold.jsonl`은 평가
+프로세스까지 분리합니다.
+
 ---
 
 ## F4 — Qwen Base와 Phase E Legacy Adapter 평가
 
-상태: `Blocked by F3`
+상태: `Complete — base/legacy contract smoke FAIL`
 
 F4는 새 학습 전에 task·contract·evaluator가 실제 모델 호출에서 작동하는지
 검증합니다.
@@ -507,11 +541,36 @@ F4가 contract나 evaluator 오류로 실패하면 F2/F3로 돌아갑니다. 단
 base 또는 legacy 모델의 품질이 낮다는 이유로 새 Qwen 학습을 막지는
 않습니다.
 
+### F4 실제 결과 — 2026-07-29
+
+고정 seed로 `present 10 + not_observed 10` smoke를 만들고 양쪽 모델에 같은
+vLLM 조건(TP2, BF16, max model length 4,096, temperature 0)을 사용했습니다.
+
+| 항목 | Q0-B base | Q0-E Phase E legacy |
+| --- | ---: | ---: |
+| prediction 누락 | `0/20` | `0/20` |
+| JSON parse | `0.85` | `1.00` |
+| source-v2 schema | `0.00` | `0.00` |
+| abstention | `1.00` | `1.00` |
+| latency p50 / p95 | `4,111 / 5,947 ms` | `2,596 / 4,096 ms` |
+| 500건 진행 | 중단 | 중단 |
+
+base는 `assessment_basis`를 배열이 아닌 객체로 출력하고 finding의
+`code_spans` 대신 `code_span`을 사용했습니다. legacy는 구형 target의
+`source_code`, `vulnerability` 필드를 되살리거나 `findings`를 누락했습니다.
+두 결과 모두 model contract 미학습으로 판정합니다.
+
+동일 20건의 F3 gold target을 prediction으로 사용한 oracle 검증은
+precision/recall/schema/safety/evidence `1.00`, FPR/abstention `0.00`으로
+PASS했습니다. 따라서 challenge·canonical record·source evaluator 경로는
+정상입니다. F4 실패는 F2/F3 데이터 오류나 evaluator 오류가 아니며 Q1
+신규 학습을 막지 않습니다.
+
 ---
 
 ## F5 — Qwen3-Coder-Next 80B 신규 LoRA 학습
 
-상태: `Blocked by F3/F4`
+상태: `Q1R1 Complete — diagnostic FAIL / training-budget diagnosis required`
 
 Qwen 80B는 현재 주 실험입니다. GPT-OSS-20B는 Qwen의 선행 gate가 아닙니다.
 
@@ -566,6 +625,121 @@ worker당 약 `171,762 MiB`를 사용하고 있었습니다. 이는 서빙 측�
 Q1을 통과했을 때만 같은 Phase F checkpoint에서 resume합니다. Q2 완료 후
 전체 500건 absolute evaluation을 수행합니다.
 
+### Q1 실제 결과 — 2026-07-29
+
+- base에서 신규 LoRA 100 optimizer step 완료
+- train wall time `4,230.398초`, 최종 validation loss `0.06199`
+- GPU peak: GPU 0 `107,342 MiB`, GPU 1 `107,402 MiB`
+- root adapter와 `checkpoint-100`, 외부 checkpoint mirror 생성 완료
+- adapter SHA-256:
+  `7f6fc7de49f7488c2d834422a3b267f9f83b76ed2df8f6c6d324935edb9b9eca`
+- LLaMAFactory HF API 재로드와 `/v1/models` HTTP 200 통과
+- 고정 20건 smoke: prediction `20/20`, parse `1.00`, safety `1.00`,
+  precision `0.7778`, recall `0.7000`, FPR `0.2000`, abstention `0.1000`,
+  schema `0.9000`, evidence `0.9000`
+- 반복·비정상 길이 `0`, latency p50/p95 `18,513/32,484 ms`
+- 판정: recall과 schema gate 실패. 500건과 Q2는 실행하지 않음
+
+실패 원인은 두 층입니다.
+
+1. 의미 오류: dead/non-selected buffer를 사용한 FP, 동일 크기 복사를
+   취약하다고 한 FP, invalid free와 무제한 allocation을 놓친 FN
+2. 계약 오류: exact span 공백 변형 1건, 최대 10개인 `code_spans`를 11개
+   출력한 1건
+
+따라서 loss 감소나 Q2 연장으로 덮지 않습니다. F5 remediation에서
+negative target의 비활성 flaw span을 제거하고, branch condition·할당
+크기·copy 길이·allocation/free provenance를 하나의 causal evidence로
+묶습니다. target의 span 수를 더 보수적으로 제한하고 exact substring
+copy gate를 재검증한 뒤 같은 20건 smoke를 다시 통과해야 Q2로 이동합니다.
+
+### Q1R1 remediation 재학습 결과 — 2026-07-29
+
+- remediation candidate 수동 재감사: 기존과 exact 일치한 37건 carry,
+  변경·신규 63건 재감사, 오류 `0/100`
+- 승인 데이터: `phase-f-source-v4`, train `10,000`, validation `1,000`,
+  blind test `500`
+- dataset manifest SHA-256:
+  `5318df99f7e5b87c2f2a33b1cbe74b0b4de6ac4cfd4b8471aa435de781eea756`
+- `SHA256SUMS` SHA-256:
+  `1aee987a53caa6793de7c534ed11c2db254c698db4057d0d7d09c62bd3358c7d`
+- base에서 신규 100 steps, global batch `32`, resume 없음
+- train runtime `4,448.27초`, aggregate train loss `0.2929`,
+  최종 validation loss `0.05258`
+- GPU peak: GPU 0 `108,326 MiB`, GPU 1 `107,222 MiB`
+- adapter SHA-256:
+  `04d226318875e6ad5f2a3fe800e53dac9dbab5789b5ec5a1c0961bdd40735c50`
+- save·checkpoint mirror·재로드·HTTP serving 모두 통과
+- 새 blind 20건: prediction `20/20`, parse/schema/safety/evidence `1.00`,
+  precision `0.7500`, recall `0.3000`, FPR `0.1000`, abstention `0`,
+  repetition·비정상 길이 `0`
+- 판정: **Fail**. FN `7`, FP `1`; 500건과 Q2는 미실행
+- base의 같은 20건 공식 평가는 schema `0`으로 Fail. 단, raw label만
+  보조 집계하면 precision `0.7000`, recall `0.7000`, FPR `0.3333`
+
+Q1R1은 schema와 FPR을 개선했지만 base보다 raw-label recall이 크게
+낮았습니다. 실패는 CWE-121/122 buffer capacity, CWE-191 arithmetic
+boundary, CWE-127 negative index, CWE-690 allocation failure check처럼
+여러 코드 span의 관계를 계산해야 하는 positive에 집중됐습니다.
+다음 canary는 데이터와 learning rate를 고정하고 학습 budget을 25 steps로
+줄여, 100-step 과학습/semantic overwrite 가설을 먼저 검증했습니다.
+
+### Q1R2 25-step semantic-preservation 결과 — 2026-07-29
+
+- base에서 신규 25 steps, global batch `32`, resume 없음
+- train runtime `1,059초`, aggregate train loss `0.8245`,
+  최종 validation loss `0.6074`
+- GPU peak: GPU 0 `108,098 MiB`, GPU 1 `108,034 MiB`
+- adapter SHA-256:
+  `a58154585e01213ab265afd880172937881def119ae95f2d5e51eefba3bffe7b`
+- save·checkpoint mirror·재로드·HTTP serving 모두 통과
+- 동일 blind 20건: prediction/parse/safety `1.00`, schema/evidence `0.60`,
+  공식 precision `0.6364`, recall `0.7000`, FPR `0.4000`,
+  abstention `0.4000`
+- schema와 무관하게 raw `assessment`만 보조 집계하면 TP/TN/FP/FN
+  `8/1/9/2`, precision `0.4706`, recall `0.8000`, FPR `0.9000`
+- schema 오류: confidence 누락 `6`, operation 누락 `2`,
+  exact source substring 불일치 `1`
+- 판정: **Fail**. 500건과 Q2는 미실행
+
+25 steps에서는 의미 recall이 보존됐지만 `present` 편향이 커졌고, 100
+steps에서는 schema와 FPR이 개선되는 대신 recall이 붕괴했습니다. 두
+끝점 사이의 판정 경계를 확인하기 위해 동일 조건의 50-step Q1R3를 단 한
+번 수행합니다. Q1R3도 diagnostic gate를 통과하지 못하면 step 탐색을
+종료하고 class-conditional loss, target boilerplate 축소 또는 two-stage
+contract 학습으로 전환합니다.
+
+### Q1R3 50-step boundary 결과 — 2026-07-30
+
+- base에서 신규 50 steps, global batch `32`, resume 없음
+- train runtime `2,040.70초`, aggregate train loss `0.5272`
+- validation loss: step 25 `0.4029`, final `0.1964`
+- GPU peak: GPU 0 `108,098 MiB`, GPU 1 `107,194 MiB`
+- adapter SHA-256:
+  `f42f6eb043c5f24ca3d07cb934a6ddd90c002e4e4ccae4f5bc98ea11ce5e2bb2`
+- save·checkpoint mirror·재로드·고정 model ID HTTP serving 모두 통과
+- 동일 blind 20건: prediction `20/20`, parse/safety `0.70`,
+  schema/evidence `0.50`, precision `0.6667`, recall `0.2000`,
+  FPR `0.1000`, abstention `0.5000`
+- raw `assessment` 보조 집계: precision `0.8333`, recall `0.5000`,
+  FPR `0.1000`
+- 1,024-token에서 미완성 JSON `6`, relationship/confidence 누락 `3`,
+  exact span 불일치 `1`
+- 판정: **Fail**. 500건과 Q2는 미실행
+
+Q1R3 실패로 step sweep은 종료합니다. max output token을 늘려 장문 출력을
+허용하는 것은 contract 품질 문제를 숨기므로 remediation으로 사용하지
+않습니다. 다음 CPU 단계는 source-v4의 label, causal evidence, split을
+보존하면서 다음을 검증하는 compact-target 재설계입니다.
+
+1. limitations의 전체 code excerpt를 제거한다.
+2. assessment basis와 finding의 중복 설명을 최소화한다.
+3. 전체 assistant target token과 label별 길이 차이를 감사한다.
+4. assessment 판단과 최종 JSON contract 생성을 한 loss로 계속 학습할지,
+   semantic → contract two-stage로 분리할지 canary 전에 결정한다.
+5. 새 target의 oracle round-trip, exact span, schema, token gate와 고정
+   100건 의미 동일성 검토를 통과하기 전에는 GPU를 다시 사용하지 않는다.
+
 ### Q3 — 총 313 step, 선택
 
 Train 10,000건, global batch 32에서 1 epoch는 약 313 step입니다. Q0→Q1→Q2
@@ -606,7 +780,7 @@ GPT-OSS 결과는 Qwen Q1~Q3의 시작·중단 조건이 아닙니다.
 
 ### F6-A 후보·라이선스·저장 조사
 
-상태: `Ready — F2~F5와 병행 가능`
+상태: `Complete — inventory PASS`
 
 Binary 후보는 같은 목적으로 한데 섞지 않고 다음 역할로 분리합니다.
 
@@ -652,7 +826,7 @@ F6-A 산출물:
 
 ### F6-B B0 100 pair
 
-상태: `Blocked by F5`
+상태: `Running — toolchain ready, 1-pair smoke PASS`
 
 - build 가능한 before/after 100 pair, 총 200 함수
 - GCC·Clang, `O0/O2`
@@ -670,12 +844,16 @@ Gate:
 - provenance·label·split 유입 0
 
 실패하면 규모를 늘리지 않고 extractor/build recipe를 수정합니다.
+1-pair smoke는 이 gate의 사전 검증일 뿐 100-pair 결과를 대체하지 않습니다.
+후보는 compiler 최적화 뒤에도 target CWE와 present/not_observed 차이가
+pseudo-C 또는 제한된 assembly에서 관찰되는 경우에만 100-pair manifest에
+승격합니다.
 
 ---
 
 ## F7 — Binary Dataset v1과 별도 Adapter
 
-상태: `Blocked by F6-B`
+상태: `Running — 250-pair pilot complete / supply gate PASS`
 
 - pair 최대 2,000
 - before `present`: 최대 2,000
@@ -695,6 +873,47 @@ Source adapter와 섞지 않고 별도 학습·평가합니다.
 - raw byte·payload 출력 0
 
 검증된 pair가 부족하면 저신뢰 데이터로 채우지 않고 B0 결과만 남깁니다.
+
+### F7 공급량과 250-pair pilot 판정
+
+F6-B에서 사용한 후보를 제외한 구조 적격 공급을 포함해 4,643 pair의
+결정적 queue를 동결했다. 과거 명시 검토 145 pair의 관측 승인률과 Wilson
+95% 하한으로 공급 가능성을 먼저 확인한 뒤, 별도 250-pair pilot을
+GCC·Clang × `O0/O2`로 compile·decompile했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 구조 적격 전체 공급 | `4,643 pair` |
+| pilot compile / symbol link | `1,000/1,000` |
+| pilot decompile / function link | `999/1,000` |
+| pilot 명시 승인 / 탈락 | `206/44`, 승인률 `0.824` |
+| 누적 검토 / 승인 / 탈락 | `395 / 306 / 89` |
+| 누적 관측 승인률 | `0.7747` |
+| Wilson 95% 승인률 하한 | `0.73095` |
+| 추가 필요 승인 / 하한 기준 예상 검토 | `2,144 / 2,934` |
+| 남은 구조 공급 / 공급 margin | `4,248 / 1,314` |
+| raw payload·object 실행 | `0 / 0` |
+
+250-pair batch 자체는 `0.90` target-preservation 기준에 미달했으므로
+44 pair를 교체 대상으로 제외한다. 이는 저신뢰 후보를 자동 승인하지
+않기 위한 candidate-quality gate다. 반면 최종 2,450 verified pair를
+확보할 수 있는지 판단하는 supply gate는 Wilson 하한에서도 통과했다.
+두 판정을 혼동하지 않고, 500-pair 단위로 compile→decompile→명시 검토를
+반복하며 매 batch 뒤 공급률과 잔여 margin을 다시 계산한다.
+
+250-pair pilot의 4개 병렬 decompile shard는 artifact mtime 기준 약
+`1,388.6초`(23.1분), 중복 merged artifact를 포함해 약 `106.9 MB`였다.
+500-pair batch의 단순 선형 예상은 약 46.3분·213.8 MB이며 수동 검토
+시간은 별도다.
+
+- 최종 review summary SHA-256:
+  `9bd9d026224cce6347a8497bfbe2cf345fc514b4cdfb98dbeb36129d500d6e60`
+- 누적 supply outcome SHA-256:
+  `d58a5aad633b5180e0377e1354f96eef9bad911eda430beb6262098038be6bed`
+- 다음 500-pair queue SHA-256:
+  `20d1af8262634288992be7e3e663b0c0f2895d6e12de13258a4b2d79f07318bd`
+- resource summary SHA-256:
+  `dd349e488a2c9a25c1527c97c1f744d415aa1d5f4006212c29d7f7b43c424f70`
 
 ---
 
@@ -780,3 +999,609 @@ uv run ruff check .
 uv run ruff format --check .
 uv run mypy aegislm/ tests/
 ```
+
+## F5 target compact 재설계와 Q1R4 — 2026-07-30
+
+Q1R1 100-step, Q1R2 25-step, Q1R3 50-step가 모두 diagnostic gate를
+통과하지 못했으므로 step 탐색을 종료했다. Q1R3에서는 20건 중 6건이
+`max_new_tokens=1024`에서 잘렸고, 기존 assistant target이 supplied code를
+`limitations`에 다시 복사하는 구조가 원인임을 확인했다. label, split, code,
+CWE와 핵심 semantic evidence는 유지하고 다음 항목만 compact화했다.
+
+- supplied code 전체 재인용 제거
+- 반복적인 limitations와 recommendation 축약
+- assistant target budget `768` tokens 추가
+- source schema의 최대 code span 수를 formatter와 같은 `8`개로 통일
+
+첫 compact 후보는 exact-target duplicate rate가 높아 자동 gate가
+실패했다. 기존 gate는 code 전체 재인용 때문에 target을 인위적으로
+고유하게 만들고 있었으므로, 품질 의미가 있는 다음 gate로 교체했다.
+
+- exact code + target pair duplicate `0`
+- 단일 exact target의 최대 비중 `≤ 0.02`
+- raw exact-target duplicate rate는 진단 지표로 계속 보존
+
+근거 span 정렬 감사에서는 11,500건 중 17건에서 같은 위치로 시작하는
+짧은 span과 여러 줄 span의 순서가 Python hash seed에 따라 달라지는
+문제를 발견했다. 정렬 key를 `(source position, span length, span text)`로
+고정하고 회귀 테스트를 추가했다. 수정 후 두 독립 빌드의 train,
+validation, challenge, gold, canonical records와 eligible manifest hash가
+모두 일치했다. 기존 source-v4와의 semantic field 전수 비교도 차이
+`0/11,500`이었다.
+
+최종 동결본:
+
+- profile: `phase-f-source-v5-r1`
+- train / validation / challenge: `10,000 / 1,000 / 500`
+- manual review: `0/100` errors
+- maximum assistant tokens: `634/768`
+- maximum full training tokens: `1,816/2,048`
+- dataset manifest SHA-256:
+  `04c4731993136c5f75ba3055ddbb58ea8adaa8bfa6d3098b626c5bb1b7f5eafa`
+- `SHA256SUMS` SHA-256:
+  `a2ff9f3c217c64a3a8f9acbe12d762f3733de959fe86f6c18177dc920e1d3898`
+- status: `approved_for_training`
+
+이 동결본으로 Q1R4 100-step을 base model에서 새로 학습한다. Q1R4도
+save → reload → serve → 고정 20건 diagnostic gate 순서로 평가하고,
+gate를 통과할 때만 500건 절대평가로 확장한다.
+
+### Q1R4 결과와 다음 분기
+
+Q1R4의 학습·저장·미러·재로드·HTTP lifecycle은 모두 통과했다.
+adapter root, checkpoint-100, persistent mirror의
+`adapter_model.safetensors` SHA-256은 모두
+`8d0c035010399a99541b8dad89c684b49f5444e973169dc3feea34bcc567d31b`
+로 일치했다.
+
+고정 20건 diagnostic은 precision `1.00`, recall `0.60`, FPR `0`,
+parse/schema/safety `0.95`로 실패했다. compact target은 Q1R1의 recall
+`0.30`보다 개선됐고 19건은 짧고 유효한 JSON을 생성했지만 다음 문제가
+남았다.
+
+- CWE-121 destination/source capacity 관계 FN 1건
+- CWE-127 음수 하한 검사가 없는 경로 FN 1건
+- CWE-690 allocation 성공 검사가 없는 경로 FN 2건
+- negative 1건의 문구 반복과 1,024-token JSON 절단
+
+train 공급량은 클래스별로 균형이었다. CWE-121은 label당 701건,
+CWE-127은 85건, CWE-690은 99건이다. 따라서 수량 부족만으로 설명할 수
+없다. 실패 20건에 범용 decision checklist와 반복 금지를 추가한
+prompt-only probe는 parse/schema/safety를 `1.00`으로 만들었지만 recall을
+`0.30`으로 악화시켰다. 이 prompt 변경은 폐기한다.
+
+Q1R4 실패로 500건 절대평가와 Q2 250-step은 계속 중단한다. 다음 canary는
+동일 code/CWE/label split에서 report JSON 전체가 아니라 최소
+`assessment`만 학습한다. 이 classification-only 실험은 다음 질문만
+검증한다.
+
+1. Qwen 80B가 report formatting loss 없이 present/not_observed 결정을
+   학습할 수 있는가?
+2. 가능하다면 semantic decision과 evidence/report generation을
+   multi-task 또는 두 단계 adapter로 분리해야 하는가?
+3. 불가능하다면 추가 step이 아니라 data semantics 또는 model 변경으로
+   넘어가야 하는가?
+
+classification-only 결과는 최종 제품 품질 PASS가 아니라 원인 분리
+증거다. 기존 20건은 개발용으로 전환하고, 향후 최종 절대평가는 이 ID를
+제외한 untouched 480건에서 수행한다.
+
+## F5-Q1R5/Q1R6 objective 분리 결과
+
+Q1R5는 `assessment` 한 필드만 학습하는 decision-only 25-step 진단이다.
+고정 20건은 recall `0.60`으로 실패했지만, 서로 다른 validation 100건 두
+세트에서 각각 precision/recall/FPR `0.90/0.90/0.10`,
+`0.9388/0.92/0.06`으로 진단 gate를 통과했다. JSON parse와 schema는
+모두 `1.00`이었다. 따라서 report 생성 손실을 제거하면 의미 판별 objective는
+학습 가능하다는 가설을 지지한다.
+
+Q1R6는 Q1R5 adapter를 초기값으로 compact full-report를 25 steps 순차
+학습했다. full-report 고정 20건에서 precision `0.7143`, recall `0.50`,
+FPR `0.20`, schema `0.75`로 실패했다. schema를 무시한 raw assessment도
+recall `0.60`, FPR `0.30`이어서 단순 출력 계약 문제만은 아니다. 순차
+학습 중 decision objective가 약화된 것으로 해석하며, 이 해석은 결과에
+근거한 연구 가설이지 아직 일반화된 사실이 아니다.
+
+결정:
+
+- Q1R5 decision-only adapter는 진단 기준선으로 동결한다.
+- Q1R6 순차 2단계 adapter는 실패 artifact로 동결한다.
+- Q1R6에 25 steps를 단순 추가하지 않는다.
+- 다음 Q1R7은 decision-only와 compact full-report를 한 학습 run에서
+  interleave하는 multitask dataset으로 설계한다.
+- contract별 validation과 evaluator를 분리하고 두 gate를 모두 통과해야 한다.
+- 기존 고정 20건은 노출된 개발 세트이며, blind 480건은 계속 보존한다.
+
+## F5-Q1R7 interleaved multitask 결과 — 2026-07-30
+
+Q1R7은 Q1R5 decision adapter에서 시작해 compact full-report와 decision
+target을 `0.75/0.25` 비율로 같은 50-step run에 interleave했다. dataset
+artifact는 두 번 독립 빌드해 동일 hash를 확인했고, contract별 validation
+100건은 서로 분리했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| dataset | `phase-f-source-multitask-v1`; report/decision train 각 `10,000`건 |
+| dataset manifest / SHA256SUMS | `d45f2025...f6bd3` / `50189bce...631` |
+| 초기 adapter | Q1R5 decision-only `0e510505...86e2b` |
+| 학습 | interleave-over `0.75/0.25`, global batch `32`, `50` steps |
+| runtime / train loss | `1,416.95초` / `0.4694` |
+| GPU peak / OOM | 두 GPU 합계 `210,580 MiB`; `0/0` |
+| 최종 adapter SHA-256 | `b3a8236bb21c8059fedf5050f90870298a2116a00f1a4231ff392c6b058ab0a9` |
+| save / mirror / reload / HTTP | `Pass / Pass / Pass / 200` |
+| decision validation 100 | **PASS** — TP/TN/FP/FN `42/46/4/8`, precision `0.9130`, recall `0.8400`, FPR `0.0800`, schema `1.00` |
+| full-report validation 100 | **FAIL** — TP/TN/FP/FN `13/17/2/37`, precision `0.8667`, recall `0.2600`, FPR `0.0400` |
+| full-report 구조 | parse `0.53`, schema/evidence `0.34`, safety `0.53`, abstention `0.66`, repetition `0.02` |
+| serving | p50/p95 `24,275/36,224 ms`; GPU별 peak `82,760 MiB`; 5xx/OOM `0/0` |
+| blind 480 | 미실행·미공개 |
+
+full-report 실패 66건의 주된 원인은 invalid JSON `47`건과
+`assessment_basis.relationship/confidence`, `findings.operation` 누락이다.
+invalid JSON 다수는 conclusion 문구를 반복하다 `768` token 상한에서 잘렸다.
+따라서 Q1R7은 단일 adapter가 두 계약을 동시에 만족한다는 가설을 지지하지
+않는다. 다만 Q1R5 초기값과 50-step 중 full-report의 유효 비중이 약
+37.5 step뿐이므로, “멀티태스크 자체가 불가능하다”로 일반화하지 않는다.
+
+다음 GPU 실행 전 CPU 분기는 다음과 같다.
+
+1. full-report target에 반복 문구나 schema 누락이 없는지 전수 감사한다.
+2. Q1R4 full-report adapter를 보존 기준으로 삼아 validation 100건을 같은
+   contract로 측정한다.
+3. Q1R4가 report contract를 충분히 보존한 경우에만 report-first
+   multitask canary를 설계한다.
+4. 두 contract가 모두 개발 gate를 통과하기 전에는 blind 480건을 열지 않는다.
+
+### Q1R4 동일 validation 100건 기준선
+
+Q1R7 실패가 멀티태스크 혼합 때문인지 full-report 자체의 한계인지 구분하기
+위해 기존 Q1R4 full-report 전용 adapter를 같은 validation 100건에 평가했다.
+
+| 항목 | Q1R4 full-report | Q1R7 multitask |
+| --- | ---: | ---: |
+| precision | `0.8824` | `0.8667` |
+| recall | `0.6000` | `0.2600` |
+| FPR | `0.0800` | `0.0400` |
+| parse | `0.9800` | `0.5300` |
+| schema / evidence | `0.8600` | `0.3400` |
+| abstention | `0.1400` | `0.6600` |
+| repetition | `0` | `0.0200` |
+| latency p50 / p95 | `11,521 / 20,879 ms` | `24,275 / 36,224 ms` |
+| 절대 판정 | **FAIL** | **FAIL** |
+
+Q1R4는 Q1R7보다 안정적이지만 parse·schema·recall·abstention gate를
+통과하지 못했다. 따라서 Q1R4를 시작점으로 decision target만 추가하는
+report-first GPU canary도 승인하지 않는다.
+
+full-report 정답 10,000건 전수 감사에서는 schema·exact span 오류,
+필수 field 누락, 3회 이상 문장 반복이 모두 `0`이었다. 정답 길이는 문자
+기준 중앙값 `1,104`, p95 `1,828`, 최대 `2,491`이었다. 문제는 target 생성
+오류가 아니라 80B adapter가 긴 구조·판단·근거·설명 objective를 한 번에
+안정적으로 생성하지 못한 것으로 판정한다.
+
+### F2R1 compact evidence 계약
+
+다음 계약은 모델이 보안 판단과 코드 근거 선택에 집중하도록 출력 범위를
+다음 네 field로 줄인다.
+
+- `schema_version="aegislm.source-compact-evidence.v1"`
+- `assessment`: `present / not_observed / uncertain`
+- `evidence_spans`: 입력 함수의 exact substring 최대 8개
+- `confidence`: `low / medium / high`
+
+`present`와 `not_observed`는 evidence span이 최소 1개 필요하고,
+`uncertain`은 빈 배열만 허용한다. 기존 full-report target은 이 계약으로
+결정적으로 projection한다. 장문 `relationship`, `conclusion`, `operation`,
+`limitations`, `recommendations`는 모델이 생성하지 않고 검증 후 renderer가
+source output v2로 만든다.
+
+초기 구현은 `aegislm/datasets/source_compact.py`와
+`aegislm.source-compact-evidence.v1` schema에 반영했다. exact span,
+prompt leakage, full-target projection, v2 renderer round-trip 회귀를
+포함해 전체 테스트 `191 passed, 1 skipped`, ruff·format·mypy를 통과했다.
+
+다음 작업은 10,000/1,000 compact artifact를 결정적으로 materialize하고
+token·schema·span·재현성 gate를 통과시키는 것이다. 그 전에는 새 GPU
+학습을 시작하지 않는다.
+
+### F2R1 artifact와 Q1R8 결과
+
+`phase-f-source-compact-v1`은 두 번 독립 빌드해 동일 hash를 확인했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| train / validation / development | `10,000 / 1,000 / 100` |
+| 전체 label | present/not_observed `5,500/5,500` |
+| Qwen 전체 chat token 최대 | `1,587 / 2,048` |
+| manifest SHA-256 | `84f0ab42b277d7cbfe8e880c26cb6467bda86c73b433b2068ec5fdd0fa1ba8aa` |
+| SHA256SUMS SHA-256 | `a4f041ad935fec964428c9a6ec05374eef7f38da37009ee7ebbf6796a8a83acb` |
+| oracle 100 | precision/recall/schema/evidence F1/renderer `1.00`, FPR `0` |
+
+Q1R8은 base에서 새로 시작한 compact evidence 25-step canary다.
+
+| 항목 | 결과 |
+| --- | --- |
+| runtime / train loss | `716.69초` / `0.1679` |
+| GPU peak / OOM | 합계 `209,448 MiB`; `0/0` |
+| adapter SHA-256 | `892d74bf40b085fde46ceb27395d016c10348a768a6264ec734e79fc8af75e6c` |
+| save / mirror / reload / HTTP | `Pass / Pass / Pass / 200` |
+| confusion matrix | TP/TN/FP/FN `27/35/6/23` |
+| precision / recall / FPR | `0.8182 / 0.5400 / 0.1200` |
+| parse / schema / abstention | `1.00 / 0.86 / 0.14` |
+| evidence precision / recall / F1 | `0.7911 / 0.7009 / 0.7433` |
+| renderer pass | `0.86` |
+| latency p50 / p95 | `3,696 / 5,938 ms` |
+| serving | GPU별 peak `82,760 MiB`; HTTP 200 `100`, 5xx/OOM `0/0` |
+| 판정 | **FAIL** — recall·schema·abstention·renderer gate 미달 |
+
+schema를 무시한 raw assessment도 precision `0.8108`, recall `0.60`,
+FPR `0.14`로 recall gate를 통과하지 못했다. schema 실패 14건은 span
+상한 초과 또는 whitespace·구문 일부 변경으로 인한 exact substring
+불일치였다. line index로 바꾸면 복사 오류는 줄일 수 있지만 decision recall
+문제는 해결되지 않는다.
+
+반면 Q1R5 decision-only는 동일 validation 계열에서 precision `0.913`,
+recall `0.84`, FPR `0.08`을 통과했고, Q1R8 evidence overlap도 별도 gate를
+통과했다. 다음 F2R2는 단일 출력 objective를 더 학습하지 않고 다음처럼
+분리한다.
+
+1. Q1R5 계열 decision adapter가 `assessment`를 생성한다.
+2. evidence-only adapter는 결정된 assessment를 조건으로 받아 line index나
+   exact span selector만 생성한다.
+3. deterministic resolver가 line index를 원본 exact span으로 변환한다.
+4. renderer가 source output v2를 생성한다.
+
+evidence-only 학습에서는 gold assessment를 조건으로 사용하고, validation은
+gold-conditioned evidence 품질과 predicted-decision-conditioned 전체
+pipeline 품질을 각각 기록한다. 이 두 gate 전에는 GPU 학습·blind 480건을
+실행하지 않는다.
+
+### F2R2 line-range evidence artifact
+
+`phase-f-source-evidence-lines-v1`은 Q1R5 decision objective와 결합하지
+않는 assessment-conditioned evidence-only dataset이다. 입력에는 gold
+assessment와 line-numbered source만 주고, 출력은 최대 8개의
+`start_line/end_line` 범위와 confidence만 포함한다. resolver가 선택 범위를
+원본 코드의 exact substring으로 복구하고 deterministic renderer가 source
+output v2를 생성한다.
+
+| 항목 | 결과 |
+| --- | --- |
+| train / validation / development | `9,975 / 996 / 100` |
+| cutoff quarantine | train `25`, validation `4`; replacement `0` |
+| Qwen 전체 chat token 최대 | `1,892 / 2,048` |
+| manifest SHA-256 | `bbf08a7e6988a08659badbc2411e75cb1665b76d62753e2712fb3f84982693b8` |
+| SHA256SUMS SHA-256 | `3def771c14f100296878356168fa920d02c76ba85292a563ddce34b1f04e8987` |
+| 재현성 | 독립 build 2회의 manifest·SHA256SUMS 동일 |
+| oracle dev100 | parse/schema/evidence precision·recall·F1/renderer 모두 `1.00` |
+| oracle summary SHA-256 | `5323041ec0f229528bbc0a663260933fb907c526d8c2c8c847cd81a193ec329a` |
+| 로컬 회귀 | `199 passed, 1 skipped`; ruff·format·mypy PASS |
+
+초기 line-number 추가로 29건이 2,048 token을 초과했다. right truncation이나
+저신뢰 대체 레코드로 수량을 채우지 않고 해당 레코드만 quarantine했다.
+따라서 Q1R9 preflight는 frozen artifact의 실제 수량 `9,975/996`을
+명시적으로 검사한다. 다음 gate는 base에서 새로 시작하는 evidence-only
+25-step canary와 gold-conditioned dev100 평가다. blind 480건과
+predicted-decision end-to-end 평가는 이 gate 통과 전까지 열지 않는다.
+
+### Q1R9 evidence canary와 two-stage 결과
+
+Q1R9은 base에서 새로 시작한 assessment-conditioned line-range evidence
+25-step canary다. gold-conditioned dev100에서 최초 renderer 실패 1건은
+유효 근거와 함께 빈 줄 range를 선택한 경우였다. resolver는 빈 줄만
+결정적으로 제거하되 실제 근거가 하나도 남지 않으면 계속 실패하도록
+수정했다. 수정 전·후 summary는 모두 보존했다.
+
+| Q1R9 항목 | 결과 |
+| --- | --- |
+| runtime / train loss | `750.98초 / 0.2154` |
+| training GPU peak / OOM | `106,062 / 106,052 MiB`; OOM `0` |
+| adapter SHA-256 | `cec803409aad5dc9603d12dfb46f4461b7650914b1a4d48082a5d2d311cc7e47` |
+| lifecycle | root/checkpoint-25/mirror checkpoint hash 일치, reload·HTTP 200 |
+| prediction | `100/100`, unique `100`, 누락·초과 `0/0` |
+| parse / schema / renderer | `1.00 / 1.00 / 1.00` |
+| evidence precision / recall / F1 | `0.7885 / 0.8224 / 0.8051` |
+| latency p50 / p95 | `3,576 / 5,281 ms` |
+| serving | HTTP 200 `100`, 5xx/OOM `0/0`, peak `82,760/80,986 MiB` |
+| prediction SHA-256 | `18e8382b93514868dc7cd862ff270182b3411fca6ecf0450e19687101d8ecab9` |
+| final summary SHA-256 | `55eddf323fa86a5c4a93560c00543477b1e708e26d66cd5bf03b935d048760fe` |
+| 판정 | **evidence diagnostic PASS** |
+
+같은 100 ID에서 Q1R5 decision을 다시 실행하고 그 prediction으로 Q1R9
+prompt를 구성한 two-stage 결과는 다음과 같다.
+
+| two-stage 항목 | 결과 |
+| --- | --- |
+| Q1R5 confusion matrix | TP/TN/FP/FN `43/44/6/7` |
+| decision precision / recall / FPR | `0.8776 / 0.8600 / 0.1200` |
+| evidence precision / recall / F1 | `0.7849 / 0.8187 / 0.8015` |
+| parse / schema / renderer | `1.00 / 1.00 / 1.00` |
+| pipeline latency p50 / p95 | `4,295 / 5,998 ms` |
+| challenge / evidence prediction / summary SHA-256 | `7ae40fc5…7d69 / 3ee4d469…b1b0 / f8bd604a…86ba` |
+| 판정 | **FAIL** — evidence gate PASS, decision absolute gate FAIL |
+
+blind 480건은 열지 않는다. 오류 13건은 FP 6·FN 7이며, FN은
+unchecked allocation `CWE-690` 3건과 작은 buffer copy `CWE-122` 2건에
+집중됐다. FP는 위험 API가 남아 있어도 해제·길이 제한·고정 format으로 target
+CWE가 제거된 patched 사례였다. train은 label별 균형이지만 Q1R5 25-step은
+약 800 sample-equivalent만 보므로 희소 CWE가 충분히 노출되지 않을 수 있다.
+다음 실행은 데이터를 바꾸지 않은 base-start decision 100-step Q1R10이다.
+동일 dev100에서 개선을 확인한 경우에만 250-step으로 확장한다.
+
+### Q1R10 decision 및 최종 blind 480 결과 — 2026-07-30
+
+Q1R10은 Q1R5와 같은 decision-only 데이터에서 base model로 다시 시작한
+100-step run이다. loss가 아니라 저장·재로드·서빙 lifecycle과 절대평가로
+판정했다.
+
+| Q1R10 항목 | 결과 |
+| --- | --- |
+| runtime / train loss | `2,747.42초 / 0.0289815` |
+| training GPU peak / OOM | `104,808/104,776 MiB`; OOM `0` |
+| adapter SHA-256 | `3dee2eb1d1555b90ff0a680d15b53e6fc3ed21f3be18b74f344fc304fbf23dd4` |
+| lifecycle | root/checkpoint-100/persistent mirror hash 일치, reload·HTTP 200 |
+| dev100 confusion matrix | TP/TN/FP/FN `49/50/0/1` |
+| dev100 precision / recall / FPR | `1.0000 / 0.9800 / 0.0000` |
+| dev100 two-stage evidence P/R/F1 | `0.7871 / 0.8224 / 0.8044` |
+| dev100 renderer / 판정 | `1.0000 / PASS` |
+
+100-step이 이미 decision 최종 절대 gate를 통과했으므로 250-step은 실행하지
+않았다. 추가 step은 현재 오류 원인과 관계가 없고 임대 GPU 시간을 쓰기
+때문이다.
+
+기존 500건 중 앞선 진단에서 노출된 20 ID를 제거하고, 노출 파일 8개의
+ID union과 정확히 대조한 `phase-f-source-untouched-blind-480-v1`을
+동결했다. challenge/gold/private records는 각각 480건이며 label은
+`240/240`이다.
+
+| blind 480 항목 | 결과 |
+| --- | --- |
+| decision confusion matrix | TP/TN/FP/FN `239/236/4/1` |
+| decision precision / recall / FPR | `0.9835 / 0.9958 / 0.0167` |
+| decision parse / schema / 판정 | `1.0000 / 1.0000 / PASS` |
+| evidence precision / recall / F1 | `0.7855 / 0.8056 / 0.7954` |
+| evidence parse / schema | `1.0000 / 0.9938` |
+| evidence renderer | `0.9938` (`477/480`) |
+| pipeline latency p50 / p95 | `4,208.19 / 5,993.51 ms` |
+| 최종 판정 | **FAIL** — decision PASS, evidence renderer gate FAIL |
+| decision prediction SHA-256 | `bb377ce766704b187535e08946f8bdd74274b207bade2084430a2ca5a2e2154a` |
+| evidence prediction SHA-256 | `215a577ece07e5ac9a6a5ab702115b0982959d125e64dd5a73cfab4072313118` |
+| 최종 summary SHA-256 | `aa555516f827b46c11bab12f63a8bc4d8a7573941fcb9a8e1883857eefb3b4d7` |
+
+최초 renderer 실패 5건 중 2건은 서로 다른 유효 line range가 동일한 코드
+문자열을 가리킬 때 exact span uniqueness를 깨뜨리는 resolver 결함이었다.
+유효 range를 line 순서대로 유지하면서 동일 텍스트만 중복 제거했고, 역순·
+중복 range는 자동 교정하지 않았다. 수정 전 summary
+`28837d1b…b8f4`, 수정 후 `aa555516…b4d7`이며 evidence overlap 점수는
+변하지 않았다.
+
+남은 3건은 실제 모델 계약 위반이다.
+
+- `sard-82a5750b899aa72e-present`: `start_line=13`, `end_line=7`
+- `sard-1ee5ed456f983a10-not_observed`: 동일 line range 중복
+- `sard-8beb1c673aac344e-present`: `start_line=80`, `end_line=77`
+
+따라서 Q1R10 decision은 채택 후보로 동결하고 Q1R9 evidence는 채택하지
+않는다. 이 blind의 gold가 공개됐으므로 evidence 보정 후 최종 판정에는
+재사용하지 않는다. 현재 extractor에서 기존 group ID와 code hash를 모두
+제외한 뒤 확인된 unique complete pair `2,217`개 중 새 group을 사용해
+다음 blind를 먼저 동결한다. 다음 canary는 decision 데이터나 threshold를
+바꾸지 않고 evidence-only 100-step `Q1R11`로 진행하며, dev100 gate
+통과 후에만 새 blind를 한 번 연다.
+
+### 새 미노출 blind 동결 및 Q1R11 preflight
+
+`phase-f-source-fresh-blind-500-v1`은 기존 SARD train·validation·이전
+blind의 5,750 group과 11,500 code hash를 모두 제외한 뒤 선택한 250쌍,
+500건이다.
+
+| 항목 | 값 |
+| --- | --- |
+| label | present/not_observed `250/250` |
+| 기존 group / code hash overlap | `0 / 0` |
+| 신규 group / record | `250 / 500` |
+| model-visible label leakage | `0` |
+| tokenizer 최대 | `1,442 / 2,048` |
+| manual answer sheet | 생성하지 않음 |
+| dataset manifest SHA-256 | `d20ba5c538da786b64d628400b44b021bf4fa8c2fbd03f78bbab26de59103033` |
+| dataset SHA256SUMS SHA-256 | `d0270e19b024da0d4266d27e54d2435b3fcb22f85b9a71bf07c3f2fd4a8c1eeb` |
+| contract manifest SHA-256 | `c498a64d5f1b1cc6556283223602a6351997189f2ae386116234a6aca01a944e` |
+| contract SHA256SUMS SHA-256 | `e5eb74a1f5cd375e83b3baf04de7a75807fdd1f9043d8a108f462c7b07e1a00a` |
+| 재현성 | 독립 재빌드의 source·contract SHA256SUMS byte-identical |
+
+이 artifact는 `evaluation_only=true`,
+`approved_for_training=false`, `status=frozen_blind`다. Q1R11 개발
+평가가 통과하기 전에는 challenge를 모델에 전달하지 않는다.
+
+Q1R11은 Q1R9과 동일한 evidence dataset·LR·global batch에서 base-start
+100-step으로 고정했다. preflight는 dataset manifest
+`bbf08a7e…3b8`, train/validation `9,975/996`, global batch `32`,
+resume 없음, save step `100`을 모두 확인하고 PASS했다.
+
+### Q1R11 학습·dev100·신규 blind 500 결과
+
+Q1R11은 base에서 100 optimizer step을 학습하고 저장·mirror·재로드를
+통과했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| runtime / train loss | `2,969.24초 / 0.1035507` |
+| GPU peak 합계 | `209,624 MiB` |
+| adapter SHA-256 | `c68c4af73248a2f2b3da52cb6be18573cced78d17a108a146cfab938457451e0` |
+| dev100 evidence P/R/F1 | `0.8941 / 0.9308 / 0.9121` |
+| dev100 parse/schema/renderer | `1.0000 / 1.0000 / 1.0000` |
+| dev100 two-stage | `PASS` |
+
+dev100 통과 뒤에만 `phase-f-source-fresh-blind-500-v1`을 한 번 열었다.
+Q1R10 decision 예측으로 evidence challenge를 만든 뒤 Q1R11을
+assessment-conditioned evidence selector로 실행했다.
+
+| 최종 blind 항목 | 결과 |
+| --- | --- |
+| 수량 / HTTP | `500 / decision 500×200 + evidence 500×200`, non-200 `0` |
+| decision TP/TN/FP/FN | `250 / 247 / 3 / 0` |
+| decision P/R/FPR | `0.9881 / 1.0000 / 0.0120` |
+| decision parse/schema/abstention | `1.0000 / 1.0000 / 0` |
+| evidence P/R/F1 | `0.9001 / 0.9229 / 0.9114` |
+| evidence parse/schema/renderer | `1.0000 / 1.0000 / 1.0000` |
+| pipeline latency p50/p95 | `4,239.48 / 5,330.96 ms` |
+| two-stage 최종 판정 | **PASS** |
+| result SHA256SUMS SHA-256 | `c460afcf76ef845cd23113d8f0820a2d6d667cbd68994af8e810381bf706eef1` |
+
+판단 FP는 3건이다.
+
+- `sard-ed213928edf7351c-not_observed` (`CWE-690`): null guard가 있는
+  allocation을 present로 과판정
+- `sard-2b4b6c5b89f8d61e-not_observed` (`CWE-789`): network-derived
+  allocation size가 `<100`으로 제한됐지만 present로 과판정
+- `sard-ed879b9acd94a217-not_observed` (`CWE-122`): 100-wide buffer에
+  길이 99인 null-terminated source를 붙이는 경계를 present로 과판정
+
+고정 seed `20260730`의 TP 10/TN 10은 판단 `20/20`, gold evidence와
+overlap `20/20`, exact line-set `9/20`이었다. 안전하지 않은 공격 지침은
+없었지만 20건 모두 confidence가 `high`였고 deterministic recommendation은
+일반적인 재확인 문구다. 따라서 이번 PASS는 지정 CWE의 synthetic
+function-level decision/evidence 계약에 한정하며 confidence calibration,
+구체적 remediation, 실제 코드·다른 언어·binary 일반화의 증거로
+해석하지 않는다.
+
+Q1R10 decision과 Q1R11 evidence는 채택 후보로 동결한다. 추가 step
+연장은 수행하지 않는다. 다음 gate는 두 adapter를 각각 BF16 checkpoint로
+merge하고 vLLM TP2에서 같은 단계의 schema와 renderer가 유지되는지
+검증하는 F5-M1이다.
+
+### F5-M1 BF16 merge·vLLM TP2 lifecycle 결과
+
+두 adapter는 하나로 합치지 않고 각각 독립 BF16 checkpoint로 export했다.
+
+| 항목 | Decision | Evidence |
+| --- | --- | --- |
+| merged path | `model/merged/aegislm-qwen3-coder-next-phase-f-q1r10-decision` | `model/merged/aegislm-qwen3-coder-next-phase-f-q1r11-evidence` |
+| size / shard | 약 `149G / 48` | 약 `149G / 48` |
+| merged inventory SHA-256 | `0c0f31ad…8fed` | `20a4792e…86a` |
+| vLLM | `0.26.0`, TP2, BF16 | `0.26.0`, TP2, BF16 |
+| GPU peak | GPU당 `171,268 MiB` | GPU당 `171,268 MiB` |
+| OOM / fatal / non-200 | `0 / 0 / 0` | `0 / 0 / 0` |
+
+Decision merged endpoint는 500건 모두 HF API raw output과 동일했고
+precision/recall/FPR `0.9881/1.0000/0.0120`, parse/schema `1.0000`으로
+PASS했다.
+
+Evidence의 자유 생성 vLLM run은 500건 중
+`sard-bc07c073565dac83-present` 한 건이 9개 range를 출력해
+schema/renderer `0.9980`으로 FAIL했다. 이는 merge file 손상이 아니라
+서빙 backend의 수치·kernel 차이에서 자유 생성 경계가 달라진 사례다.
+같은 merged model에 vLLM의 `response_format=json_schema` constrained
+decoding을 적용하고, vLLM grammar가 지원하지 않는 `uniqueItems`는 요청
+복사본에서만 제거한 뒤 AegisLM의 순서·중복 semantic validator로 계속
+검사했다.
+
+| constrained evidence 항목 | 결과 |
+| --- | --- |
+| 수량 / 누락 / non-200 | `500 / 0 / 0` |
+| parse / schema / renderer | `1.0000 / 1.0000 / 1.0000` |
+| line evidence P/R/F1 | `0.8757 / 0.8783 / 0.8770` |
+| latency p50/p95 | `428.07 / 606.47 ms` |
+| two-stage decision P/R/FPR | `0.9881 / 1.0000 / 0.0120` |
+| 최종 gate | **PASS** |
+
+Line-range objective의 확정 gate는 line precision/recall 각각 `≥0.50`이며,
+기존 full-report의 evidence field 존재율 `≥0.90`과 다른 지표다. 따라서
+constrained run은 gate를 통과했지만 HF와 byte-identical한 evidence
+출력을 주장하지 않는다.
+
+운영 결정:
+
+- F5-M1은 **PASS with required constrained decoding**으로 종료한다.
+- evidence endpoint는 guided JSON Schema와 사후 semantic validation 없이
+  production-ready로 표시하지 않는다.
+- artifact root는
+  `artifacts/evaluation/phase-f-source-fresh-blind-500-v1/f5-m1-merged-vllm`이며
+  `SHA256SUMS` SHA-256은 `fee515c5…ad1`이다.
+- 평가 뒤 port 8000 종료와 두 GPU `0 MiB`를 확인했다.
+
+### F6-A 후보·toolchain inventory와 F6-B 1-pair smoke 결과
+
+`configs/phase_f/binary_candidates.json`과
+`scripts/preflight_phase_f_binary_b0.py`로 다운로드·컴파일·실행 없이 서버
+상태를 감사했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| manifest | `data/raw_data/_manifests/binary_candidate_inventory.json` |
+| manifest SHA-256 | `af18ec72306fcd6b1e53c1b8e86170a5353cc3b9336f20ebc7ef30022f75ab9d` |
+| SARD/Juliet | 존재, `152,957,342 bytes`, CC0/공공영역, B0 선택 |
+| BigVul | 존재, `10,784,462,714 bytes`, dataset-level license 재검토 필요 |
+| compiler / static tools | GCC 13.3, 사용자 영역 Clang 18.1.3, binutils 2.42 |
+| decompiler | 사용자 영역 Ghidra 12.1.2 |
+| toolchain manifest SHA-256 | `0de66fb5673374ee3fb6fd9fb05bf97099063d429c6a508203543010a148e502` |
+| F6-A | **PASS** |
+| F6-B | **RUNNING** — CWE-122 1-pair smoke PASS, 100-pair gate 미실행 |
+
+첫 CWE-690 후보는 `O2`에서 realloc/null-dereference 의미가 제거되어
+정상적으로 탈락시켰다. 두 번째 CWE-122 후보 `eaa5bdf5be4b7f6b`는
+GCC·Clang × `O0/O2` 4개 ELF를 컴파일하고, present/not_observed 대상 함수
+8개를 Ghidra pseudo-C·정적 특징·제한된 assembly로 정규화했다.
+8/8 schema·decompile·function link와 prompt 누출 0을 확인했으며 binary
+실행은 0회다.
+
+- artifact:
+  `artifacts/evaluation/phase-f-binary-b0-smoke-v2-cwe122`
+- normalized records SHA-256:
+  `04cedc4218454d65f31c82c36d1c33c3633908b889ca76e9d6da91d027e72c4c`
+- smoke summary SHA-256:
+  `c9ed9183630aef3ac1c20fd58bf1069b0d7fa5e4ae474687b61c8cec6f6f0908`
+- artifact inventory SHA-256:
+  `f3094284642b515189006b7fdbaff51b13b32a68f83c1463021808e0463d572d`
+
+이 결과는 1-pair feasibility PASS이며 B0 100-pair 절대 gate의 PASS가 아니다.
+다음에는 target-preservation 후보 감사와 고정 manifest를 먼저 만든다.
+
+### F6-B 후보 queue와 10-pair compile canary
+
+- Linux B0에서 `w32/windows` 전용 source 309 pair를 구조적으로 제외했다.
+- train group 5,000개 중 4,691 pair가 구조 gate를 통과했다.
+- seed `20260728`로 primary 100·reserve 50을 고정했다.
+- primary는 37개 CWE이며 단일 CWE 최대 비중은 `0.03`이다.
+- queue SHA-256:
+  `fcd8bbc792ece1ec07e09a74be278837a49d1b1c563a4f0dfac739b8fed0198f`
+- 10-pair compile canary는 relocatable ELF object만 생성하고 실행하지
+  않았다. GCC·Clang × `O0/O2` compile과 target-symbol link는 `40/40`이다.
+- compile summary SHA-256:
+  `59f2db0c6e9e63a5e92adbb3e7001771c576fddf8b4b6cdeb796931519871524`
+
+초기 canary의 Windows header 실패와 POSIX `S_IREAD/S_IWRITE` 호환 문제를
+각각 모집단 필터와 명시적 alias로 수정했다. 다음 gate는 같은 10 pair의
+Ghidra decompile 성공률, source–binary–function link, compiler별 target
+CWE 보존을 감사하는 것이다. 이를 통과하기 전에는 100 pair 전체
+decompile을 시작하지 않는다.
+
+### F6-B B0 100-pair 최종 결과 — 2026-07-30
+
+F6-B는 `PASS`로 종료한다. 고정 queue와 reserve에서 총 145 pair를
+검토했고, compiler 최적화 후 핵심 offset·length·allocation·resource
+경계가 사라진 45 pair를 제외했다. 저신뢰 pair로 수량을 채우지 않고
+명시 검토를 통과한 100 pair만 최종 manifest에 포함했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 검토 pair / 승인 / 탈락 | `145 / 100 / 45` |
+| 최종 compiler variant | `400`: GCC·Clang × `O0/O2` |
+| compile / decompile / function link | 승인 variant `400/400` |
+| normalized record | `800`: present 400 / not_observed 400 |
+| compiler consistency group | `200/200`, 각 4 variant |
+| schema / pseudo-C / assembly / static feature linkage | 각각 `1.00` |
+| prompt provenance·label·source-symbol 누출 | `0` |
+| raw executable payload / object 실행 | `0 / 0` |
+| B0 gate summary SHA-256 | `73ade0fbf0970d7176e2d3ef7d069c243d2657ee9d6e86b4c226ef72a825b8dd` |
+| normalized records SHA-256 | `737a9e399ca5004681e38739ca87e71f1dff19f9ea8e5de691d5f483041fe18c` |
+| normalized audit SHA-256 | `e67cfb28ef59bbd429eb35c8823cf64ce6158298fe624e8a692596a5013ccab6` |
+
+Linux에서 `wchar_t*`를 POSIX `open/fopen`에 전달하는 비이식 사례는
+candidate 단계에서 제외한다. 자동 triage는 승인 도구가 아니며,
+경고가 없는 pair도 명시 decision에 포함한다. 최종 artifact는
+`artifacts/evaluation/phase-f-binary-b0-final-v1`에 보관한다.
+
+이 결과로 F7의 차단 조건은 해제되었다. 다음 작업은 곧바로 adapter를
+학습하는 것이 아니라, 먼저 최대 2,000 pair의 실제 공급량과 provenance를
+감사하고 function/pair 단위 split, `O3 + stripped` robustness holdout,
+validation 400·blind test 500을 동결하는 것이다.

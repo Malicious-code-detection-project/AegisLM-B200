@@ -35,6 +35,44 @@ LLM 모델 개발은 분석 파이프라인 구현과 다른 속도로 움직입
 
 현재 저장소 단계는 **Phase F: 데이터 재설계 + adapter 복구 실험**입니다.
 
+2026-07-30 현재 source model-only 최종 후보는 Q1R10 decision 100-step과
+Q1R11 evidence 100-step을 순차 실행하는 two-stage pipeline입니다. 기존
+학습·검증·평가의 5,750 pair와 group/code hash가 겹치지 않는 신규 blind
+500건에서 decision precision/recall/FPR
+`0.9881/1.0000/0.0120`, evidence precision/recall/F1
+`0.9001/0.9229/0.9114`, parse/schema/renderer `1.0000`으로 고정 절대
+gate를 모두 통과했습니다. Q1R10과 Q1R11은 각각 base-start 100-step이며
+추가 250/313-step 학습은 수행하지 않습니다.
+
+이 PASS는 NIST SARD/Juliet 기반 C/C++ 함수에서 지정된 CWE의
+`present / not_observed` 판단과 근거 line 선택에 한정됩니다. 고정 seed
+TP 10/TN 10 검토에서는 판단 20/20과 evidence overlap 20/20을
+확인했지만, 20건 모두 confidence가 `high`였고 deterministic report의
+recommendation은 일반적인 재확인 문구입니다. 따라서 calibration,
+구체적인 remediation, 실제 프로젝트·다른 언어·binary 분석 성능은 아직
+검증되지 않았습니다. 두 adapter의 개별 BF16 merge와 vLLM TP2 lifecycle은
+완료했습니다. Evidence endpoint는 자유 JSON 생성 시 500건 중 1건이
+8-range 상한을 넘었으므로 `response_format=json_schema` constrained
+decoding과 AegisLM semantic validator를 배포 필수조건으로 고정합니다.
+이 조건에서 decision과 evidence의 전체 절대 gate가 통과했습니다.
+
+F6-A binary 후보·서버 preflight와 F6-B B0 100-pair gate도 완료했습니다.
+SARD/Juliet CC0 원천과 사용자 영역의 GCC·Clang 18·Ghidra 12.1.2
+toolchain을 동결했습니다. 후보 145쌍을 GCC·Clang × `O0/O2`로
+compile·decompile하고 target CWE 보존을 명시적으로 검토해 45쌍을
+탈락시켰습니다. 최종 승인 100쌍·400 variant는 모두 function link와
+target-preservation gate를 통과했습니다.
+
+승인 pair는 present/not_observed를 분리한 normalized record 800건으로
+materialize했습니다. schema, pseudo-C, bounded assembly, static-feature
+linkage는 모두 `1.00`이고, prompt provenance·gold label·source symbol
+누출과 raw payload·object 실행은 `0`입니다. F6-B는 `Pass`입니다.
+F7은 구조 적격 4,643 pair의 전체 queue를 동결하고 250-pair pilot을
+완료했습니다. 명시 검토에서 206 pair를 승인하고 44 pair를 제외했으며,
+과거 B0 결과를 합친 누적 승인/검토는 `306/395`입니다. Wilson 95% 하한
+기준으로도 목표 2,450 pair를 채우고 1,314 pair의 공급 여유가 있어
+500-pair 단위 확대를 승인했습니다.
+
 Phase E에서는 Qwen3-Coder-Next 80B LoRA를 학습하고 adapter 저장·재로드,
 merge, vLLM serving, 5건 smoke와 500건 절대평가까지 완료했습니다. 인프라
 경로는 통과했지만 500건 품질 gate는 실패했습니다. Phase F에서는
@@ -55,8 +93,34 @@ source dataset부터 다시 검증합니다.
 10,000건, validation 1,000건, blind test 500건을 구성하며 자동
 품질·수량·2,048-token gate와 고정 100건 수동 gate를 모두 통과했습니다.
 수동 검토 오류는 `0/100`이고 정답의 Juliet `good/bad` 용어 누출도
-`0`입니다. 현재 상태는 `ready_for_source_v3_integration`이며, 아직
-`approved_for_training=false`입니다. 다음 작업은 F3 승인본 구축·동결입니다.
+`0`입니다. 이 자료를 다시 검증·승격한 `phase-f-source-v3`은
+train 10,000건, validation 1,000건, blind challenge 500건으로
+동결됐습니다. split·content overlap과 canonical round-trip 오류는 모두
+`0`, 최대 실제 Qwen token은 `1,913/2,048`이며 동일 입력 재빌드 hash도
+일치했습니다. F3 상태는 `approved_for_training=true`입니다. F4에서는
+새 학습 전 Qwen base와 Phase E legacy adapter에 고정 20건
+source-v2 contract smoke를 수행했습니다. 두 모델 모두 prediction은
+완료했지만 schema는 `0/20`이어서 500건 확장은 중단했습니다. 동일 gold
+target oracle은 `20/20` PASS해 평가 경로는 정상으로 확인됐습니다.
+
+F5-Q1은 Phase E checkpoint를 재사용하지 않고 base에서 100-step LoRA를
+완료했습니다. 저장·checkpoint mirror·재로드·HTTP serving은 통과했지만,
+고정 20건 진단 smoke는 precision `0.7778`, recall `0.7000`, FPR
+`0.2000`, schema `0.9000`으로 실패했습니다. control-flow, buffer
+capacity, allocation provenance와 exact span을 보정한 `phase-f-source-v4`로
+Q1R1 100-step을 다시 수행했습니다. lifecycle과 schema는 통과했지만 새
+blind 20건에서 precision `0.7500`, recall `0.3000`, FPR `0.1000`으로
+semantic gate가 다시 실패했습니다. 같은 사례에서 base raw label은
+precision `0.7000`, recall `0.7000`, FPR `0.3333`이어서, 100-step SFT가
+형식 준수와 FPR을 개선하는 대신 관계 추론 recall을 훼손했을 가능성이
+확인됐습니다. 25-step semantic-preservation canary는 raw recall을
+`0.8000`으로 보존했지만 raw FPR `0.9000`, schema `0.6000`으로 반대
+방향의 실패를 보였습니다. 이어 수행한 50-step boundary canary도
+precision `0.6667`, recall `0.2000`, schema `0.5000`으로 실패했고,
+6건은 1,024-token에서 JSON이 잘렸습니다. 따라서 500건 평가와 Q2
+250-step은 계속 중단하며 step 탐색도 종료했습니다. 현재 다음 단계는
+label·근거·split을 보존하면서 장문 code excerpt와 중복 boilerplate를
+제거하는 compact target 및 semantic/contract 학습 목표 재설계입니다.
 
 F1 raw catalog에 이어 group-first pool, 보안 범주화, category sampling,
 reserve와 cross-dataset holdout 구현 및 full materialization 감사를
@@ -102,7 +166,7 @@ Qwen3-Coder-Next 80B에서 학습, adapter 저장·로드, merge, 실제 API ser
 별개로 precision, recall, FPR, schema gate를 통과하지 못해 현재 adapter는
 채택하지 않습니다.
 
--> **Phase F: dataset 재설계 + source/binary adapter 개선 (F2 PASS / F3 Ready)**
+-> **Phase F: dataset 재설계 + source lifecycle PASS / binary F7 pilot**
 
 기존 33만 건을 확대하지 않고 catalog→eligible manifest→materialized JSONL
 세 계층으로 재구성합니다. 구조 검사를 통과한 데이터에 대해 코드 근거가

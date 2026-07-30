@@ -69,8 +69,28 @@ Phase F의 우선순위는 다음과 같다.
 - 기존 33만 건과 80B adapter를 실패 기준선으로 동결
 - source/metadata/label/target을 model-visible prompt에서 제거
 - catalog→eligible manifest→materialized JSONL 세 계층을 유지
-- 10,000건 source profile과 독립 500건 challenge를 먼저 구성
-- 20B 100-step canary가 진단 gate를 통과한 뒤에만 80B로 진행
+- F3 `phase-f-source-v3` 10,000건과 독립 500건 challenge 동결 완료
+- F4 base·legacy source-v2 smoke는 schema `0/20`으로 종료
+- oracle `20/20` PASS로 evaluator 정상 확인
+- F5의 최종 source 후보는 Q1R10 decision과 Q1R11 evidence를 순차
+  실행하는 two-stage pipeline
+- 신규 blind 500건에서 decision P/R/FPR
+  `0.9881/1.0000/0.0120`, evidence P/R/F1
+  `0.9001/0.9229/0.9114`, schema/renderer `1.00`으로 PASS
+- 두 adapter의 개별 BF16 merge와 vLLM TP2 lifecycle 완료
+- evidence serving은 guided JSON Schema constrained decoding과
+  AegisLM semantic validator를 필수조건으로 사용
+- F6-A binary candidate/toolchain inventory는 PASS
+- F6-B B0는 사용자 영역 Clang 18·Ghidra 12.1.2에서 145 pair를 검토해
+  100 pair·400 compiler variant를 승인하고 PASS로 종료
+- 승인 pair의 normalized binary record 800건은 schema·pseudo-C·assembly·
+  static-feature linkage 1.00, prompt provenance/label/source-symbol 누출 0
+- F7 구조 적격 공급 4,643 pair를 동결하고 250-pair pilot을 명시 검토해
+  206 pair를 승인, 44 pair를 제외
+- 과거 B0를 합친 누적 승인/검토는 306/395, Wilson 95% 하한 공급
+  margin은 1,314 pair로 다음 500-pair batch를 승인
+- Q2 250-step과 313-step 연장은 개선 근거가 없어 미실행
+- GPT-OSS 20B는 Qwen 결론 이후 보조 이식성 실험으로만 진행
 - source와 binary-derived adapter를 서로 분리해 절대평가
 - binary는 raw byte가 아니라 pseudo-C, 정적 특징, 제한된 assembly를 사용
 - 두 adapter가 독립 gate를 통과하기 전에는 NuriLab/RAG/MCP 연결을 보류

@@ -1,0 +1,55 @@
+### model
+model_name_or_path: model/base/qwen3-coder-next
+trust_remote_code: true
+low_cpu_mem_usage: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: all
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.05
+deepspeed: configs/deepspeed/ds_z3_b200.json
+
+### dataset
+dataset: phase_f_source_v5_r1_train
+eval_dataset: phase_f_source_v5_r1_validation
+dataset_dir: data/processed/phase-f-source-v5-r1
+template: qwen3_nothink
+cutoff_len: 2048
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: training_artifacts/qwen3-coder-next/lora/phase-f-source-v5-r1/q1r4-100
+logging_dir: /NHNHOME/WORKSPACE/26moel002_ex07/LLM/TrainingArtifacts/runs/qwen3-coder-next/lora/phase-f-source-v5-r1/q1r4-100
+logging_steps: 5
+save_strategy: steps
+save_steps: 100
+save_total_limit: 1
+plot_loss: true
+overwrite_output_dir: false
+save_only_model: false
+report_to: wandb
+run_name: aegislm-phase-f-source-v5-r1-q1r4-100
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 16
+learning_rate: 1.0e-4
+max_steps: 100
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+fp16: false
+gradient_checkpointing: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+
+### eval
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 25

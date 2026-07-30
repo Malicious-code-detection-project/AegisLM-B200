@@ -206,3 +206,40 @@ Source와 binary 결과는 서로 다른 task·adapter의 독립 판정입니다
 두 adapter가 각자 gate를 통과하기 전에는 혼합 adapter, NuriLab signal,
 RAG/MCP의 개선 효과를 평가하지 않습니다.
 
+### 10.1 Two-stage source blind 규칙
+
+Source decision과 evidence selection을 별도 adapter로 평가할 때도 같은 ID
+집합을 사용하며 두 단계가 모두 통과해야 전체 PASS입니다.
+
+- decision: precision `≥0.90`, recall `≥0.95`, FPR `≤0.05`,
+  parse/schema `≥0.99`
+- evidence line selection: parse/schema `≥0.99`, line precision/recall
+  각각 `≥0.50`, deterministic renderer `1.00`
+- malformed·역순·중복 range는 자동 교정하지 않고 모델 오류로 집계
+- 서로 다른 유효 line이 동일 문자열을 가리키는 경우 resolver는 exact span
+  uniqueness를 위해 텍스트만 한 번 렌더링
+- `--blind-test`를 사용한 결과만 최종 판정으로 기록하며, 한 번 gold를 연
+  ID 집합은 후속 모델의 최종 blind로 재사용하지 않음
+
+2026-07-30 Q1R10→Q1R9 미노출 480건에서는 decision은 PASS했지만 evidence
+renderer가 `477/480`으로 strict gate를 통과하지 못해 source 전체
+FAIL이었습니다. 이 gold는 이후 평가에 재사용하지 않았습니다.
+
+보정한 Q1R11 evidence adapter는 dev100 gate 통과 후 기존 group/code
+overlap이 0인 신규 blind 500건에서 한 번 평가했습니다. Q1R10→Q1R11은
+decision precision/recall/FPR `0.9881/1.0000/0.0120`, evidence
+precision/recall/F1 `0.9001/0.9229/0.9114`, parse/schema/renderer
+`1.0000`으로 전체 PASS했습니다. 이 판정은 synthetic function-level
+SARD/Juliet와 지정 CWE 범위에 한정합니다. 고정 표본 20건에서 confidence가
+전부 `high`였고 recommendation은 deterministic 일반 문구였으므로,
+calibration·구체적 remediation·실제 코드 일반화는 별도 후속 gate입니다.
+
+F3 `phase-f-source-v3`이 2026-07-29에 학습 승인 상태로 동결됐습니다.
+F4는 새 학습 전에 이 artifact의 `challenge.jsonl`만 inference에 전달해
+Qwen base와 Phase E legacy adapter를 각각 평가합니다. `gold.jsonl`은
+inference process에 전달하지 않고 평가 시점에만 사용합니다.
+
+- challenge SHA-256: `41d7da1b21863be6ad27d8d76073012f211b51b762b16a81f46bf9f26979f82f`
+- gold SHA-256: `3d60ce666e1f1a7e477861afd4c7ebb1fe6cdef994eeba18fea2809241cb4105`
+- dataset manifest SHA-256: `5b63098478c261e3031ce91848627dc06c6bee3e165724ee3f8ee8c60887cb8b`
+

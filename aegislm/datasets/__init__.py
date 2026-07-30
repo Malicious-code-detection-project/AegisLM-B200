@@ -76,6 +76,54 @@ from aegislm.datasets.sard_juliet import (
     materialize_juliet_profile,
     summarize_juliet_manual_review,
 )
+from aegislm.datasets.source_v3 import (
+    SOURCE_V3_CUTOFF_LEN,
+    SOURCE_V3_PROFILE,
+    SOURCE_V3_SEED,
+    promote_source_v3,
+)
+from aegislm.datasets.source_decision import (
+    SOURCE_DECISION_PROFILE,
+    SOURCE_DECISION_SYSTEM_PROMPT,
+    build_source_decision_artifact,
+    decision_target,
+)
+from aegislm.datasets.source_multitask import (
+    SOURCE_MULTITASK_PROFILE,
+    build_source_multitask_artifact,
+)
+from aegislm.datasets.source_compact import (
+    SOURCE_COMPACT_PROFILE,
+    SOURCE_COMPACT_EVIDENCE_SYSTEM_PROMPT,
+    build_source_compact_artifact,
+    format_compact_evidence_prompt,
+    project_full_report_target,
+    render_source_assessment,
+    validate_compact_evidence_output,
+)
+from aegislm.datasets.source_evidence_lines import (
+    SOURCE_EVIDENCE_LINES_SYSTEM_PROMPT,
+    format_evidence_lines_prompt,
+    number_source_code,
+    project_compact_to_evidence_lines,
+    render_assessment_from_evidence_lines,
+    resolve_evidence_ranges,
+    validate_evidence_lines_output,
+)
+from aegislm.datasets.source_two_stage import (
+    build_predicted_assessment_evidence_challenge,
+)
+from aegislm.datasets.source_blind_subset import (
+    FreshBlindContracts,
+    UntouchedBlindSubset,
+    build_fresh_blind_contracts,
+    build_untouched_blind_subset,
+)
+from aegislm.datasets.source_evidence_artifact import (
+    SOURCE_EVIDENCE_PROFILE,
+    build_source_evidence_artifact,
+    to_evidence_training_record,
+)
 
 __all__ = [
     "validate_record",
@@ -133,6 +181,38 @@ __all__ = [
     "juliet_function_to_source_record",
     "materialize_juliet_profile",
     "summarize_juliet_manual_review",
+    "SOURCE_V3_CUTOFF_LEN",
+    "SOURCE_V3_PROFILE",
+    "SOURCE_V3_SEED",
+    "promote_source_v3",
+    "SOURCE_DECISION_PROFILE",
+    "SOURCE_DECISION_SYSTEM_PROMPT",
+    "build_source_decision_artifact",
+    "decision_target",
+    "SOURCE_MULTITASK_PROFILE",
+    "build_source_multitask_artifact",
+    "SOURCE_COMPACT_EVIDENCE_SYSTEM_PROMPT",
+    "SOURCE_COMPACT_PROFILE",
+    "build_source_compact_artifact",
+    "format_compact_evidence_prompt",
+    "project_full_report_target",
+    "render_source_assessment",
+    "validate_compact_evidence_output",
+    "SOURCE_EVIDENCE_LINES_SYSTEM_PROMPT",
+    "format_evidence_lines_prompt",
+    "number_source_code",
+    "project_compact_to_evidence_lines",
+    "render_assessment_from_evidence_lines",
+    "resolve_evidence_ranges",
+    "validate_evidence_lines_output",
+    "build_predicted_assessment_evidence_challenge",
+    "FreshBlindContracts",
+    "UntouchedBlindSubset",
+    "build_fresh_blind_contracts",
+    "build_untouched_blind_subset",
+    "SOURCE_EVIDENCE_PROFILE",
+    "build_source_evidence_artifact",
+    "to_evidence_training_record",
     "format_source_prompt",
     "phase_f_record_to_source_record",
     "source_prompt_variant_id",

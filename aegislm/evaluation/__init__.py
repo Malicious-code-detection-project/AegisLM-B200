@@ -26,6 +26,28 @@ from aegislm.evaluation.harness import (
 from aegislm.evaluation.source import (
     SourceThresholds,
     evaluate_source_predictions,
+    write_source_report,
+    write_source_summary,
+)
+from aegislm.evaluation.source_decision import (
+    SourceDecisionThresholds,
+    evaluate_source_decisions,
+    write_source_decision_summary,
+)
+from aegislm.evaluation.source_compact import (
+    SourceCompactThresholds,
+    evaluate_source_compact_predictions,
+    write_source_compact_summary,
+)
+from aegislm.evaluation.source_evidence_lines import (
+    SourceEvidenceThresholds,
+    evaluate_source_evidence_predictions,
+    write_source_evidence_summary,
+)
+from aegislm.evaluation.source_two_stage import (
+    SourceTwoStageThresholds,
+    evaluate_source_two_stage_predictions,
+    write_source_two_stage_summary,
 )
 from aegislm.evaluation.validation import (
     ValidationResult,
@@ -39,6 +61,9 @@ __all__ = [
     "Prediction",
     "BinaryThresholds",
     "SourceThresholds",
+    "SourceDecisionThresholds",
+    "SourceCompactThresholds",
+    "SourceEvidenceThresholds",
     "ValidationResult",
     "build_blind_code_challenge",
     "collect_training_fingerprints",
@@ -46,6 +71,17 @@ __all__ = [
     "evaluate_binary_predictions",
     "evaluate_predictions",
     "evaluate_source_predictions",
+    "evaluate_source_decisions",
+    "evaluate_source_compact_predictions",
+    "evaluate_source_evidence_predictions",
+    "write_source_report",
+    "write_source_summary",
+    "write_source_decision_summary",
+    "write_source_compact_summary",
+    "write_source_evidence_summary",
+    "SourceTwoStageThresholds",
+    "evaluate_source_two_stage_predictions",
+    "write_source_two_stage_summary",
     "load_jsonl",
     "load_predictions",
     "parse_model_output",
