@@ -1,0 +1,41 @@
+{
+  "review_artifact_sha256": "f211482c893bf45557fc7eb89881ff88544d24680514e531ea9ffaffc908dc83",
+  "decisions": [
+    {
+      "id": "binary-b0-073013ac264e5737-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 present links strlen(dest) to memcpy but omits the selected short dataBadBuffer and its capacity, which establish the out-of-bounds read relation."
+    },
+    {
+      "id": "binary-b0-ab71115b1a316be8-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-134 present links a local pointer assignment to fwprintf but omits the fgetws-controlled format-buffer flow needed to justify the uncontrolled format-string assessment."
+    },
+    {
+      "id": "binary-b0-9f2623e79fd4dc7d-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-190 present links the constant initialization data = 0 to data * data and omits the fscanf input and missing arithmetic bound."
+    },
+    {
+      "id": "binary-b0-cc6974e6652e8949-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-191 present links data = 0 to data - 1 and omits the recv/atoi input path and missing lower-bound guard."
+    },
+    {
+      "id": "binary-b0-0f494079be875444-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-194 present links an unrelated socket listen condition to the int cast and omits the short conversion and later signed length use that form the scoped relation."
+    },
+    {
+      "id": "binary-b0-4a056c81d4b94ca5-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-195 present links the post-copy dest[data] write to memmove and omits the negative/untrusted data value converted to the copy length."
+    }
+  ]
+}

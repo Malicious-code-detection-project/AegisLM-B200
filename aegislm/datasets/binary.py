@@ -221,6 +221,25 @@ The assessment is scoped to the target CWE and is not a claim that the whole
 program is safe. Do not provide exploit, malware deployment, persistence,
 credential theft, or evasion instructions."""
 
+BINARY_ROLE_SYSTEM_PROMPT = """You are AegisLM, a defensive binary-analysis assistant.
+
+Return exactly one JSON object and no Markdown. The object must contain:
+- scope: target_cwe, binary_format, architecture
+- assessment: present, not_observed, or uncertain
+- findings: function_id, representation, evidence, relations, confidence
+- evidence: evidence_id, role, code_span, explanation
+- relations: from_evidence_id, to_evidence_id, relationship
+- limitations: array of strings
+- recommendations: array of strings
+
+Every code_span must be copied exactly from the supplied evidence. Link each
+source, control, bound, or remediation item to a supplied sink. Use only the
+supplied pseudo-C, bounded assembly evidence, and static features. Do not infer
+from dataset provenance, labels, source symbols, or file paths. The assessment
+is scoped to the target CWE and is not a claim that the whole program is safe.
+Do not provide exploit, malware deployment, persistence, credential theft, or
+evasion instructions."""
+
 
 def validate_binary_record(record: Mapping[str, Any]) -> None:
     """Validate schema and prohibit embedded executable/raw-byte payloads."""
@@ -536,6 +555,707 @@ def build_binary_pair_targets(
     return (
         _build_binary_target_from_evidence(present_record, present_evidence),
         _build_binary_target_from_evidence(fixed_record, fixed_evidence),
+    )
+
+
+def build_binary_pair_role_targets(
+    present_record: Mapping[str, Any],
+    fixed_record: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Build v2 targets whose supporting roles are explicitly linked to a sink.
+
+    The v1 target deliberately remains available for reproduction. This builder
+    is stricter: a pair is excluded when the supplied pseudo-C cannot show both
+    the target operation and the role needed to justify the scoped assessment.
+    """
+    (
+        target_cwe,
+        present_function,
+        fixed_function,
+    ) = _validate_and_unpack_binary_pair(present_record, fixed_record)
+    present_pseudo = str(present_function["pseudo_c"])
+    fixed_pseudo = str(fixed_function["pseudo_c"])
+    if not binary_target_relation_visible(target_cwe, present_pseudo):
+        raise BinaryRecordValidationError(
+            f"{target_cwe} has no observable target relation"
+        )
+    present_roles = _select_role_evidence(
+        present_pseudo,
+        target_cwe=target_cwe,
+        assessment="present",
+        comparison_pseudo_c=fixed_pseudo,
+    )
+    fixed_roles = _select_role_evidence(
+        fixed_pseudo,
+        target_cwe=target_cwe,
+        assessment="not_observed",
+        comparison_pseudo_c=present_pseudo,
+    )
+    return (
+        _build_binary_role_target(present_record, present_roles),
+        _build_binary_role_target(fixed_record, fixed_roles),
+    )
+
+
+def _validate_and_unpack_binary_pair(
+    present_record: Mapping[str, Any],
+    fixed_record: Mapping[str, Any],
+) -> tuple[str, Mapping[str, Any], Mapping[str, Any]]:
+    validate_binary_record(present_record)
+    validate_binary_record(fixed_record)
+    if present_record["metadata"]["label"] != "present":
+        raise BinaryRecordValidationError("first pair record must be present")
+    if fixed_record["metadata"]["label"] != "not_observed":
+        raise BinaryRecordValidationError("second pair record must be not_observed")
+    scope_keys = (
+        ("task", "target_cwe"),
+        ("artifact", "format"),
+        ("artifact", "architecture"),
+        ("artifact", "compiler"),
+        ("artifact", "optimization"),
+    )
+    present_scope = tuple(present_record[parent][key] for parent, key in scope_keys)
+    fixed_scope = tuple(fixed_record[parent][key] for parent, key in scope_keys)
+    if present_scope != fixed_scope:
+        raise BinaryRecordValidationError("binary pair scope or variant mismatch")
+    present_function = cast(
+        Mapping[str, Any],
+        cast(list[Any], present_record["analysis"]["functions"])[0],
+    )
+    fixed_function = cast(
+        Mapping[str, Any],
+        cast(list[Any], fixed_record["analysis"]["functions"])[0],
+    )
+    return str(present_record["task"]["target_cwe"]), present_function, fixed_function
+
+
+def _build_binary_role_target(
+    record: Mapping[str, Any],
+    role_evidence: Sequence[tuple[str, str]],
+) -> dict[str, Any]:
+    artifact = cast(Mapping[str, Any], record["artifact"])
+    analysis = cast(Mapping[str, Any], record["analysis"])
+    task = cast(Mapping[str, Any], record["task"])
+    metadata = cast(Mapping[str, Any], record["metadata"])
+    function = cast(Mapping[str, Any], cast(list[Any], analysis["functions"])[0])
+    counters: dict[str, int] = {}
+    evidence: list[dict[str, str]] = []
+    sink_id = ""
+    for role, code_span in role_evidence:
+        counters[role] = counters.get(role, 0) + 1
+        evidence_id = f"{role}-{counters[role]}"
+        if role == "sink" and not sink_id:
+            sink_id = evidence_id
+        evidence.append(
+            {
+                "evidence_id": evidence_id,
+                "role": role,
+                "code_span": code_span,
+                "explanation": _role_explanation(
+                    str(task["target_cwe"]),
+                    str(metadata["label"]),
+                    role,
+                ),
+            }
+        )
+    if not sink_id:
+        raise BinaryRecordValidationError("role evidence has no sink")
+    relationship_by_role = {
+        "source": "flows_to",
+        "control": "constrains",
+        "bound": "bounds",
+        "remediation": "remediates",
+    }
+    relations = [
+        {
+            "from_evidence_id": item["evidence_id"],
+            "to_evidence_id": sink_id,
+            "relationship": relationship_by_role[item["role"]],
+        }
+        for item in evidence
+        if item["role"] != "sink"
+    ]
+    target: dict[str, Any] = {
+        "scope": {
+            "target_cwe": task["target_cwe"],
+            "binary_format": artifact["format"],
+            "architecture": artifact["architecture"],
+        },
+        "assessment": metadata["label"],
+        "findings": [
+            {
+                "function_id": function["function_id"],
+                "representation": "pseudo_c",
+                "evidence": evidence,
+                "relations": relations,
+                "confidence": "high",
+            }
+        ],
+        "limitations": [
+            "The assessment is limited to the target CWE and supplied function.",
+            "Static decompilation may omit runtime context and compiler intent.",
+        ],
+        "recommendations": [
+            "Confirm the scoped result with deterministic binary analysis and "
+            "human review."
+        ],
+    }
+    errors = validate_binary_role_output_for_record(target, record)
+    if errors:
+        raise BinaryRecordValidationError("; ".join(errors))
+    return target
+
+
+def _role_explanation(target_cwe: str, assessment: str, role: str) -> str:
+    descriptions = {
+        "source": "This supplied operation or value reaches the scoped sink.",
+        "control": "This supplied condition constrains the scoped sink.",
+        "bound": "This supplied size or index bound is compared with the scoped sink.",
+        "remediation": "This supplied operation is the pair-visible remediation.",
+        "sink": "This supplied operation is the scoped target-CWE sink.",
+    }
+    qualifier = (
+        "The linked roles expose the target relation."
+        if assessment == "present"
+        else "The linked control or remediation limits only this target relation."
+    )
+    return f"{descriptions[role]} {qualifier} Target: {target_cwe}."
+
+
+def _select_role_evidence(
+    pseudo_c: str,
+    *,
+    target_cwe: str,
+    assessment: Literal["present", "not_observed"],
+    comparison_pseudo_c: str,
+) -> list[tuple[str, str]]:
+    statements = _pseudo_c_statements(pseudo_c)
+    comparison_statements = set(_pseudo_c_statements(comparison_pseudo_c))
+    if not statements:
+        raise BinaryRecordValidationError("pseudo-C has no model-visible statements")
+    target_pattern = _TARGET_EVIDENCE_PATTERNS.get(target_cwe)
+    target_scores = [
+        _target_evidence_score(target_cwe, line, target_pattern=target_pattern)
+        for line in statements
+    ]
+    control_scores = [
+        (
+            _fixed_control_evidence_score(target_cwe, line)
+            if line not in comparison_statements
+            else 0
+        )
+        for line in statements
+    ]
+    sink_index = _role_sink_index(target_cwe, statements, target_scores)
+    if sink_index is None:
+        raise BinaryRecordValidationError(f"{target_cwe} has no role-linked sink")
+    required = _target_specific_role_indices(
+        target_cwe,
+        statements,
+        sink_index=sink_index,
+        assessment=assessment,
+        comparison_statements=comparison_statements,
+        control_scores=control_scores,
+    )
+    if not required:
+        required = _generic_role_indices(
+            statements,
+            sink_index=sink_index,
+            assessment=assessment,
+            comparison_statements=comparison_statements,
+            control_scores=control_scores,
+        )
+    if not required:
+        raise BinaryRecordValidationError(
+            f"{target_cwe} {assessment} has no role linked to its sink"
+        )
+    role_lines = [(role, statements[index]) for role, index in required]
+    role_lines.append(("sink", statements[sink_index]))
+    return list(dict.fromkeys(role_lines))
+
+
+def _pseudo_c_statements(pseudo_c: str) -> list[str]:
+    lines = [
+        line.strip()
+        for line in _DECOMPILER_BLOCK_COMMENT.sub("", pseudo_c).splitlines()
+        if line.strip() and line.strip() not in {"{", "}"}
+    ]
+    return list(
+        dict.fromkeys(
+            line
+            for line in lines
+            if line.endswith(";")
+            or _SECURITY_OPERATION.search(line)
+            or line.startswith(("if (", "for (", "while (", "do {"))
+        )
+    )
+
+
+def _role_sink_index(
+    target_cwe: str,
+    statements: Sequence[str],
+    target_scores: Sequence[int],
+) -> int | None:
+    candidates = [
+        index
+        for index, score in enumerate(target_scores)
+        if score > 0
+        and not _looks_like_declaration(statements[index])
+        and not statements[index].startswith(("if (", "for (", "while (", "do {"))
+    ]
+    if target_cwe in {"CWE-121", "CWE-122", "CWE-124", "CWE-126", "CWE-127"}:
+        memory = [
+            index for index in candidates if _MEMORY_COPY.search(statements[index])
+        ]
+        if memory:
+            candidates = memory
+    if target_cwe in {"CWE-194", "CWE-195"}:
+        converted_memory = [
+            index
+            for index in candidates
+            if re.search(
+                r"(?:memcpy|memmove|strncpy|malloc|calloc|realloc)[^;]*"
+                r"\bdata\b",
+                statements[index],
+                flags=re.IGNORECASE,
+            )
+        ]
+        if converted_memory:
+            candidates = converted_memory
+    if target_cwe == "CWE-690":
+        uses = [
+            index
+            for index in candidates
+            if not (
+                _C_ALLOCATOR.search(statements[index])
+                or _CPP_ALLOCATOR.search(statements[index])
+            )
+            and re.search(r"(?:->|\[[^\]]+\]|\*\s*[A-Za-z_])", statements[index])
+        ]
+        if uses:
+            candidates = uses
+    if not candidates:
+        return None
+    return max(candidates, key=lambda index: (target_scores[index], -index))
+
+
+def _target_specific_role_indices(
+    target_cwe: str,
+    statements: Sequence[str],
+    *,
+    sink_index: int,
+    assessment: Literal["present", "not_observed"],
+    comparison_statements: set[str],
+    control_scores: Sequence[int],
+) -> list[tuple[str, int]]:
+    sink = statements[sink_index]
+    if target_cwe in {"CWE-121", "CWE-122"}:
+        capacity = _memory_capacity_index(statements, sink)
+        if capacity is None:
+            return []
+        role = "bound" if assessment == "present" else "remediation"
+        return [(role, capacity)]
+    if target_cwe in {"CWE-124", "CWE-127"}:
+        offset = _negative_offset_or_guard_index(
+            statements,
+            sink,
+            require_negative=assessment == "present",
+        )
+        if offset is None:
+            return []
+        return [(("bound" if assessment == "present" else "control"), offset)]
+    if target_cwe == "CWE-126":
+        return _buffer_selection_role_indices(
+            statements,
+            sink_index=sink_index,
+            assessment=assessment,
+        )
+    if target_cwe == "CWE-134":
+        return _format_string_role_indices(
+            statements,
+            sink_index=sink_index,
+            assessment=assessment,
+        )
+    if target_cwe in {"CWE-190", "CWE-191"}:
+        if assessment == "not_observed":
+            guard = _numeric_guard_index(statements, statements[sink_index])
+            return [("control", guard)] if guard is not None else []
+        sources = _numeric_source_indices(
+            statements,
+            statements[sink_index],
+            comparison_statements=comparison_statements,
+        )
+        return [("source", index) for index in sources]
+    if target_cwe in {"CWE-194", "CWE-195"}:
+        if assessment == "not_observed":
+            controls = [
+                index
+                for index, score in enumerate(control_scores)
+                if score >= 40 and index != sink_index
+            ]
+            return [("remediation", controls[0])] if controls else []
+        sources = _conversion_source_indices(
+            statements,
+            statements[sink_index],
+            comparison_statements=comparison_statements,
+        )
+        return [("source", index) for index in sources]
+    if target_cwe == "CWE-457":
+        return _initialization_role_indices(
+            statements,
+            sink_index=sink_index,
+            assessment=assessment,
+        )
+    if target_cwe == "CWE-690":
+        allocator = _linked_allocator_index(statements, sink)
+        if allocator is None:
+            return []
+        if assessment == "present":
+            return [("source", allocator)]
+        guard = _null_guard_index(statements, sink)
+        if guard is None:
+            return []
+        return [("control", guard), ("remediation", allocator)]
+    if assessment == "not_observed":
+        controls = [
+            index
+            for index, score in enumerate(control_scores)
+            if score >= 40 and index != sink_index
+        ]
+        if controls:
+            return [("remediation", controls[0])]
+    return []
+
+
+def _generic_role_indices(
+    statements: Sequence[str],
+    *,
+    sink_index: int,
+    assessment: Literal["present", "not_observed"],
+    comparison_statements: set[str],
+    control_scores: Sequence[int],
+) -> list[tuple[str, int]]:
+    sink_ids = _stable_evidence_identifiers(statements[sink_index])
+    candidates: list[tuple[int, int]] = []
+    for index, line in enumerate(statements):
+        if index == sink_index or _looks_like_declaration(line):
+            continue
+        overlap = len(sink_ids & _stable_evidence_identifiers(line))
+        contrast = int(line not in comparison_statements)
+        control = control_scores[index]
+        if overlap or control >= 40:
+            candidates.append((index, overlap * 20 + contrast * 10 + control))
+    if not candidates:
+        return []
+    index = max(candidates, key=lambda item: (item[1], -item[0]))[0]
+    if assessment == "not_observed":
+        if control_scores[index] < 40:
+            return []
+        role = "control" if statements[index].startswith("if (") else "remediation"
+    else:
+        role = "control" if statements[index].startswith("if (") else "source"
+    return [(role, index)]
+
+
+def _memory_capacity_index(statements: Sequence[str], sink: str) -> int | None:
+    call = re.search(r"\b\w+\s*\(\s*([A-Za-z_]\w*)\s*,", sink)
+    destination = call.group(1) if call else ""
+    if not destination:
+        assignment = re.search(r"\b([A-Za-z_]\w*)\s*\[[^\]]+\]\s*=", sink)
+        destination = assignment.group(1) if assignment else ""
+    if not destination:
+        return None
+    patterns = (
+        re.compile(
+            rf"\b{re.escape(destination)}\s*\[\s*(?:0x[0-9a-f]+|\d+)\s*\]",
+            flags=re.IGNORECASE,
+        ),
+        re.compile(
+            rf"\b{re.escape(destination)}\b\s*=\s*(?:\([^)]*\)\s*)?"
+            r"(?:malloc|calloc|realloc|new\b)[^;]*",
+            flags=re.IGNORECASE,
+        ),
+    )
+    return next(
+        (
+            index
+            for index, line in enumerate(statements)
+            if any(pattern.search(line) for pattern in patterns)
+        ),
+        None,
+    )
+
+
+def _negative_offset_or_guard_index(
+    statements: Sequence[str],
+    sink: str,
+    *,
+    require_negative: bool,
+) -> int | None:
+    sink_ids = _stable_evidence_identifiers(sink)
+    negative = re.compile(
+        r"(?:\+\s*-\s*(?:1|2|4|8)|-\s*(?:1|2|4|8)|0xffffffff)",
+        flags=re.IGNORECASE,
+    )
+    guard = re.compile(r"(?:>=\s*0|>\s*0|<\s*(?:0x[0-9a-f]+|\d+))")
+    pattern = negative if require_negative else guard
+    return next(
+        (
+            index
+            for index, line in enumerate(statements)
+            if pattern.search(line)
+            and bool(sink_ids & _stable_evidence_identifiers(line))
+        ),
+        None,
+    )
+
+
+def _buffer_selection_role_indices(
+    statements: Sequence[str],
+    *,
+    sink_index: int,
+    assessment: Literal["present", "not_observed"],
+) -> list[tuple[str, int]]:
+    sink = statements[sink_index]
+    arguments = re.search(
+        r"\b(?:memcpy|memmove|strncpy|wcsncpy)\s*\(\s*"
+        r"[^,]+,\s*([A-Za-z_]\w*)",
+        sink,
+        flags=re.IGNORECASE,
+    )
+    if not arguments:
+        return []
+    source_variable = arguments.group(1)
+    selection = next(
+        (
+            (index, match.group(1))
+            for index, line in enumerate(statements)
+            if (
+                match := re.search(
+                    rf"\b{re.escape(source_variable)}\s*=\s*"
+                    r"([A-Za-z_]\w*(?:Buffer)?)\s*;",
+                    line,
+                    flags=re.IGNORECASE,
+                )
+            )
+        ),
+        None,
+    )
+    if selection is None:
+        return []
+    selection_index, buffer_name = selection
+    capacity_index = next(
+        (
+            index
+            for index, line in enumerate(statements)
+            if re.search(
+                rf"\b{re.escape(buffer_name)}\s*\[\s*"
+                r"(?:0x[0-9a-f]+|\d+)\s*\]",
+                line,
+                flags=re.IGNORECASE,
+            )
+        ),
+        None,
+    )
+    if capacity_index is None:
+        return []
+    selection_role = "source" if assessment == "present" else "remediation"
+    return [(selection_role, selection_index), ("bound", capacity_index)]
+
+
+def _format_string_role_indices(
+    statements: Sequence[str],
+    *,
+    sink_index: int,
+    assessment: Literal["present", "not_observed"],
+) -> list[tuple[str, int]]:
+    sink = statements[sink_index]
+    if assessment == "not_observed":
+        if re.search(
+            r"\b\w*printf\s*\([^;]*,\s*L?\"[^\"\\]*(?:\\.[^\"\\]*)*\"",
+            sink,
+            flags=re.IGNORECASE,
+        ):
+            return [("remediation", sink_index)]
+        literal_assignment = next(
+            (
+                index
+                for index, line in enumerate(statements)
+                if re.search(
+                    r"(?:strcpy|strncpy|wcscpy|wcsncpy)\s*\([^;]*"
+                    r"L?\"[^\"\\]*(?:\\.[^\"\\]*)*\"",
+                    line,
+                    flags=re.IGNORECASE,
+                )
+                and bool(
+                    _stable_evidence_identifiers(sink)
+                    & _stable_evidence_identifiers(line)
+                )
+            ),
+            None,
+        )
+        return (
+            [("remediation", literal_assignment)]
+            if literal_assignment is not None
+            else []
+        )
+    sink_ids = _stable_evidence_identifiers(sink)
+    input_index = next(
+        (
+            index
+            for index, line in enumerate(statements)
+            if re.search(
+                r"(?:fgets|fgetws|recv|read|scanf)\s*\(",
+                line,
+                flags=re.IGNORECASE,
+            )
+            and bool(sink_ids & _stable_evidence_identifiers(line))
+        ),
+        None,
+    )
+    return [("source", input_index)] if input_index is not None else []
+
+
+def _numeric_source_indices(
+    statements: Sequence[str],
+    sink: str,
+    *,
+    comparison_statements: set[str],
+) -> list[int]:
+    sink_ids = _stable_evidence_identifiers(sink)
+    external = [
+        index
+        for index, line in enumerate(statements)
+        if re.search(
+            r"(?:fscanf|scanf|recv|read|fgets|atoi|strto\w*)\s*\(",
+            line,
+            flags=re.IGNORECASE,
+        )
+        and bool(sink_ids & _stable_evidence_identifiers(line))
+    ]
+    if external:
+        return external[-2:]
+    assignments = [
+        index
+        for index, line in enumerate(statements)
+        if line not in comparison_statements
+        and any(
+            re.match(rf"^{re.escape(identifier)}\s*=", line) for identifier in sink_ids
+        )
+        and not re.search(r"=\s*0\s*;", line)
+    ]
+    return assignments[-1:]
+
+
+def _numeric_guard_index(statements: Sequence[str], sink: str) -> int | None:
+    sink_ids = _stable_evidence_identifiers(sink)
+    return next(
+        (
+            index
+            for index, line in enumerate(statements)
+            if line.startswith("if (")
+            and re.search(r"(?:<|>|<=|>=|==|!=)", line)
+            and bool(sink_ids & _stable_evidence_identifiers(line))
+        ),
+        None,
+    )
+
+
+def _conversion_source_indices(
+    statements: Sequence[str],
+    sink: str,
+    *,
+    comparison_statements: set[str],
+) -> list[int]:
+    sink_ids = _stable_evidence_identifiers(sink)
+    conversions = [
+        index
+        for index, line in enumerate(statements)
+        if line not in comparison_statements
+        and bool(sink_ids & _stable_evidence_identifiers(line))
+        and (
+            re.search(
+                r"=\s*\((?:u?char|u?short|u?int|u?long|size_t)\)",
+                line,
+                flags=re.IGNORECASE,
+            )
+            or re.search(
+                r"^(?:data|size|length)\s*=\s*-\s*(?:0x[0-9a-f]+|\d+)",
+                line,
+                flags=re.IGNORECASE,
+            )
+            or re.search(
+                r"(?:fscanf|scanf|recv|read|atoi|strto\w*)\s*\(",
+                line,
+                flags=re.IGNORECASE,
+            )
+        )
+    ]
+    return conversions[-2:]
+
+
+def _initialization_role_indices(
+    statements: Sequence[str],
+    *,
+    sink_index: int,
+    assessment: Literal["present", "not_observed"],
+) -> list[tuple[str, int]]:
+    sink_ids = _stable_evidence_identifiers(statements[sink_index])
+    writes = [
+        index
+        for index, line in enumerate(statements)
+        if index != sink_index
+        and "=" in line
+        and bool(sink_ids & _stable_evidence_identifiers(line.split("=", 1)[0]))
+    ]
+    loops = [
+        index
+        for index, line in enumerate(statements)
+        if line.startswith(("for (", "while ("))
+    ]
+    if not writes:
+        return []
+    write_loop = next(
+        (index for index in reversed(loops) if index < writes[0]),
+        None,
+    )
+    read_loop = next(
+        (index for index in reversed(loops) if index < sink_index),
+        None,
+    )
+    if write_loop is None or read_loop is None or write_loop == read_loop:
+        return []
+    roles: list[tuple[str, int]] = [("source", writes[0])]
+    roles.extend(("bound", index) for index in (write_loop, read_loop))
+    if assessment == "not_observed":
+        roles[0] = ("remediation", writes[0])
+    return roles
+
+
+def _linked_allocator_index(statements: Sequence[str], sink: str) -> int | None:
+    sink_ids = _stable_evidence_identifiers(sink)
+    return next(
+        (
+            index
+            for index, line in enumerate(statements)
+            if (_C_ALLOCATOR.search(line) or _CPP_ALLOCATOR.search(line))
+            and bool(sink_ids & _stable_evidence_identifiers(line))
+        ),
+        None,
+    )
+
+
+def _null_guard_index(statements: Sequence[str], sink: str) -> int | None:
+    sink_ids = _stable_evidence_identifiers(sink)
+    return next(
+        (
+            index
+            for index, line in enumerate(statements)
+            if line.startswith("if (")
+            and re.search(r"(?:==|!=)\s*(?:NULL|0)\b", line, flags=re.IGNORECASE)
+            and bool(sink_ids & _stable_evidence_identifiers(line))
+        ),
+        None,
     )
 
 
@@ -900,6 +1620,22 @@ def format_binary_prompt(
             ),
         },
     ]
+
+
+def format_binary_role_prompt(
+    record: Mapping[str, Any],
+) -> list[BinaryPromptMessage]:
+    """Format the same withheld record with the v2 role-output instructions."""
+    messages = format_binary_prompt(record)
+    messages[0] = {"role": "system", "content": BINARY_ROLE_SYSTEM_PROMPT}
+    messages[1] = {
+        "role": "user",
+        "content": messages[1]["content"].replace(
+            "required binary assessment JSON object",
+            "required role-structured binary assessment JSON object",
+        ),
+    }
+    return messages
 
 
 def _find_forbidden_payload_keys(

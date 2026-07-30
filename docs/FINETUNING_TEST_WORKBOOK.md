@@ -2313,6 +2313,35 @@ v8·v9은 동일 변수와 memory write/read 연결을 추가했지만 flat evid
 합니다. 새 model-ready dataset과 수동 100건 검토가 모두 PASS하기 전까지
 GPU 학습은 금지합니다.
 
+### Binary role target v2 실행 기록 — 2026-07-31
+
+| 항목 | v2 r1 | v2 r2 |
+|---|---:|---:|
+| tokenizer-qualified pair | `2,479` | `2,485` |
+| accepted pair | `2,450` | `2,450` |
+| excluded pair | `445` | `439` |
+| 자동 gate | PASS | PASS |
+| 고정 수동 검토 | `6/100 FAIL EARLY` | `6/100 FAIL EARLY` |
+| materialization 승인 | 아니오 | 아니오 |
+
+- r1 gate SHA: `9b48a00c…577a`
+- r2 gate SHA: `bf910417…f703`
+- r1 review 원본 SHA: `f211482c…dc83`
+- r2 review 원본 SHA: `8f7844aa…1990`
+- r2 결정 적용 manifest SHA: `b9a00eaa…01f4`
+- raw object execution: `0`
+
+r1에서 확인한 numeric/buffer/format 오연결은 r2에서 교정됐습니다. 그러나
+r2에서 path construction, unbounded work, missing release,
+initialization, invalid pointer origin, untrusted loop bound가 서로 무관한
+identifier-overlap으로 대체되는 오류 6건이 나왔습니다. 6번째 오류에서
+검토를 중단했고 나머지 94건을 정상으로 간주하지 않습니다.
+
+다음 체크포인트는 학습이 아니라 strict CWE extractor 공급 감사입니다.
+generic fallback 사용은 0이어야 하며 unsupported CWE는 quarantine합니다.
+실제 eligible 수량에 맞춰 dataset을 줄인 뒤 새 고정 100건에서
+`≤5/100`을 통과해야만 binary materialization과 Qwen 학습을 시작합니다.
+
 r2 탈락은 CWE-476 5쌍과 CWE-563 23쌍을 포함해 총 106쌍이다. r3 탈락은
 CWE-563 전체 13쌍과 O2에서 근거가 소실된 77쌍을 합쳐 총 90쌍이다. 나머지는
 네 compiler variant 중 하나에서 target buffer operation, allocation과

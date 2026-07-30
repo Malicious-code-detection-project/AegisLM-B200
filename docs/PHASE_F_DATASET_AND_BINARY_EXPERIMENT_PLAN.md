@@ -1049,6 +1049,28 @@ heuristic이 아니라 `source / control / sink / bound / remediation` role과
 contract입니다. 이 계약과 새 고정 100건이 통과하기 전 binary adapter
 학습은 계속 금지합니다.
 
+### Role target v2 r1/r2 결과
+
+v2 schema 이후 pair 기반 builder와 v2 전용 prompt를 구현해 실제 Qwen
+tokenizer gate를 실행했습니다. r1은 `2,450/2,479`, r2는
+`2,450/2,485`로 자동 공급 gate를 통과했습니다. gate SHA-256은 각각
+`9b48a00c5be60f1fb3c8d2caf1f275086c510145ee540835355607d43d16577a`,
+`bf910417b2830f2a962641665ee52adfcf8ab8afa434a149a99b65ffbf09f703`
+입니다.
+
+그러나 고정 seed 100건 검토는 두 iteration 모두 evidence 오류 6건에서
+`FAIL EARLY`했습니다. r1의 numeric/buffer/format 회귀는 r2에서
+교정됐지만, path traversal, resource consumption, memory leak,
+uninitialized read, invalid free, unchecked loop에서 generic
+identifier-overlap이 다시 잘못된 관계를 만들었습니다.
+
+이 결과로 F7은 계속 `Running — target quality blocked`입니다. 다음 공급
+계산은 2,450 pair를 먼저 요구하지 않고 CWE별 완전한 role extractor를
+통과한 pair만 집계합니다. unsupported CWE는 quarantine하고 실제 공급량에
+맞춰 dataset을 축소합니다. 자세한 결정은
+[Binary Role Target v2 Decision](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
+기록합니다.
+
 초기의 `2,450 pair × 4 variant × 2 label = 19,600` 전량 학습 가정은
 폐기합니다. compiler variant는 pair당 cutoff 내 하나를
 `613/612/613/612` 수준으로 균형 선택해 총 4,900건을 학습·검증·blind에

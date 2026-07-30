@@ -334,6 +334,40 @@ def test_binary_tokenizer_gate_selects_exact_supply_after_relation_gate() -> Non
     assert result["qualified_reserve_pair_count"] == 1
     assert result["quality_gates"]["accepted_pair_supply"] is True
     assert result["quality_gates"]["compiler_consistency_supply"] is True
+    assert result["output_contract"] == "aegislm.binary-assessment-output.v1"
+
+
+def test_binary_tokenizer_gate_can_apply_v2_role_contract() -> None:
+    records, gate = _inputs()
+    for record in records:
+        record["task"]["target_cwe"] = "CWE-121"
+        if record["metadata"]["label"] == "present":
+            pseudo_c = "char dst[8];\nmemcpy(dst, src, 32);"
+        else:
+            pseudo_c = "char dst[32];\nmemcpy(dst, src, 8);"
+        record["analysis"]["functions"][0]["pseudo_c"] = pseudo_c
+    relation_gate = {
+        "target_relation_policy": "observable-target-relation-v1",
+        "qualified_pair_ids": gate["accepted_pair_ids"],
+        "qualified_pair_variants": {
+            pair_id: ["gcc-O0", "gcc-O2", "clang-O0", "clang-O2"]
+            for pair_id in gate["accepted_pair_ids"]
+        },
+    }
+
+    result = build_tokenizer_gate(
+        relation_gate,
+        [records],
+        tokenizer=_Tokenizer(),
+        required_pairs=5,
+        cutoff_len=4096,
+        minimum_consistency_pairs=1,
+        target_contract="v2",
+    )
+
+    assert result["gate_pass"] is True
+    assert result["output_contract"] == "aegislm.binary-role-assessment-output.v2"
+    assert result["target_policy"] == "role-structured-evidence-v2"
 
 
 def test_relation_gate_preserves_reserve_variants_for_tokenizer_replacement() -> None:

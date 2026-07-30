@@ -19,9 +19,11 @@ if str(REPO_ROOT) not in sys.path:
 
 from aegislm.datasets.binary import (  # noqa: E402
     BinaryRecordValidationError,
+    build_binary_pair_role_targets,
     build_binary_pair_targets,
     compact_binary_record,
     format_binary_prompt,
+    format_binary_role_prompt,
     validate_binary_record,
 )
 from aegislm.datasets.phase_f import load_jsonl  # noqa: E402
@@ -36,8 +38,19 @@ def build_tokenizer_gate(
     required_pairs: int,
     cutoff_len: int,
     minimum_consistency_pairs: int = 100,
+    target_contract: str = "v1",
 ) -> dict[str, Any]:
     """Select exact pairs only after both labels fit without truncation."""
+    if target_contract not in {"v1", "v2"}:
+        raise ValueError(f"unsupported target contract: {target_contract}")
+    target_builder = (
+        build_binary_pair_role_targets
+        if target_contract == "v2"
+        else build_binary_pair_targets
+    )
+    prompt_formatter = (
+        format_binary_role_prompt if target_contract == "v2" else format_binary_prompt
+    )
     indexed: dict[tuple[str, str], Mapping[str, Any]] = {}
     for records in record_sources:
         for record in records:
@@ -78,7 +91,7 @@ def build_tokenizer_gate(
                 targets = dict(
                     zip(
                         ("present", "not_observed"),
-                        build_binary_pair_targets(
+                        target_builder(
                             compacted_by_label["present"],
                             compacted_by_label["not_observed"],
                         ),
@@ -90,7 +103,7 @@ def build_tokenizer_gate(
                     target = targets[label]
                     tokens = count_source_training_tokens(
                         tokenizer,
-                        format_binary_prompt(prompt_record),
+                        prompt_formatter(prompt_record),
                         target,
                     )
                     maximum = max(maximum, tokens)
@@ -134,7 +147,16 @@ def build_tokenizer_gate(
     return {
         "schema_version": "aegislm.phase-f-binary-tokenizer-gate.v1",
         "profile": "phase-f-binary-derived-v1",
-        "target_policy": "memory-write-read-linked-evidence-v9",
+        "target_policy": (
+            "role-structured-evidence-v2"
+            if target_contract == "v2"
+            else "memory-write-read-linked-evidence-v9"
+        ),
+        "output_contract": (
+            "aegislm.binary-role-assessment-output.v2"
+            if target_contract == "v2"
+            else "aegislm.binary-assessment-output.v1"
+        ),
         "decision": "pass" if passed else "fail",
         "gate_pass": passed,
         "target_relation_policy": relation_gate["target_relation_policy"],
@@ -170,6 +192,7 @@ def main() -> None:
     parser.add_argument("--model-dir", type=Path, required=True)
     parser.add_argument("--required-pairs", type=int, default=2450)
     parser.add_argument("--cutoff-len", type=int, default=4096)
+    parser.add_argument("--target-contract", choices=("v1", "v2"), default="v1")
     parser.add_argument("--output-gate", type=Path, required=True)
     args = parser.parse_args()
     relation_gate = json.loads(args.relation_gate.read_text(encoding="utf-8"))
@@ -185,6 +208,7 @@ def main() -> None:
         required_pairs=args.required_pairs,
         cutoff_len=args.cutoff_len,
         minimum_consistency_pairs=100,
+        target_contract=args.target_contract,
     )
     gate["source_sha256"] = {
         "relation_gate": _sha256(args.relation_gate),

@@ -9,10 +9,12 @@ import pytest
 from aegislm.datasets.binary import (
     BinaryRecordValidationError,
     binary_target_relation_visible,
+    build_binary_pair_role_targets,
     build_binary_pair_targets,
     build_binary_target,
     compact_binary_record,
     format_binary_prompt,
+    format_binary_role_prompt,
     validate_binary_record,
     validate_binary_output_for_record,
     validate_binary_role_output_for_record,
@@ -159,6 +161,18 @@ def test_binary_prompt_does_not_mutate_record() -> None:
     format_binary_prompt(record)
 
     assert record == original
+
+
+def test_binary_role_prompt_requests_v2_contract_without_provenance() -> None:
+    record = _record()
+
+    messages = format_binary_role_prompt(record)
+    prompt = json.dumps(messages)
+
+    assert "evidence_id" in prompt
+    assert "from_evidence_id" in prompt
+    assert "private-fixture" not in prompt
+    assert '"label"' not in prompt
 
 
 def test_binary_target_is_semantically_linked_to_supplied_pseudo_c() -> None:
@@ -320,6 +334,224 @@ def test_binary_role_output_rejects_unknown_relation_reference() -> None:
     assert "findings.0.relations.0.from_evidence_id: unknown" in (
         validate_binary_role_output_for_record(output, record)
     )
+
+
+def _binary_pair(
+    target_cwe: str,
+    present_pseudo_c: str,
+    fixed_pseudo_c: str,
+) -> tuple[dict, dict]:
+    present = _record(label="present")
+    fixed = _record(
+        record_id="binary-fixture-2",
+        label="not_observed",
+    )
+    for record, pseudo_c in (
+        (present, present_pseudo_c),
+        (fixed, fixed_pseudo_c),
+    ):
+        record["task"]["target_cwe"] = target_cwe
+        record["analysis"]["functions"][0]["pseudo_c"] = pseudo_c
+    return present, fixed
+
+
+def test_binary_role_target_preserves_destination_capacity_and_copy_sink() -> None:
+    present, fixed = _binary_pair(
+        "CWE-121",
+        "char dst[8];\nchar src[32];\nmemcpy(dst, src, 32);",
+        "char dst[32];\nchar src[8];\nmemcpy(dst, src, 8);",
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    for record, target, capacity in (
+        (present, present_target, "char dst[8];"),
+        (fixed, fixed_target, "char dst[32];"),
+    ):
+        assert validate_binary_role_output_for_record(target, record) == []
+        evidence = target["findings"][0]["evidence"]
+        assert capacity in {item["code_span"] for item in evidence}
+        assert "memcpy" in next(
+            item["code_span"] for item in evidence if item["role"] == "sink"
+        )
+
+
+def test_binary_role_target_rejects_memory_copy_without_destination_capacity() -> None:
+    present, fixed = _binary_pair(
+        "CWE-121",
+        "char dst[8];\nmemcpy(dst, src, 32);",
+        "memcpy(dst, src, 8);",
+    )
+
+    with pytest.raises(
+        BinaryRecordValidationError,
+        match="not_observed has no role linked",
+    ):
+        build_binary_pair_role_targets(present, fixed)
+
+
+def test_binary_role_target_preserves_negative_offset_and_sink() -> None:
+    present, fixed = _binary_pair(
+        "CWE-124",
+        "data = -1;\nmemcpy(buffer + -1, source, 8);",
+        "data = 1;\nif (data >= 0) {\nmemcpy(buffer + data, source, 8);",
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    assert validate_binary_role_output_for_record(present_target, present) == []
+    assert validate_binary_role_output_for_record(fixed_target, fixed) == []
+    present_evidence = present_target["findings"][0]["evidence"]
+    assert any("-1" in item["code_span"] for item in present_evidence)
+    assert any(item["role"] == "sink" for item in present_evidence)
+
+
+def test_binary_role_target_requires_null_guard_for_fixed_allocation_use() -> None:
+    present, fixed = _binary_pair(
+        "CWE-690",
+        "data = malloc(32);\n*data = 1;",
+        "data = malloc(32);\nif (data == NULL) return;\n*data = 1;",
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    assert validate_binary_role_output_for_record(present_target, present) == []
+    assert validate_binary_role_output_for_record(fixed_target, fixed) == []
+    fixed_evidence = fixed_target["findings"][0]["evidence"]
+    assert any(item["role"] == "control" for item in fixed_evidence)
+    assert any("NULL" in item["code_span"] for item in fixed_evidence)
+
+    fixed["analysis"]["functions"][0]["pseudo_c"] = "data = malloc(32);\n*data = 1;"
+    with pytest.raises(
+        BinaryRecordValidationError,
+        match="not_observed has no role linked",
+    ):
+        build_binary_pair_role_targets(present, fixed)
+
+
+def test_binary_role_target_requires_write_and_read_loop_bounds_for_cwe457() -> None:
+    present, fixed = _binary_pair(
+        "CWE-457",
+        (
+            "for (i = 0; i < 5; i++)\n"
+            "data[i] = 0;\n"
+            "for (i = 0; i < 10; i++)\n"
+            "printIntLine(data[i]);"
+        ),
+        (
+            "for (i = 0; i < 10; i++)\n"
+            "data[i] = 0;\n"
+            "for (j = 0; j < 10; j++)\n"
+            "printIntLine(data[j]);"
+        ),
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    for record, target in ((present, present_target), (fixed, fixed_target)):
+        assert validate_binary_role_output_for_record(target, record) == []
+        evidence = target["findings"][0]["evidence"]
+        assert sum(item["role"] == "bound" for item in evidence) == 2
+        assert any(item["role"] == "sink" for item in evidence)
+
+
+def test_binary_role_target_links_selected_buffer_capacity_for_cwe126() -> None:
+    present, fixed = _binary_pair(
+        "CWE-126",
+        (
+            "char dataBadBuffer[50];\nchar dest[100];\nchar *data;\n"
+            "data = dataBadBuffer;\nlength = strlen(dest);\n"
+            "memcpy(dest, data, length);"
+        ),
+        (
+            "char dataGoodBuffer[100];\nchar dest[100];\nchar *data;\n"
+            "data = dataGoodBuffer;\nlength = strlen(dest);\n"
+            "memcpy(dest, data, length);"
+        ),
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    for target, expected in (
+        (present_target, "data = dataBadBuffer;"),
+        (fixed_target, "data = dataGoodBuffer;"),
+    ):
+        evidence = target["findings"][0]["evidence"]
+        assert expected in {item["code_span"] for item in evidence}
+        assert any(item["role"] == "bound" for item in evidence)
+        assert not any(
+            item["role"] == "source" and "strlen(dest)" in item["code_span"]
+            for item in evidence
+        )
+
+
+def test_binary_role_target_links_external_format_source_and_literal_fix() -> None:
+    present, fixed = _binary_pair(
+        "CWE-134",
+        "fgetws(dataBuffer, 100, stdin);\nfwprintf(stdout, dataBuffer);",
+        'fgetws(dataBuffer, 100, stdin);\nfwprintf(stdout, L"%s", dataBuffer);',
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    assert present_target["findings"][0]["evidence"][0]["code_span"].startswith(
+        "fgetws"
+    )
+    assert fixed_target["findings"][0]["evidence"][0]["code_span"] == (
+        'fwprintf(stdout, L"%s", dataBuffer);'
+    )
+
+
+@pytest.mark.parametrize(
+    ("target_cwe", "operation", "guard"),
+    [
+        ("CWE-190", "data * data", "if (data < 1000)"),
+        ("CWE-191", "data - 1", "if (data > -2147483648)"),
+    ],
+)
+def test_binary_role_target_links_numeric_input_and_guard(
+    target_cwe: str,
+    operation: str,
+    guard: str,
+) -> None:
+    present, fixed = _binary_pair(
+        target_cwe,
+        f'fscanf(stdin, "%d", &data);\nprintIntLine({operation});',
+        f'fscanf(stdin, "%d", &data);\n{guard}\nprintIntLine({operation});',
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    assert "fscanf" in present_target["findings"][0]["evidence"][0]["code_span"]
+    assert any(
+        item["role"] == "control" and item["code_span"] == guard
+        for item in fixed_target["findings"][0]["evidence"]
+    )
+
+
+@pytest.mark.parametrize("target_cwe", ["CWE-194", "CWE-195"])
+def test_binary_role_target_links_conversion_source_to_copy_length(
+    target_cwe: str,
+) -> None:
+    present, fixed = _binary_pair(
+        target_cwe,
+        (
+            "input = recv(fd, buffer, 8, 0);\n"
+            "data = (short)input;\n"
+            "memcpy(dest, source, (long)data);"
+        ),
+        "data = 8;\nmemcpy(dest, source, (long)data);",
+    )
+
+    present_target, fixed_target = build_binary_pair_role_targets(present, fixed)
+
+    present_evidence = present_target["findings"][0]["evidence"]
+    assert any("data = (short)input;" == item["code_span"] for item in present_evidence)
+    assert any(
+        item["role"] == "sink" and "memcpy" in item["code_span"]
+        for item in present_evidence
+    )
+    assert fixed_target["assessment"] == "not_observed"
 
 
 def test_binary_target_selects_variable_index_and_boundary_relation() -> None:

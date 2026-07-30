@@ -119,6 +119,10 @@ Phase F의 우선순위는 다음과 같다.
   추가해 exact span, role, sink-directed relation을 강제
 - 다음은 v2 role-structured target builder → tokenizer gate → 고정
   100건 수동 review 순서
+- v2 r1은 자동 공급 `2,450/2,479`, r2는 `2,450/2,485`를 확보했지만
+  두 고정 review 모두 evidence 오류 `6/100`에서 `FAIL EARLY`
+- generic identifier-overlap fallback으로 2,450 pair를 채우지 않음;
+  다음은 CWE별 완전한 role extractor가 있는 범주만 eligible로 재산정
 - 초기 19,600 전량 학습 가정은 폐기; pair당 한 compiler variant를
   균형 선택한 4,900건과 별도 800건 compiler-consistency set으로 구성
 - 수동 target review가 `≤5/100`을 통과하기 전 binary 학습 금지

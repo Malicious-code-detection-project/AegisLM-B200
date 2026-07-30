@@ -119,6 +119,16 @@ sink에서 끝나고 role에 맞는 `flows_to/constrains/bounds/remediates`
 sink에 실제 연결되지 않으면 실패합니다. 기존 v1 target builder와
 평가 artifact는 재현성을 위해 그대로 유지하며, 다음 구현은 v2 target
 builder와 100건 수동 gate입니다.
+
+v2 r1과 r2는 role target builder, 실제 Qwen tokenizer gate, 고정 seed
+100건 검토까지 실행했습니다. 자동 공급은 각각 `2,450/2,479`,
+`2,450/2,485`로 통과했지만 두 검토 모두 명백한 evidence 오류 6건에서
+`FAIL EARLY`했습니다. 따라서 binary materialization과 학습은 계속
+금지합니다. 다음 iteration은 generic identifier-overlap fallback을
+폐기하고 CWE별 완전한 role extractor가 있는 범주만 eligible로
+인정합니다. 상세 결정은
+[`docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`](docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
+보존합니다.
 초기 `2,450 × 4 × 2 = 19,600` 전량 사용 가정은 폐기했습니다. 최종
 학습본은 pair당 cutoff 내 한 variant만 균형 선택해 4,900건을 만들고,
 별도 100-pair × 4-variant consistency set을 둡니다.
