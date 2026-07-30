@@ -35,7 +35,7 @@ flowchart LR
 | F5 | `Complete — lifecycle PASS with constrained decoding` | 두 BF16 merge·vLLM TP2 완료; guided JSON Schema와 semantic validator에서 전체 gate PASS |
 | F6-A | `Complete` | 후보·license·local source·toolchain inventory 동결 |
 | F6-B | `Complete — strict re-audit 99/145` | 최초 100 pair 중 CWE-563 1 pair 추가 격리; 부족분은 F7에서 대체 |
-| F7 | `Running — three 500-pair batches complete` | 누적 승인 1,521/1,895, Wilson 하한 공급 margin 1,563 pair; 네 번째 500-pair batch 승인 |
+| F7 | `Running — four 500-pair batches complete` | 누적 승인 1,940/2,395, Wilson 하한 공급 margin 1,605 pair; 다섯 번째 500-pair batch 승인 |
 | F8 | `Blocked by F5/F7` | 독립 adapter 결과 필요 |
 | F9 | `Not Started` | 앞 단계 결과 필요 |
 
@@ -853,7 +853,7 @@ pseudo-C 또는 제한된 assembly에서 관찰되는 경우에만 100-pair mani
 
 ## F7 — Binary Dataset v1과 별도 Adapter
 
-상태: `Running — three 500-pair batches complete / supply gate PASS`
+상태: `Running — four 500-pair batches complete / supply gate PASS`
 
 - pair 최대 2,000
 - before `present`: 최대 2,000
@@ -874,10 +874,10 @@ Source adapter와 섞지 않고 별도 학습·평가합니다.
 
 검증된 pair가 부족하면 저신뢰 데이터로 채우지 않고 B0 결과만 남깁니다.
 
-### F7 공급량, 엄격 재감사와 세 차례 500-pair 확대 판정
+### F7 공급량, 엄격 재감사와 네 차례 500-pair 확대 판정
 
 F6-B에서 사용한 후보를 포함해 구조 적격 4,643 pair의 결정적 queue를
-동결했다. 250-pair pilot 뒤 세 차례 500-pair 확대 배치를 GCC·Clang ×
+동결했다. 250-pair pilot 뒤 네 차례 500-pair 확대 배치를 GCC·Clang ×
 `O0/O2`로 compile·decompile했다. 첫 확대 배치 검토 중 동일한
 최적화 소실 사례가 과거에는 PASS와 FAIL로 섞여 있음을 발견해
 `strict-target-evidence-v1` 정책을 과거 B0와 pilot에도 소급 적용했다.
@@ -897,14 +897,16 @@ F6-B에서 사용한 후보를 포함해 구조 적격 4,643 pair의 결정적 q
 | 두 번째 500-pair 승인 / 탈락 | `394/106`, 승인률 `0.788` |
 | 세 번째 500-pair compile / decompile·link | `2,000/2,000` / `1,996/2,000` |
 | 세 번째 500-pair 승인 / 탈락 | `410/90`, 승인률 `0.820` |
-| 누적 검토 / 승인 / 탈락 | `1,895 / 1,521 / 374` |
-| 누적 관측 승인률 | `0.80264` |
-| Wilson 95% 승인률 하한 | `0.78411` |
-| 추가 필요 승인 / 하한 기준 예상 검토 | `929 / 1,185` |
-| 남은 구조 공급 / 공급 margin | `2,748 / 1,563` |
+| 네 번째 500-pair compile / decompile·link | `2,000/2,000` / `1,996/2,000` |
+| 네 번째 500-pair 승인 / 탈락 | `419/81`, 승인률 `0.838` |
+| 누적 검토 / 승인 / 탈락 | `2,395 / 1,940 / 455` |
+| 누적 관측 승인률 | `0.81002` |
+| Wilson 95% 승인률 하한 | `0.79382` |
+| 추가 필요 승인 / 하한 기준 예상 검토 | `510 / 643` |
+| 남은 구조 공급 / 공급 margin | `2,248 / 1,605` |
 | raw payload·object 실행 | `0 / 0` |
 
-250-pair pilot과 세 500-pair 확대 batch는 모두 `0.90`
+250-pair pilot과 네 500-pair 확대 batch는 모두 `0.90`
 target-preservation 기준에 미달했으므로 탈락 pair를 교체 대상으로
 제외한다. 두 번째 batch의 106개 탈락에는 CWE-476·CWE-563 전체와
 O2에서 buffer operation, allocation/free, unchecked dereference 또는
@@ -938,10 +940,16 @@ margin을 다시 계산한다.
   `bfdff41c7ce3e9df59936bed1f0643b6ca30075dbc53e9d0b99e727b8a529587`
 - 세 번째 500-pair review summary SHA-256:
   `11ab07b6106096f069e96b60f6311761a20d3fadbaca35b547c1786688b716d0`
+- 네 번째 500-pair compile summary SHA-256:
+  `c62df00272e58613f9cc358889e795d512d09c6cb6ebb6df1f52493fddd67224`
+- 네 번째 500-pair decompile summary SHA-256:
+  `136a3d178cfd9d61a4d573a4513a5a64c9740a1afa2866a30681e751ad69fb66`
+- 네 번째 500-pair review summary SHA-256:
+  `4931b1708ac63da1e2173fc3668f1460c986f6c98184240d1e1751a18d981bd6`
 - 누적 supply outcome SHA-256:
-  `4426bcdcc0a4b6cb694150ec87ad68f5f502c246e7ffaba30ef5829ffdfa5403`
+  `f7cbac10d5ee06d105f98c725f1ad5d0bdd525931e607f6c0220685872f71212`
 - 다음 500-pair queue SHA-256:
-  `df84d9393650236868ddbf3ebea2748dbb651f8fd7688af61141f6e757b5b3e0`
+  `7d0fdaf011b815f116f65cb0f7794d1a4e5bc110243a00eff2e129cfd895996f`
 - resource summary SHA-256:
   `dd349e488a2c9a25c1527c97c1f744d415aa1d5f4006212c29d7f7b43c424f70`
 

@@ -88,11 +88,11 @@ Phase F의 우선순위는 다음과 같다.
   static-feature linkage 1.00, prompt provenance/label/source-symbol 누출 0
 - F7 구조 적격 공급 4,643 pair를 동결하고 엄격 정책으로 과거
   250-pair pilot을 198/250, B0를 99/145로 정정
-- 세 번째 500-pair 확대 배치는 compile 2,000/2,000,
+- 네 번째 500-pair 확대 배치는 compile 2,000/2,000,
   decompile·function link 1,996/2,000
-- target preservation은 r1 420/500, r2 394/500, r3 410/500
-- 누적 승인/검토는 1,521/1,895, Wilson 95% 하한 공급 margin은 1,563
-  pair로 네 번째 500-pair batch를 승인
+- target preservation은 r1 420/500, r2 394/500, r3 410/500, r4 419/500
+- 누적 승인/검토는 1,940/2,395, Wilson 95% 하한 공급 margin은 1,605
+  pair로 다섯 번째 500-pair batch를 승인
 - Q2 250-step과 313-step 연장은 개선 근거가 없어 미실행
 - GPT-OSS 20B는 Qwen 결론 이후 보조 이식성 실험으로만 진행
 - source와 binary-derived adapter를 서로 분리해 절대평가
