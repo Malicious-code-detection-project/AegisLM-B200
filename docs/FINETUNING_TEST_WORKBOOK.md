@@ -2624,7 +2624,10 @@ extracted function feature의 license로 간주하지 않습니다. pickle은
 | primary label | `Pass` | binary·양 클래스 존재 | `0: 6,000`, `1: 6,000` |
 | duplicate audit | `Pass with required dedup` | label·static feature conflict 0 | 12,000 → 6,000 observations |
 | auxiliary labels | `Blocked` | deterministic merge contract | CAPS/MBC/TTP 차이 존재 |
-| benchmark materialization | `Ready` | `(week_id, sha256)` dedup 고정 | approved |
+| benchmark materialization | `Pass` | `(week_id, sha256)` dedup 고정 | train 26,000 / test 6,000 |
+| 자체 temporal classifier | `Fail` | P≥0.95, R≥0.90, FPR≤0.01, weekly FPR≤0.02 | P/R/FPR `0.9793/0.9293/0.0197`; weekly FPR `0.056` |
+| 공식 공개 모델 control | `Fail` | 동일 절대 gate | P/R/FPR `0.9002/0.9897/0.1097`; weekly FPR `0.208` |
+| NuriLab static-signal 연결 | `Blocked` | classifier absolute gate PASS | 두 모델 모두 FAIL |
 | SFT / raw executable | `Fail` | 별도 승인 필요 | `false / false` |
 
 운영 규칙:
@@ -2646,5 +2649,9 @@ Evidence:
 - 상세 결정:
   [EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)
 
-다음 실행은 deduplicated 6,000관측치 materializer와 별도 malware
-classifier absolute gate입니다. Qwen SFT는 이 benchmark와 분리합니다.
+materializer와 classifier absolute gate는 완료했습니다. 자체 모델과
+공식 모델 모두 낮은 FPR의 시간 안정성 gate에 실패했으므로 Qwen SFT 및
+NuriLab 연결과 분리합니다. 다음 실행은 FP 집중 주차의 label-blind
+feature drift 감사입니다. 상세 결과는
+[EMBER2024 classifier 결정문](PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
+보존합니다.

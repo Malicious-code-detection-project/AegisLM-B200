@@ -1,0 +1,20 @@
+{
+  "profile": "phase-f-ember2024-elf-train-inventory-v1",
+  "source_id": "joyce8-ember2024-elf-train",
+  "source_revision": "3d23efef7c0f0b702c5024400cfff4c3744a3832",
+  "dataset_license": "Apache-2.0",
+  "artifact_name": "ELF_train.zip",
+  "artifact_url": "https://huggingface.co/datasets/joyce8/EMBER2024/resolve/3d23efef7c0f0b702c5024400cfff4c3744a3832/ELF_train.zip",
+  "expected_bytes": 69249829,
+  "expected_sha256": "dd22c65c1a4b6b1c0680717814c74c1569256cf4ef6e7629c1b2b94b8e11afe3",
+  "max_uncompressed_bytes": 1073741824,
+  "max_compression_ratio": 20.0,
+  "documented_records_after_dedup": 26000,
+  "dataset_role": "malware_classifier_training_only",
+  "sft_training_requested": false,
+  "safety": {
+    "contains_raw_executable": false,
+    "extract_before_inventory": false,
+    "execute_payload": false
+  }
+}

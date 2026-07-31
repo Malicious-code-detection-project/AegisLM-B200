@@ -400,7 +400,12 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
 - EMBER2024의 primary label과 static feature 충돌은 0건이다. 서로 다른
   CAPS/MBC/TTP annotation은 별도 merge 계약 전까지 사용하지 않는다.
 - EMBER2024는 SFT에 혼합하지 않고 raw executable도 받지 않는다.
-- 다음 실행은 deduplicated 6,000관측치 materializer와 독립 classifier
-  절대평가 계약이다.
+- train 26,000건·test 6,000건 materialization은 label-blind
+  feature/gold 분리와 재현 hash gate를 통과했다.
+- 자체 temporal LightGBM은 test FPR `0.0197`, 주별 최대 FPR `0.056`으로
+  절대 gate에 실패했다. 공식 모델도 calibration threshold에서 test FPR
+  `0.1097`, 주별 최대 FPR `0.208`로 실패했다.
+- 두 classifier 모두 NuriLab static-signal 연결과 Qwen SFT 혼합 승인은
+  false다. 다음 작업은 FP 집중 주차의 feature drift 감사다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.

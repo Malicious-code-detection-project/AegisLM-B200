@@ -6,7 +6,10 @@ import zipfile
 from pathlib import Path
 
 from aegislm.datasets.archive_inventory import inventory_zip_archive
-from aegislm.datasets.ember2024 import audit_ember2024_elf_test
+from aegislm.datasets.ember2024 import (
+    audit_ember2024_elf_test,
+    materialize_ember2024_elf_test,
+)
 
 
 def _record(index: int, *, label: int, week_id: int) -> dict:
@@ -31,6 +34,14 @@ def _record(index: int, *, label: int, week_id: int) -> dict:
             "string_counts": {},
         },
         "general": {"start_bytes": [0] * 4},
+        "header": {},
+        "section": {},
+        "imports": {},
+        "exports": {},
+        "datadirectories": {},
+        "richheader": {},
+        "authenticode": {},
+        "pefilewarnings": [],
         "week_id": week_id,
         "caps": [],
         "ttps": [],
@@ -235,3 +246,84 @@ def test_ember2024_elf_test_audit_allows_duplicate_label_metadata_difference(
     assert result["summary"]["conflicting_duplicate_observation_count"] == 1
     assert result["summary"]["conflicting_static_feature_observation_count"] == 0
     assert result["duplicate_observation_differing_field_counts"] == {"family": 1}
+
+
+def test_ember2024_materialization_separates_features_and_gold(
+    tmp_path: Path,
+) -> None:
+    archive, inventory = _inputs(tmp_path)
+    audit = audit_ember2024_elf_test(
+        archive,
+        inventory,
+        expected_records=24,
+    )
+    audit_path = tmp_path / "audit.json"
+    audit_path.write_text(json.dumps(audit), encoding="utf-8")
+
+    result = materialize_ember2024_elf_test(
+        archive,
+        inventory,
+        audit_path,
+        tmp_path / "materialized",
+        expected_records=24,
+        dataset_role="classifier_test",
+    )
+
+    features_path = Path(result["outputs"]["features_path"])
+    gold_path = Path(result["outputs"]["gold_path"])
+    feature_records = [
+        json.loads(line)
+        for line in features_path.read_text(encoding="utf-8").splitlines()
+    ]
+    gold_records = [
+        json.loads(line) for line in gold_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert result["decision"] == "materialization_pass"
+    assert result["summary"]["record_count"] == 24
+    assert len(feature_records) == len(gold_records) == 24
+    assert "label" not in feature_records[0]
+    assert "sha256" not in json.dumps(feature_records[0])
+    assert set(gold_records[0]) == {
+        "schema_version",
+        "observation_id",
+        "file_sha256",
+        "week_id",
+        "label",
+    }
+    assert result["safety"]["feature_label_leakage_count"] == 0
+    assert result["approved_for_classifier_benchmark"] is True
+    assert result["approved_for_classifier_training"] is False
+    assert result["approved_for_sft_training"] is False
+
+
+def test_ember2024_materialization_is_deterministic(tmp_path: Path) -> None:
+    archive, inventory = _inputs(tmp_path)
+    audit = audit_ember2024_elf_test(
+        archive,
+        inventory,
+        expected_records=24,
+    )
+    audit_path = tmp_path / "audit.json"
+    audit_path.write_text(json.dumps(audit), encoding="utf-8")
+
+    first = materialize_ember2024_elf_test(
+        archive,
+        inventory,
+        audit_path,
+        tmp_path / "first",
+        expected_records=24,
+        dataset_role="classifier_train",
+    )
+    second = materialize_ember2024_elf_test(
+        archive,
+        inventory,
+        audit_path,
+        tmp_path / "second",
+        expected_records=24,
+        dataset_role="classifier_train",
+    )
+
+    assert first["outputs"]["features_sha256"] == second["outputs"]["features_sha256"]
+    assert first["outputs"]["gold_sha256"] == second["outputs"]["gold_sha256"]
+    assert first["approved_for_classifier_training"] is True
+    assert first["approved_for_classifier_benchmark"] is False

@@ -203,6 +203,16 @@ feature 충돌은 0건이지만 CAPS/MBC/TTP 보조 annotation은 일부 중복 
 [`docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md`](docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)에
 보존합니다.
 
+train 26,000건과 test 6,000건을 label-blind feature/gold로 분리해
+materialize한 뒤 자체 temporal LightGBM과 공식 공개 모델을 같은 절대
+gate로 평가했습니다. 자체 모델은 precision/recall
+`0.9793/0.9293`을 기록했지만 FPR `0.0197`, 주별 최대 FPR `0.056`으로
+실패했습니다. 공식 모델도 calibration threshold에서 FPR `0.1097`,
+주별 최대 FPR `0.208`로 실패했습니다. 따라서 NuriLab static-signal
+연결과 Qwen SFT 혼합은 승인하지 않습니다. 상세 근거는
+[`docs/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md`](docs/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
+보존합니다.
+
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
 허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
 규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
@@ -353,6 +363,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md` - Assemblage artifact·schema PASS 뒤 strict metadata 교집합 0건으로 raw ELF·학습 불승인
 - `docs/PHASE_F_BINKIT_METADATA_DECISION_20260731.md` - BinKit compile matrix 확인 뒤 고정 artifact·license·schema 부재로 binary·pickle 다운로드 보류
 - `docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md` - EMBER2024 ELF 12,000행을 6,000관측치로 필수 중복 제거한 독립 static-feature benchmark 승인
+- `docs/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md` - 자체 temporal LightGBM·공식 모델 절대평가 FAIL과 NuriLab 연결 보류
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽

@@ -2100,8 +2100,32 @@ malware benchmark 후보로 감사합니다. 상세 결정은
   `f37ae45b619ad2274827ebba2d37c9a06f8448406b4dc9e4c6cba639ca618a8e`
 - final disposition: `independent_benchmark_with_required_dedup`
 
-다음 실행은 `(week_id, sha256)` 중복 제거 materializer와 별도 malware
-classifier 절대평가 계약입니다. source CWE adapter 점수와 합치지 않으며
-Qwen SFT 데이터에도 혼합하지 않습니다. 상세 결정은
-[EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)에
+`(week_id, sha256)` 중복 제거 materializer와 별도 malware classifier
+절대평가는 완료했습니다. source CWE adapter 점수와 합치지 않으며 Qwen
+SFT 데이터에도 혼합하지 않습니다. 공급 결정은
+[EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md),
+분류기 결과는
+[EMBER2024 classifier 결정문](PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
 보존합니다.
+
+### EMBER2024 ELF classifier 실제 결과 — 2026-07-31
+
+train 26,000건은 weeks 0–43 fit 22,000건과 weeks 44–51 calibration
+4,000건으로 분리하고, test weeks 52–63의 6,000건에는 고정 threshold만
+적용했습니다.
+
+| 모델 | Precision | Recall | FPR | ROC AUC | 주별 최대 FPR | 판정 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 자체 temporal LightGBM | 0.9793 | 0.9293 | 0.0197 | 0.9854 | 0.056 | FAIL |
+| 공식 EMBER2024 ELF 모델 | 0.9002 | 0.9897 | 0.1097 | 0.9929 | 0.208 | FAIL |
+
+자체 모델은 test oracle에서도 FPR 1%일 때 recall 87.53%로 aggregate
+gate를 넘지 못했습니다. 공식 모델은 oracle aggregate에서 recall
+91.4%를 기록했지만 주별 최대 FPR 4.8%로 주별 gate를 통과하지 못했고,
+test label로 고른 threshold이므로 승인값이 아닙니다.
+
+이 결과로 EMBER2024 static-feature 신호의 NuriLab 연결은 차단합니다.
+다음 gate는 weeks 56·57·59·61의 label-blind feature drift와 FP/FN 원인
+감사입니다. drift 근거가 확인될 때만 독립 calibration을 유지한 temporal
+remediation을 한 번 실행하고, 다시 실패하면 이 경로를 `research_hold`로
+종료합니다.

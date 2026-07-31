@@ -174,7 +174,7 @@ metadata benchmark로 나눕니다.
 | [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–assembly representation과 정렬 회귀 | `alignment-reference-only`; 첫 shard 수동 `96/100 PASS`, repository 명시 84.66%, 행별 license·compiler·optimization 부재로 학습 불승인 |
 | [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `metadata-hold`; matrix 문서 PASS, Drive artifact size·checksum·dataset license·row schema 부재, pickle 역직렬화 금지 |
 | [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) | decompilation format와 representation 연구 | `reference` |
-| [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `independent-benchmark-with-required-dedup`; ELF raw 12,000행 → `(week_id, sha256)` 6,000관측치, SFT false |
+| [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `classifier_absolute_gate_fail`; train 26,000·test 6,000 materialization PASS, 자체·공식 모델 temporal FPR FAIL, SFT·NuriLab 연결 false |
 | SOREL-20M full | 대규모 PE feature/disarmed binary | `hold` |
 | BODMAS raw, BIG 2015 | raw malware/old byte·assembly corpus | `hold` |
 
@@ -273,10 +273,12 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 8. [완료/보류] BinKit compiler-robustness metadata gate
    - compile matrix 문서 PASS
    - 고정 dataset artifact·license·schema 부재로 download false
-9. [완료/조건부 승인] EMBER2024 static-feature 독립 malware benchmark
+9. [완료/분류기 실패] EMBER2024 static-feature 독립 malware benchmark
    - archive·schema·feature shape PASS
    - raw 12,000행 → `(week_id, sha256)` 6,000관측치 필수 중복 제거
-   - SFT·raw executable download false
+   - 자체 모델 FPR `0.0197`, 주별 최대 FPR `0.056`로 FAIL
+   - 공식 모델 FPR `0.1097`, 주별 최대 FPR `0.208`로 FAIL
+   - SFT·raw executable·NuriLab signal 연결 false
 
 전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.
 세부 근거는

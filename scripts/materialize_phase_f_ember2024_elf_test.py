@@ -1,9 +1,8 @@
-"""Audit the fixed EMBER2024 ELF test feature archive as an independent benchmark."""
+"""Materialize deduplicated, label-blind EMBER2024 ELF benchmark files."""
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -12,7 +11,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from aegislm.datasets.ember2024 import (  # noqa: E402
-    audit_ember2024_elf_test,
+    materialize_ember2024_elf_test,
 )
 
 
@@ -20,31 +19,31 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--inventory", type=Path, required=True)
+    parser.add_argument("--audit", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--expected-records", type=int, required=True)
-    parser.add_argument("--expected-materialized-records", type=int)
-    parser.add_argument("--expected-members", type=int, default=12)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--dataset-role",
+        choices=("classifier_train", "classifier_test"),
+        required=True,
+    )
     args = parser.parse_args()
 
-    result = audit_ember2024_elf_test(
+    result = materialize_ember2024_elf_test(
         args.archive,
         args.inventory,
+        args.audit,
+        args.output_dir,
         expected_records=args.expected_records,
-        expected_materialized_records=args.expected_materialized_records,
-        expected_members=args.expected_members,
-    )
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+        dataset_role=args.dataset_role,
     )
     print(
-        "EMBER2024 ELF test audit: "
+        "EMBER2024 ELF materialization: "
         f"decision={result['decision']}, "
         f"records={result['summary']['record_count']}, "
-        f"labels={result['label_counts']}"
+        f"labels={result['summary']['label_counts']}"
     )
-    if result["decision"] != "benchmark_metadata_pass":
+    if result["decision"] != "materialization_pass":
         raise SystemExit(1)
 
 

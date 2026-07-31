@@ -112,11 +112,15 @@ formatter·근거 계약과 사람 검토 gate 없이는 시작하지 않는다.
 
 ## 다음 단계
 
-1. `(week_id, sha256)` 중복 제거 materializer와 재현 hash를 구현한다.
-2. 6,000관측치의 label 균형과 주차별 분포를 다시 검증한다.
-3. malware classifier의 absolute gate와 baseline을 별도 문서로 고정한다.
-4. 보조 label은 merge 정책이 생기기 전까지 사용하지 않는다.
-5. Qwen adapter 학습 데이터에는 EMBER2024를 혼합하지 않는다.
+1. [완료] `(week_id, sha256)` 중복 제거 materializer와 재현 hash 구현
+2. [완료] train 26,000건·test 6,000건의 label·주차 계약 검증
+3. [실패] 자체 temporal LightGBM과 공식 모델의 6,000건 절대평가
+4. [차단] NuriLab static-signal 연결과 Qwen SFT 혼합
+5. [다음] FP 집중 주차의 label-blind feature drift·오류 원인 감사
+
+실제 classifier 결과와 다음 중단 기준은
+[EMBER2024 classifier 결정문](PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
+보존한다.
 
 ## 근거
 

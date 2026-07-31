@@ -12,6 +12,11 @@ from pathlib import Path
 from typing import Any
 
 EMBER2024_AUDIT_SCHEMA_VERSION = "aegislm.phase-f-ember2024-elf-test-audit.v1"
+EMBER2024_FEATURE_SCHEMA_VERSION = "aegislm.ember2024-static-feature-observation.v1"
+EMBER2024_GOLD_SCHEMA_VERSION = "aegislm.ember2024-malware-gold.v1"
+EMBER2024_MATERIALIZATION_SCHEMA_VERSION = (
+    "aegislm.phase-f-ember2024-materialization.v1"
+)
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _REQUIRED_KEYS = {
     "sha256",
@@ -50,10 +55,178 @@ _STATIC_FEATURE_FIELDS = {
     "authenticode",
     "pefilewarnings",
 }
+EMBER2024_STATIC_FEATURE_FIELDS = tuple(sorted(_STATIC_FEATURE_FIELDS))
 
 
 class Ember2024AuditError(ValueError):
     """Raised when EMBER2024 audit inputs violate the fixed contract."""
+
+
+def materialize_ember2024_elf_test(
+    archive_path: Path,
+    inventory_path: Path,
+    audit_path: Path,
+    output_dir: Path,
+    *,
+    expected_records: int,
+    dataset_role: str,
+) -> dict[str, Any]:
+    """Write label-blind features and separate gold after deterministic dedup."""
+    if expected_records <= 0:
+        raise Ember2024AuditError("expected materialized count must be positive")
+    if dataset_role not in {"classifier_train", "classifier_test"}:
+        raise Ember2024AuditError(
+            "dataset role must be classifier_train or classifier_test"
+        )
+    if not archive_path.is_file() or not inventory_path.is_file():
+        raise Ember2024AuditError("archive and inventory must exist")
+    if not audit_path.is_file():
+        raise Ember2024AuditError("benchmark audit must exist")
+
+    inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    _validate_inventory(inventory, archive_path)
+    _validate_materialization_audit(audit, expected_records)
+
+    features_path = output_dir / "features.jsonl"
+    gold_path = output_dir / "gold.jsonl"
+    manifest_path = output_dir / "materialization-manifest.json"
+    output_paths = (features_path, gold_path, manifest_path)
+    existing = [path for path in output_paths if path.exists()]
+    if existing:
+        raise Ember2024AuditError(
+            f"materialization output already exists: {existing[0]}"
+        )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    features_temporary = features_path.with_suffix(".jsonl.tmp")
+    gold_temporary = gold_path.with_suffix(".jsonl.tmp")
+    temporary_paths = (features_temporary, gold_temporary)
+    if any(path.exists() for path in temporary_paths):
+        raise Ember2024AuditError("temporary materialization output exists")
+
+    seen: dict[tuple[str, str], tuple[str, int]] = {}
+    label_counts: Counter[str] = Counter()
+    week_counts: Counter[str] = Counter()
+    file_sha256_weeks: dict[str, set[str]] = defaultdict(set)
+    try:
+        with (
+            zipfile.ZipFile(archive_path, "r") as archive,
+            features_temporary.open(
+                "x", encoding="utf-8", newline="\n"
+            ) as features_stream,
+            gold_temporary.open("x", encoding="utf-8", newline="\n") as gold_stream,
+        ):
+            member_names = sorted(
+                info.filename
+                for info in archive.infolist()
+                if not info.is_dir() and info.filename.endswith(".jsonl")
+            )
+            for member_name in member_names:
+                with archive.open(member_name, "r") as stream:
+                    for line in stream:
+                        if not line.strip():
+                            continue
+                        record = json.loads(line)
+                        if not isinstance(record, Mapping):
+                            raise Ember2024AuditError(
+                                "materialization record must be an object"
+                            )
+                        digest, week_id, label, feature_payload = (
+                            _materialization_fields(record)
+                        )
+                        observation_key = (week_id, digest)
+                        feature_signature = _canonical_value_signature(feature_payload)
+                        previous = seen.get(observation_key)
+                        if previous is not None:
+                            if previous != (feature_signature, label):
+                                raise Ember2024AuditError(
+                                    "duplicate observation has conflicting "
+                                    "features or primary label"
+                                )
+                            continue
+                        seen[observation_key] = (feature_signature, label)
+                        observation_id = _observation_id(week_id, digest)
+                        feature_record = {
+                            "schema_version": EMBER2024_FEATURE_SCHEMA_VERSION,
+                            "observation_id": observation_id,
+                            "week_id": week_id,
+                            "file_type": "ELF",
+                            "features": feature_payload,
+                        }
+                        gold_record = {
+                            "schema_version": EMBER2024_GOLD_SCHEMA_VERSION,
+                            "observation_id": observation_id,
+                            "file_sha256": digest,
+                            "week_id": week_id,
+                            "label": label,
+                        }
+                        features_stream.write(_jsonl_line(feature_record))
+                        gold_stream.write(_jsonl_line(gold_record))
+                        label_counts[str(label)] += 1
+                        week_counts[week_id] += 1
+                        file_sha256_weeks[digest].add(week_id)
+
+        if len(seen) != expected_records:
+            raise Ember2024AuditError(
+                "post-dedup count mismatch: "
+                f"expected={expected_records} observed={len(seen)}"
+            )
+        features_temporary.replace(features_path)
+        gold_temporary.replace(gold_path)
+    except Exception:
+        for path in temporary_paths:
+            path.unlink(missing_ok=True)
+        raise
+
+    manifest = {
+        "schema_version": EMBER2024_MATERIALIZATION_SCHEMA_VERSION,
+        "source": {
+            "archive_path": str(archive_path.resolve()),
+            "archive_sha256": inventory["archive"]["observed_sha256"],
+            "inventory_path": str(inventory_path.resolve()),
+            "inventory_sha256": _file_sha256(inventory_path),
+            "audit_path": str(audit_path.resolve()),
+            "audit_sha256": _file_sha256(audit_path),
+        },
+        "contract": {
+            "dataset_role": dataset_role,
+            "deduplication_key": ["week_id", "sha256"],
+            "ordering": "archive_member_name_then_source_line",
+            "feature_fields": list(EMBER2024_STATIC_FEATURE_FIELDS),
+            "label_blind_features": True,
+            "auxiliary_labels_included": False,
+        },
+        "summary": {
+            "record_count": len(seen),
+            "label_counts": dict(sorted(label_counts.items())),
+            "week_counts": dict(sorted(week_counts.items())),
+            "unique_file_sha256_count": len(file_sha256_weeks),
+            "cross_week_file_sha256_count": sum(
+                len(weeks) > 1 for weeks in file_sha256_weeks.values()
+            ),
+        },
+        "outputs": {
+            "features_path": str(features_path.resolve()),
+            "features_sha256": _file_sha256(features_path),
+            "gold_path": str(gold_path.resolve()),
+            "gold_sha256": _file_sha256(gold_path),
+        },
+        "decision": "materialization_pass",
+        "approved_for_classifier_benchmark": dataset_role == "classifier_test",
+        "approved_for_classifier_training": dataset_role == "classifier_train",
+        "approved_for_sft_training": False,
+        "safety": {
+            "raw_executable_read_count": 0,
+            "raw_executable_execution_count": 0,
+            "feature_label_leakage_count": 0,
+            "auxiliary_label_export_count": 0,
+        },
+    }
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return manifest
 
 
 def audit_ember2024_elf_test(
@@ -309,6 +482,82 @@ def _validate_inventory(inventory: Mapping[str, Any], archive_path: Path) -> Non
         raise Ember2024AuditError("archive size changed after inventory")
     if int(safety.get("member_extraction_count") or 0) != 0:
         raise Ember2024AuditError("archive was extracted before audit")
+
+
+def _validate_materialization_audit(
+    audit: Mapping[str, Any],
+    expected_records: int,
+) -> None:
+    if audit.get("decision") != "benchmark_metadata_pass":
+        raise Ember2024AuditError("benchmark audit has not passed")
+    if audit.get("approved_for_benchmark_materialization") is not True:
+        raise Ember2024AuditError("benchmark materialization is not approved")
+    materialization = audit.get("materialization")
+    if not isinstance(materialization, Mapping):
+        raise Ember2024AuditError("benchmark audit materialization is missing")
+    if materialization.get("deduplication_key") != ["week_id", "sha256"]:
+        raise Ember2024AuditError("benchmark audit deduplication key changed")
+    if int(materialization.get("post_dedup_record_count") or -1) != (expected_records):
+        raise Ember2024AuditError("benchmark audit record count changed")
+
+
+def _materialization_fields(
+    record: Mapping[str, Any],
+) -> tuple[str, str, int, dict[str, Any]]:
+    digest = str(record.get("sha256") or "")
+    if not _SHA256_PATTERN.fullmatch(digest):
+        raise Ember2024AuditError("materialization record has invalid sha256")
+    week_value = record.get("week_id")
+    if week_value is None:
+        raise Ember2024AuditError("materialization record has no week_id")
+    week_id = str(week_value)
+    label = record.get("label")
+    if (
+        not isinstance(label, int)
+        or isinstance(label, bool)
+        or label
+        not in {
+            0,
+            1,
+        }
+    ):
+        raise Ember2024AuditError("materialization label must be 0 or 1")
+    if record.get("file_type") != "ELF":
+        raise Ember2024AuditError("materialization file type must be ELF")
+    missing_features = _STATIC_FEATURE_FIELDS - set(record)
+    if missing_features:
+        raise Ember2024AuditError(
+            f"materialization features are missing: {sorted(missing_features)}"
+        )
+    feature_payload = {
+        field: record[field] for field in EMBER2024_STATIC_FEATURE_FIELDS
+    }
+    return digest, week_id, label, feature_payload
+
+
+def _observation_id(week_id: str, digest: str) -> str:
+    key = f"ember2024-elf:{week_id}:{digest}".encode()
+    return f"ember2024-elf-{hashlib.sha256(key).hexdigest()}"
+
+
+def _jsonl_line(record: Mapping[str, Any]) -> str:
+    return (
+        json.dumps(
+            record,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    )
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(8 * 1024 * 1024):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _valid_feature_shapes(record: Mapping[str, Any]) -> bool:
