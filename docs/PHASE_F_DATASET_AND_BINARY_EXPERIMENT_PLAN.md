@@ -1900,3 +1900,65 @@ patch-localized CWE 후보인 MegaVul/CVEfixes와 representation alignment
 artifact hash는
 [ARVO patch gate 결정문](PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
 보존합니다.
+
+## Patch-localized CWE Label Supply Gate
+
+ARVO의 crash-family 자동 매핑 실패 뒤 MegaVul과 CVEfixes를 공식
+metadata만으로 감사했습니다. 두 후보를 source–binary alignment
+데이터와 섞지 않고 vulnerability-label supply 역할로만 판정합니다.
+
+| 후보 | Metadata 결과 | 허용 상태 |
+| --- | --- | --- |
+| CVEfixes v1.0.8 | immutable Zenodo record, CC BY 4.0, size·MD5, 필요한 관계형 필드와 storage headroom 통과 | `acquisition_ready` |
+| MegaVul main | immutable release, dataset license, 고정 URL·size·checksum 없음 | `metadata_hold` |
+
+CVEfixes도 학습 승인이 아닙니다. 12,708,711,268-byte archive를 받은 뒤
+다음 gate를 순서대로 적용합니다.
+
+1. observed size = official size
+2. observed MD5 = `4586a358977acfa4c60b1a2cdd096221`
+3. 별도 SHA-256 기록
+4. ZIP member payload를 읽거나 풀지 않는 central-directory inventory
+5. unsafe path·암호화·symbolic link·executable member 0
+6. uncompressed size ≤ 200 GB, 전체 compression ratio ≤ 100×
+
+inventory PASS 뒤에도 processing과 training은 false입니다. relational
+database member를 선택적으로 해제하고 read-only schema audit, C/C++
+before/after 공급량, CWE/commit 연결, null·중복·overlap을 확인한 다음
+별도의 수동 evidence gate를 수행합니다.
+
+Metadata preflight artifact SHA-256은
+`786836f0a91e41d947e693942c1f2e34311dc32f91c13983b22ec5132ef4390e`입니다.
+자세한 상태와 중단 조건은
+[patch label supply 결정문](PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
+보존합니다.
+
+### CVEfixes 실제 실행 결과 — 2026-07-31
+
+위 acquisition 계획은 모두 실행했습니다. official archive의 size·MD5와
+local SHA-256, 비추출 ZIP inventory, 선택적 SQL gzip CRC, 정적 SQL 감사,
+방어적 SQLite import가 통과했습니다.
+
+- archive SHA-256:
+  `6acd55aaeb7ffcfc20fdcebf7df88d206f9892ef64b0f2a2e06864d5b44b3a83`
+- imported DB SHA-256:
+  `4cfba1ef46e363f702f4e72a7ca36e9afc70493a3adb798816f02e24ca60e84a`
+- supply audit: exact C/C++ before/after `6,248`쌍, `PASS`
+- supply audit SHA-256:
+  `7696a884b9c1ddd386975df9146e28c28b4f11d391c90dba0c0487602ebb4014`
+
+actionable `CWE-숫자`만 남긴 pool은 `5,569`쌍입니다. seed `20260731`,
+C 150/C++ 50, commit group당 최대 1건, CWE당 최대 20건으로 200쌍을
+동결했습니다. 첫 r1에서 `NVD-CWE-Other/noinfo` 22건을 발견해 폐기하고
+r2로 재생성했습니다.
+
+- final catalog SHA-256:
+  `4993425b6fc605788a68c5f3c1635a2a2223cd62dc9a1dc71a6e032b2e420218`
+- selected function review queue:
+  `200/200`, 구조 오류 0, 동일 pair 0
+- review queue SHA-256:
+  `8e73ac22f02127a14279d383d4ff529fa750f947355844240776486854429b2a`
+
+현재 분기는 `수동 patch↔CWE gate`입니다. 오류·불확실 합계가
+`10/200`을 초과하면 실패 종료합니다. 통과하더라도 repository code
+license가 확인되기 전에는 processing·training을 승인하지 않습니다.

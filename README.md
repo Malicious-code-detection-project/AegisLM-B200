@@ -146,6 +146,21 @@ CWE-121/122/126 gold로 변환하지 않으며 binary adapter 학습도 시작�
 [`docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md`](docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
 보존합니다.
 
+다음 patch-localized CWE 공급 metadata gate에서는 CVEfixes v1.0.8만
+고정 archive·size·checksum·license·storage 조건을 통과해
+`acquisition_ready`가 됐습니다. MegaVul은 immutable release, dataset
+license, 고정 artifact URL·size·checksum이 없어 `metadata_hold`입니다.
+CVEfixes는 official archive 무결성, 비추출 ZIP inventory, 선택적 SQL
+gzip CRC, 정적 SQL 감사, 방어적 SQLite import를 모두 통과했습니다.
+read-only 공급량 감사에서 exact C/C++ before/after 후보 `6,248`쌍을
+확인했고, 숫자형 CWE만 허용한 고정 200쌍 catalog와 함수 전·후 review
+queue를 생성했습니다. 구조 오류는 0건이지만 patch↔CWE 수동 판단 200건과
+repository code license 검토가 남았으므로 processing과 training 승인은
+여전히 false입니다.
+상세 상태는
+[`docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md`](docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
+보존합니다.
+
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
 허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
 규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
@@ -291,6 +306,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
 - `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
 - `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` - ARVO 200건 공개 개발자 패치 수집, 수동 `FAIL EARLY`, 학습 불승인 결정
+- `docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` - CVEfixes archive·SQLite·6,248쌍 공급 PASS, 200쌍 수동 gate 대기, MegaVul hold
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽

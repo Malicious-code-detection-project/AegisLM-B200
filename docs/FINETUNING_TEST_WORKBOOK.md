@@ -2444,3 +2444,62 @@ allocation, source length, read/write sink가 실제로 연결되는지 확인�
 다음 단계는 ARVO 재라벨링이 아닙니다. patch-localized CWE 공급 후보
 MegaVul/CVEfixes와 source–binary alignment 후보 Assemblage/
 Decompile-Bench를 별도 gate로 평가합니다.
+
+## Patch-localized Label Supply 기록
+
+### Metadata Preflight
+
+| 기록 항목 | 값 |
+| --- | --- |
+| profile | `phase-f-patch-label-supply-preflight-v1` |
+| CVEfixes v1.0.8 | `acquisition_ready` |
+| MegaVul main | `metadata_hold` |
+| available storage | `8,735,842,787,328` bytes |
+| CVEfixes archive / 5× 요구량 | `12,708,711,268 / 63,543,556,340` bytes |
+| upstream MD5 | `4586a358977acfa4c60b1a2cdd096221` |
+| preflight artifact SHA-256 | `786836f0a91e41d947e693942c1f2e34311dc32f91c13983b22ec5132ef4390e` |
+| preflight safety counts | download/source/payload/PoC/exec/Docker 모두 `0` |
+| processing / training 승인 | `false / false` |
+
+MegaVul은 immutable dataset release, dataset license, versioned artifact
+URL·size·checksum이 확보될 때까지 다운로드하지 않습니다. repository
+code의 GPL-3.0을 dataset payload license로 간주하지 않습니다.
+
+### CVEfixes Archive 진행표
+
+| 단계 | 상태 | 통과 기준 | 기록 |
+| --- | --- | --- | --- |
+| 고정 archive 다운로드 | `Pass` | observed bytes `12,708,711,268` | MD5·SHA-256 일치 |
+| upstream checksum | `Pass` | MD5 exact match | `4586a358977acfa4c60b1a2cdd096221` |
+| local evidence hash | `Pass` | SHA-256 기록 | `6acd55aa…b3a83` |
+| 비추출 ZIP inventory | `Pass` | readable, member > 0, 모든 safety check PASS | 15 members, unsafe 계수 모두 0 |
+| 선택적 DB 해제 승인 | `Pass` | inventory PASS | SQL gzip 하나만 추출 |
+| gzip·정적 SQL·SQLite import | `Pass` | CRC, dangerous SQL 0, quick_check ok | DB SHA `4cfba1ef…e84a` |
+| read-only 공급량 | `Pass` | C/C++ exact pair ≥ 2,000 | `6,248` |
+| 200쌍 metadata catalog | `Pass` | actionable CWE, group/CWE cap, payload 0 | final SHA `4993425b…0218` |
+| 200쌍 함수 review queue | `Ready` | 구조 오류·동일 pair 0 | queue SHA `8e73ac22…9b2a` |
+| 수동 patch↔CWE gate | `Not Started` | 오류·불확실 ≤ `10/200` | 200 decisions 미완료 |
+| processing 승인 | `Blocked` | 수동 gate·license PASS | `false` |
+| training 승인 | `Blocked` | evidence·license gate PASS | `false` |
+
+실행 명령:
+
+```bash
+uv run python scripts/inventory_phase_f_cvefixes_archive.py \
+  --archive data/raw_data/cvefixes/v1.0.8/CVEfixes_v1.0.8.zip \
+  --config configs/phase_f/cvefixes_archive_inventory_v1.json \
+  --output data/processed/phase-f-cvefixes-archive-inventory-v1/inventory.json
+```
+
+이 명령은 outer archive hash와 ZIP central directory만 읽고 member를
+추출하지 않습니다. 실패 시 output의 `failure_reasons`를 기록하고
+archive를 풀지 않습니다. 상세 정책은
+[patch label supply 결정문](PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)을
+따릅니다.
+
+수동 review queue는
+`data/processed/phase-f-cvefixes-v1.0.8/manual-review-v1/review-queue.json`에
+있습니다. 각 record의 `operator_patch_related`,
+`operator_cwe_supported`, `operator_pair_quality`, `operator_notes`를
+확정합니다. 모델 prompt나 학습 shard에는 repository URL, CVE, gold CWE,
+commit hash를 전달하지 않습니다.

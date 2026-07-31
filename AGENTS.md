@@ -23,6 +23,7 @@ Project NuriLab과 협업 방식과 보안 철학은 공유하지만, 이 저장
 | B200 수동 파인튜닝 검증 실행·기록 워크북 | `docs/FINETUNING_TEST_WORKBOOK.md` |
 | Phase F 데이터 재설계·binary-derived 실험 정본 | `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` |
 | ARVO patch↔buffer-family 수동 gate 결정 | `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` |
+| Patch-localized label 공급·archive gate 결정 | `docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` |
 | source label·근거 수동 검토 기준 | `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md` |
 | baseline/adapter 평가 결과 기록 템플릿 | `docs/EXPERIMENT_LOG_TEMPLATE.md` |
 | Phase D 완료 조건과 Phase E 착수 gate | `docs/PHASE_D_EXIT_CRITERIA.md` |
@@ -364,5 +365,13 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
 - ARVO는 binary adapter 학습 supply로 승인하지 않는다.
 - 다음 공급 감사는 MegaVul/CVEfixes의 patch-localized CWE와
   Assemblage/Decompile-Bench의 alignment 역할을 분리한다.
+- 해당 metadata 감사에서 MegaVul은 immutable artifact와 dataset
+  license가 없어 hold했다.
+- CVEfixes v1.0.8은 exact size/MD5/SHA-256, 비추출 ZIP inventory,
+  선택적 SQL gzip CRC, 정적 SQL 감사, 방어적 SQLite import를 통과했다.
+- read-only 공급량은 C/C++ exact before/after `6,248`쌍이며 숫자형 CWE만
+  허용한 200쌍 review queue의 구조 오류는 0건이다.
+- patch↔CWE 수동 판단 200건과 repository code license 검토 전에는
+  bulk materialization·processing·training을 승인하지 않는다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.
