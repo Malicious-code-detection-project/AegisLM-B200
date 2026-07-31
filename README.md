@@ -174,6 +174,16 @@ corpus가 아니라 Assemblage metadata만 먼저 감사합니다. 상세 근거
 [`docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md`](docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
 보존합니다.
 
+Assemblage LinuxELF는 21.97GB compressed DuckDB의 size·SHA-256·zstd
+무결성과 5개 table schema를 통과했습니다. 그러나 249,121 binary row 중
+검증 가능한 license 상한은 70.91%, architecture는 68.84%,
+binary format·repo commit·build mode는 각각 약 31.15%뿐입니다. build
+trace가 있는 cohort와 architecture가 있는 cohort의 strict 교집합은
+0건이므로 `metadata_reference_only`, binary download·training false로
+판정했습니다. raw ELF archive는 받지 않았습니다. 상세 근거는
+[`docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md`](docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)에
+보존합니다.
+
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
 허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
 규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
@@ -321,6 +331,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` - ARVO 200건 공개 개발자 패치 수집, 수동 `FAIL EARLY`, 학습 불승인 결정
 - `docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` - CVEfixes archive·SQLite·6,248쌍 공급 PASS 뒤 수동 `11/28 FAIL EARLY`, direct-label 학습 거부
 - `docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md` - Decompile-Bench source–assembly 정렬 96/100 PASS, provenance·compiler metadata 부족으로 reference-only 판정
+- `docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md` - Assemblage artifact·schema PASS 뒤 strict metadata 교집합 0건으로 raw ELF·학습 불승인
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽

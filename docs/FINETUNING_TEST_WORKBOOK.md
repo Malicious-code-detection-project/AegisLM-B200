@@ -2548,3 +2548,40 @@ commit hash를 전달하지 않습니다.
 다음 실행은 Assemblage metadata-only gate입니다. repository license,
 compiler, optimization, architecture를 먼저 감사하고 전체 PE/ELF corpus나
 실행파일은 이 단계에서 다운로드·실행하지 않습니다.
+
+### Assemblage LinuxELF Metadata 진행표
+
+| 단계 | 상태 | 통과 기준 | 실제 기록 |
+| --- | --- | --- | --- |
+| 고정 metadata preflight | `Pass` | revision·size·SHA-256·3× storage | 21,971,861,569 bytes |
+| compressed artifact 검증 | `Pass` | size·SHA-256 exact | `a5b12c33…eb5e` |
+| zstd 무결성 | `Pass` | 전체 stream 오류 0 | 136,143,712,256 bytes |
+| DuckDB schema | `Pass` | 5 core table·row count 일치 | read-only DuckDB 1.5.5 |
+| repository URL | `Pass` | coverage ≥ 0.99 | 100% |
+| actionable license | `Fail` | coverage ≥ 0.99 | 70.9069% |
+| compiler·optimization | `Pass` | 각각 ≥ 0.99 | 99.8772% / 100% |
+| architecture | `Fail` | coverage ≥ 0.99 | 68.8404% |
+| format·commit·build mode | `Fail` | 각각 ≥ 0.99 | 약 31.15% |
+| strict complete supply | `Fail` | ≥ 200 | 0 |
+| raw ELF 다운로드 | `Blocked` | field gate PASS | 0 |
+| training 승인 | `Fail` | strict subset·license PASS | `false` |
+
+`platform=linux`는 architecture로 간주하지 않고,
+`other/Other/unknown` license는 검증 가능한 허용 license로 간주하지
+않습니다. build trace cohort와 architecture cohort의 교집합이 0이므로
+raw ELF archive를 받아도 현재 metadata 계약 실패는 해결되지 않습니다.
+
+- metadata preflight SHA-256:
+  `4228ccaa1c0447e015091014facd01e42e5ed81c0be7812ab2aed9c152a8a270`
+- compressed verification SHA-256:
+  `670c4b105789a8bdd3d634311bda8d0ac3d0cfe89ad77d936068ed463dafba60`
+- schema inventory SHA-256:
+  `06af3f985316c3ae99fe06bd9be3012fe94b4f3b8d21ec9a5364872a9124a0ba`
+- field audit SHA-256:
+  `7951a4cc5a9f47f5dc4408195446fc67552bb197b1c5d335a4285b40309d770c`
+- 상세 결정:
+  [Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)
+
+다음 실행은 BinKit 2.0 metadata-only gate입니다. compiler,
+architecture, optimization과 sample identity를 먼저 감사하며 binary
+package는 metadata gate 전까지 다운로드하지 않습니다.

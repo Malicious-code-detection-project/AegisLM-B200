@@ -2010,3 +2010,42 @@ metadata 계약입니다. 전체 executable corpus를 받지 않고 metadata만 
 감사하며, 이 단계도 취약점 label 공급과는 분리합니다. 상세 결정은
 [Decompile-Bench 정렬·출처 gate 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
 보존합니다.
+
+### Assemblage LinuxELF metadata 실제 결과 — 2026-07-31
+
+고정 revision `5d58b08b500ea279a9880f80fd4b217e1897035a`의
+`linux_licensed.duckdb.zst`만 받았습니다. 공식 raw ELF
+`binaries.tar.xz`는 받지 않았고, source·binary payload를 실행하지
+않았습니다.
+
+| Gate | 결과 | 판정 |
+| --- | --- | --- |
+| compressed artifact | 21,971,861,569 bytes, upstream SHA-256 일치 | `Pass` |
+| zstd integrity | 136,143,712,256 bytes 전체 검증 | `Pass` |
+| DuckDB schema | 5 tables, documented row counts 일치 | `Pass` |
+| actionable license 상한 | 176,644/249,121 (`70.9069%`) | `Fail` |
+| compiler / optimization | `99.8772% / 100%` | `Pass` |
+| architecture | 171,496/249,121 (`68.8404%`) | `Fail` |
+| format / commit / build mode | 약 `31.15%` | `Fail` |
+| strict complete supply | `0` | `Fail` |
+
+build trace가 있으나 architecture가 없는 cohort는 63,031건이고,
+architecture는 있으나 trace가 불완전한 cohort는 113,329건입니다.
+dataset-level 설명이나 다른 행의 값을 이용해 결손 metadata를 추정하지
+않습니다.
+
+- compressed artifact SHA-256:
+  `a5b12c3353cd0f653c9543e78343b45dca4207f072a7d5d17b2ab07a4540eb5e`
+- decompressed DuckDB SHA-256:
+  `767b69efe0443827167f152a86ee04a04ab494cd186404503e3e64f9d25449ef`
+- schema inventory SHA-256:
+  `06af3f985316c3ae99fe06bd9be3012fe94b4f3b8d21ec9a5364872a9124a0ba`
+- field audit SHA-256:
+  `7951a4cc5a9f47f5dc4408195446fc67552bb197b1c5d335a4285b40309d770c`
+- final disposition: `metadata_reference_only`
+- binary download / training 승인: `false / false`
+
+다음 gate는 BinKit 2.0 metadata에서 compiler·architecture·optimization을
+같은 sample identity에 연결할 수 있는지 확인하는 것입니다. 상세 결정은
+[Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)에
+보존합니다.

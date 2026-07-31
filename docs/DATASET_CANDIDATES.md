@@ -170,7 +170,7 @@ metadata benchmark로 나눕니다.
 | --- | --- | --- |
 | BigVul buildable patch pair | target CWE before/after binary pair | `primary-if-verified` |
 | [ARVO v3](https://github.com/n132/ARVO-Meta/releases/tag/v3.0.0) | 재현 가능한 C/C++ vulnerable/fixed patch와 buffer extractor 복구 | `manual-gate-failed`; 200건 중 오류 11건으로 `FAIL EARLY`, crash family→CWE 변환·학습 금지 |
-| [Assemblage](https://assemblage-dataset.net/) | source-built PE/ELF와 compiler variant | `feasibility-candidate` |
+| [Assemblage](https://assemblage-dataset.net/) | source-built PE/ELF와 compiler variant | `metadata-reference-only`; artifact·schema PASS, strict complete row 0으로 raw ELF·학습 불승인 |
 | [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–assembly representation과 정렬 회귀 | `alignment-reference-only`; 첫 shard 수동 `96/100 PASS`, repository 명시 84.66%, 행별 license·compiler·optimization 부재로 학습 불승인 |
 | [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `benchmark-candidate` |
 | [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) | decompilation format와 representation 연구 | `reference` |
@@ -188,6 +188,15 @@ Decompile-Bench 첫 Arrow shard 131,359건은 고정 100건 source–assembly
 repository의 행별 license와 compiler/optimization metadata는 제공되지
 않습니다. 따라서 representation 참고 자료로만 보존하며, 세부 판정은
 [Decompile-Bench alignment 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)을
+따릅니다.
+
+Assemblage LinuxELF metadata 249,121행은 repository·optimization·binary
+pointer가 완전하고 compiler도 99.88% 복원됩니다. 그러나 검증 가능한
+license 상한은 70.91%, architecture 68.84%, binary format·repo
+commit·build mode는 약 31.15%입니다. build trace cohort와 architecture
+cohort의 strict 교집합이 0건이므로 raw ELF를 받지 않고
+`metadata_reference_only`로 종료합니다. 세부 판정은
+[Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)을
 따릅니다.
 
 ARVO의 sanitizer `crash_type`도 CWE gold label로 자동 등치하지 않습니다.
@@ -241,8 +250,10 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
    - alignment `96/100 PASS`
    - provenance 84.66%, repository license·compiler·optimization 미완료
    - `alignment_reference_only`, training false
-7. Assemblage metadata와 소규모 aligned subset
-8. BinKit compiler-robustness subset
+7. [완료/실패] Assemblage metadata gate
+   - artifact·zstd·schema PASS
+   - strict complete row 0, raw ELF·training false
+8. BinKit compiler-robustness metadata와 subset
 9. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
 
 전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.

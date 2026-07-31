@@ -383,7 +383,14 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
   `111,206`행(`84.6581%`)이고 repository별 license,
   compiler·optimization metadata가 없다.
 - Decompile-Bench disposition은 `alignment_reference_only`이며
-  `approved_for_training=false`다. 다음 gate는 전체 executable이 아니라
-  Assemblage metadata-only 감사다.
+  `approved_for_training=false`다.
+- Assemblage LinuxELF compressed DuckDB의 artifact·zstd·schema gate는
+  통과했지만 license 상한 70.91%, architecture 68.84%,
+  format·commit·build mode 약 31.15%로 field gate는 실패했다.
+- build trace가 있는 63,031행과 architecture가 있는 113,329행의 strict
+  교집합은 0건이다. `metadata_reference_only`로 보존하며 raw ELF
+  다운로드와 training은 false다.
+- 다음 gate는 BinKit metadata-only compiler·architecture·optimization
+  계약 감사다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.
