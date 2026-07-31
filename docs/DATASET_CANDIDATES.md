@@ -212,7 +212,7 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 | [PrimeVul](https://github.com/DLVulDet/PrimeVul) | 정제된 vulnerable/benign source와 paired evaluation | `acquired-and-materialized`; v0.1 paired 중 global dedup을 통과한 pair로 cross-dataset test 200건 구성 |
 | [NIST SARD](https://samate.nist.gov/SARD/test-suites/112) / Juliet C/C++ 1.3 | 명시적 weakness, buildable source, 자체 source–binary pair 생성 | `ready-for-source-v3-integration`; 인과 filter 통과 11,540 pair·unique 8,191 pair 중 5,750쌍으로 10,000/1,000/500 구성, 자동 gate와 고정 100건 수동 gate PASS |
 | [MegaVul](https://github.com/Icyrockton/MegaVul) | CVE/fix commit와 함수 전후·diff 근거 보강 | `metadata-hold`; dataset immutable release·license·고정 URL·size·checksum 확보 전 다운로드 금지 |
-| [CVEfixes v1.0.8](https://zenodo.org/records/13118970) | CVE/CWE와 fixing commit, before/after function 공급량 감사 | `manual-review-ready`; archive·SQL·SQLite·6,248쌍 공급 PASS, actionable CWE 200쌍 선택 추출 완료, 수동 patch↔CWE·repository license 검토 전 training 금지 |
+| [CVEfixes v1.0.8](https://zenodo.org/records/13118970) | CVE/CWE와 fixing commit, before/after function 공급량 감사 | `manual-gate-failed`; archive·SQL·SQLite·6,248쌍 공급 PASS 뒤 28건 중 오류·불확실 11건으로 `FAIL EARLY`, commit-level CWE direct-label 학습 금지 |
 
 외부 다운로드 전에 현재 BigVul raw의 `func_after`, `lines_before`,
 `lines_after`, `patch`를 target builder가 사용하지 못한 문제부터
@@ -225,10 +225,10 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 2. [완료] NIST SARD/Juliet 고정 100건 수동 label·근거 감사
 3. SARD 통과 자료를 `phase-f-source-v3`으로 통합·동결
 4. [실패 종료] ARVO 200건 buffer patch↔CWE 수동 feasibility
-5. [진행 중] MegaVul·CVEfixes patch-localized CWE 공급 gate
+5. [실패/보류] MegaVul·CVEfixes patch-localized CWE 공급 gate
    - MegaVul: metadata hold
-   - CVEfixes: archive·import·공급량·200쌍 자동 materialization PASS,
-     수동 patch↔CWE review 200건 대기
+   - CVEfixes: archive·import·공급량·200쌍 자동 materialization PASS 뒤
+     수동 `11/28 FAIL EARLY`; 남은 172건 미검토, direct-label 사용 금지
 6. Assemblage·Decompile-Bench의 metadata 및 소규모 aligned subset
 7. BinKit compiler-robustness subset
 8. EMBER2024 static-feature subset을 별도 malware benchmark로 확보

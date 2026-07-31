@@ -2478,7 +2478,7 @@ code의 GPL-3.0을 dataset payload license로 간주하지 않습니다.
 | read-only 공급량 | `Pass` | C/C++ exact pair ≥ 2,000 | `6,248` |
 | 200쌍 metadata catalog | `Pass` | actionable CWE, group/CWE cap, payload 0 | final SHA `4993425b…0218` |
 | 200쌍 함수 review queue | `Ready` | 구조 오류·동일 pair 0 | queue SHA `8e73ac22…9b2a` |
-| 수동 patch↔CWE gate | `Not Started` | 오류·불확실 ≤ `10/200` | 200 decisions 미완료 |
+| 수동 patch↔CWE gate | `Fail` | 오류·불확실 ≤ `10/200` | 28건에서 `11`건으로 `FAIL EARLY`; 172건 미검토 |
 | processing 승인 | `Blocked` | 수동 gate·license PASS | `false` |
 | training 승인 | `Blocked` | evidence·license gate PASS | `false` |
 
@@ -2503,3 +2503,16 @@ archive를 풀지 않습니다. 상세 정책은
 `operator_cwe_supported`, `operator_pair_quality`, `operator_notes`를
 확정합니다. 모델 prompt나 학습 shard에는 repository URL, CVE, gold CWE,
 commit hash를 전달하지 않습니다.
+
+실제 검토는 28번째 record에서 오류·불확실 11건에 도달해 예산 10건을
+초과했습니다. 판정은 `manual_review_fail_early`이며 나머지 172건은
+미검토로 보존합니다.
+
+- operator decisions SHA-256:
+  `08aed98de897f8081cd8871d795d6f8480f6e810b4f97b263b71259496a969a1`
+- final result SHA-256:
+  `ed099b23b6cf619b5ea717ff4b52119c7149b87165a8c57b26ee11a4bb6172be`
+- error kinds: CWE mismatch 7, too broad 6, insufficient context 5,
+  patch unrelated 1
+- label quality·repository license review·processing·training 승인:
+  모두 `false`

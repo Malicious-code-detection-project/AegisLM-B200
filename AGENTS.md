@@ -371,7 +371,10 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
   선택적 SQL gzip CRC, 정적 SQL 감사, 방어적 SQLite import를 통과했다.
 - read-only 공급량은 C/C++ exact before/after `6,248`쌍이며 숫자형 CWE만
   허용한 200쌍 review queue의 구조 오류는 0건이다.
-- patch↔CWE 수동 판단 200건과 repository code license 검토 전에는
-  bulk materialization·processing·training을 승인하지 않는다.
+- CVEfixes patch↔CWE 수동 gate는 고정 순서 28건에서 오류·불확실
+  `11/28`로 예산 10건을 초과해 `FAIL EARLY`했다.
+- 남은 172건은 미검토이며 PASS가 아니다. CVEfixes commit-level CWE를
+  direct training label로 사용하지 않고 repository license gate도
+  착수하지 않는다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.

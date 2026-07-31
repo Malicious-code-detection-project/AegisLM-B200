@@ -1959,6 +1959,20 @@ r2로 재생성했습니다.
 - review queue SHA-256:
   `8e73ac22f02127a14279d383d4ff529fa750f947355844240776486854429b2a`
 
-현재 분기는 `수동 patch↔CWE gate`입니다. 오류·불확실 합계가
-`10/200`을 초과하면 실패 종료합니다. 통과하더라도 repository code
-license가 확인되기 전에는 processing·training을 승인하지 않습니다.
+수동 patch↔CWE gate는 고정 순서 28건에서 오류·불확실 11건으로 예산
+10건을 초과해 `FAIL EARLY`했습니다. 나머지 172건은 미검토이며 PASS로
+간주하지 않습니다.
+
+- passed/error/unfinished: `17 / 11 / 172`
+- error kinds: CWE mismatch 7, too broad 6, insufficient context 5,
+  patch unrelated 1
+- operator decisions SHA-256:
+  `08aed98de897f8081cd8871d795d6f8480f6e810b4f97b263b71259496a969a1`
+- final result SHA-256:
+  `ed099b23b6cf619b5ea717ff4b52119c7149b87165a8c57b26ee11a4bb6172be`
+
+CVEfixes commit-level CWE를 direct training label로 쓰는 경로는
+실패 종료합니다. 품질 gate가 먼저 실패했으므로 repository code license
+gate에는 착수하지 않습니다. CVEfixes를 다시 사용하려면 code-local
+operation을 기준으로 재라벨링하고 새로운 고정 sample로 처음부터
+검증해야 합니다.

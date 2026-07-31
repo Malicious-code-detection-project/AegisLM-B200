@@ -12,11 +12,12 @@ ARVO patch gate 실패 뒤 patch-localized CWE 공급 후보를 공식 metadata�
 | archive·SQL·SQLite lifecycle | `PASS` | read-only 공급량 감사 |
 | C/C++ before/after 공급량 | `PASS` | metadata catalog 생성 |
 | 200쌍 catalog·선택 추출 | `PASS` | 수동 evidence review |
-| 수동 patch↔CWE 검토 | `PENDING` | training 불승인 |
+| 수동 patch↔CWE 검토 | `FAIL EARLY` | 28건 중 오류·불확실 11건, training 불승인 |
 
-따라서 CVEfixes는 현재 `manual_review_ready`입니다. 이는 데이터 품질이나
-학습 승인이 아닙니다. 200쌍 수동 검토와 repository code license 검토가
-끝나기 전에는 bulk materialization, processing, training을 허용하지 않습니다.
+따라서 CVEfixes는 현재 `manual_review_fail_early`입니다. 자동 공급량
+PASS는 label 품질 PASS가 아니었습니다. 남은 172건은 미검토이며
+repository code license gate, bulk materialization, processing, training을
+허용하지 않습니다.
 
 ## Official Source and License Boundary
 
@@ -196,10 +197,10 @@ batch query로 수정했습니다. DB와 원본 artifact는 변경하지 않았�
   `data/processed/phase-f-cvefixes-v1.0.8/manual-review-v1/review-queue.json`
 - queue SHA-256:
   `8e73ac22f02127a14279d383d4ff529fa750f947355844240776486854429b2a`
-- decision: `manual_review_ready`
+- decision: `manual_review_ready` — 수동 검토 착수 전 상태
 - training approval: `false`
 
-## Manual Gate and Next Decision
+## Manual Gate Result and Next Decision
 
 각 record에서 다음을 label 공개 전 확인합니다.
 
@@ -210,9 +211,30 @@ batch query로 수정했습니다. DB와 원본 artifact는 변경하지 않았�
 5. repository code license가 연구·학습 사용을 허용하는가
 
 `operator_patch_related`, `operator_cwe_supported`,
-`operator_pair_quality`를 모두 확정해야 합니다. patch↔CWE 오류·불확실을
-합친 값이 `10/200`을 초과하면 `FAIL EARLY`로 종료합니다. 통과해도
-repository license 확인 전에는 training을 승인하지 않습니다.
+`operator_pair_quality`를 고정 순서로 기록했습니다. 28번째 record에서
+오류·불확실이 `11`건으로 예산 `10`건을 초과해 `FAIL EARLY`했습니다.
+
+| 항목 | 결과 |
+| --- | ---: |
+| reviewed / passed / error | `28 / 17 / 11` |
+| unfinished | `172` |
+| CWE mismatch | `7` |
+| CWE too broad | `6` |
+| insufficient context | `5` |
+| patch unrelated | `1` |
+
+- operator decisions SHA-256:
+  `08aed98de897f8081cd8871d795d6f8480f6e810b4f97b263b71259496a969a1`
+- final result SHA-256:
+  `ed099b23b6cf619b5ea717ff4b52119c7149b87165a8c57b26ee11a4bb6172be`
+- label quality·repository license review·processing·training approval:
+  모두 `false`
+
+대표 실패는 broad CWE-119/399/20/755, 함수 안에 target operation이 없는
+간접 변경, command usage text처럼 CWE와 무관한 함수 pair입니다.
+CVEfixes commit-level CWE를 direct training label로 사용하지 않습니다.
+재사용하려면 code-local operation에 기반한 새 label contract와 새 고정
+sample이 필요합니다.
 
 ## References
 

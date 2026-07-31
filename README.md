@@ -155,8 +155,11 @@ gzip CRC, 정적 SQL 감사, 방어적 SQLite import를 모두 통과했습니�
 read-only 공급량 감사에서 exact C/C++ before/after 후보 `6,248`쌍을
 확인했고, 숫자형 CWE만 허용한 고정 200쌍 catalog와 함수 전·후 review
 queue를 생성했습니다. 구조 오류는 0건이지만 patch↔CWE 수동 판단 200건과
-repository code license 검토가 남았으므로 processing과 training 승인은
-여전히 false입니다.
+repository code license 검토가 남아 있었습니다. 고정 순서 수동 검토는
+28건 중 오류·불확실 11건에 도달해 예산 10건을 초과했으므로
+`FAIL EARLY`로 종료했습니다. 나머지 172건은 미검토이며 PASS가 아닙니다.
+CVEfixes commit-level CWE를 direct training label로 사용하는 경로와
+repository license gate는 중단했고 processing·training은 false입니다.
 상세 상태는
 [`docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md`](docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
 보존합니다.
@@ -306,7 +309,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
 - `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
 - `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` - ARVO 200건 공개 개발자 패치 수집, 수동 `FAIL EARLY`, 학습 불승인 결정
-- `docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` - CVEfixes archive·SQLite·6,248쌍 공급 PASS, 200쌍 수동 gate 대기, MegaVul hold
+- `docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` - CVEfixes archive·SQLite·6,248쌍 공급 PASS 뒤 수동 `11/28 FAIL EARLY`, direct-label 학습 거부
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽
