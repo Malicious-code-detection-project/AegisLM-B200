@@ -1976,3 +1976,37 @@ CVEfixes commit-level CWE를 direct training label로 쓰는 경로는
 gate에는 착수하지 않습니다. CVEfixes를 다시 사용하려면 code-local
 operation을 기준으로 재라벨링하고 새로운 고정 sample로 처음부터
 검증해야 합니다.
+
+### Decompile-Bench alignment·provenance 실제 결과 — 2026-07-31
+
+고정 revision `4b708c2211cd7d4af403675db56322aa4ed7050c`의 첫
+Arrow shard 하나만 감사했습니다. raw binary·executable, 전체 17개 shard,
+평가 corpus는 받지 않았습니다.
+
+| Gate | 결과 | 판정 |
+| --- | --- | --- |
+| shard 무결성 | 489,618,088 bytes, SHA-256 `2a68cfda…32b5` | `Pass` |
+| 정렬 수동 검토 | 96 pass / 4 error / 0 unfinished | `Pass` |
+| 명시 repository 복원 | 111,206 / 131,359 (`84.6581%`) | `Partial` |
+| repository별 license | 공개 row에 증거 없음 | `Blocked` |
+| compiler·optimization | 공개 row에 metadata 없음 | `Blocked` |
+| 취약점·patch ground truth | 없음 | `Not Applicable` |
+
+정렬 오류 4건은 모두 source와 assembly가 다른 함수인 명백한
+`different_function + semantic_mismatch`였습니다. 수동 오류 예산
+`≤5/100`은 통과했지만 출처와 build-condition 계약은 통과하지 못했습니다.
+
+- review decisions SHA-256:
+  `0bf418152ca87cad6fffdc1f2700d67580f96da75b43e23767c9454c79445c16`
+- review result SHA-256:
+  `87104c7b9225820b2f0f935dcdd71ecf6a8cb0ad612908517ef70243c9bc2795`
+- provenance audit SHA-256:
+  `68b4b51d3968a53bd711886e3d75ea02d9de5c8794c6eef733bb5b06c5525c36`
+- final disposition: `alignment_reference_only`
+- processing / training 승인: `true / false`
+
+다음 gate는 Assemblage의 repository license와 compiler·optimization
+metadata 계약입니다. 전체 executable corpus를 받지 않고 metadata만 먼저
+감사하며, 이 단계도 취약점 label 공급과는 분리합니다. 상세 결정은
+[Decompile-Bench 정렬·출처 gate 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
+보존합니다.

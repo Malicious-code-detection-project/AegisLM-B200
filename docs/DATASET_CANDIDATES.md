@@ -171,7 +171,7 @@ metadata benchmark로 나눕니다.
 | BigVul buildable patch pair | target CWE before/after binary pair | `primary-if-verified` |
 | [ARVO v3](https://github.com/n132/ARVO-Meta/releases/tag/v3.0.0) | 재현 가능한 C/C++ vulnerable/fixed patch와 buffer extractor 복구 | `manual-gate-failed`; 200건 중 오류 11건으로 `FAIL EARLY`, crash family→CWE 변환·학습 금지 |
 | [Assemblage](https://assemblage-dataset.net/) | source-built PE/ELF와 compiler variant | `feasibility-candidate` |
-| [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–binary–decompile representation | `feasibility-candidate` |
+| [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–assembly representation과 정렬 회귀 | `alignment-reference-only`; 첫 shard 수동 `96/100 PASS`, repository 명시 84.66%, 행별 license·compiler·optimization 부재로 학습 불승인 |
 | [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `benchmark-candidate` |
 | [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) | decompilation format와 representation 연구 | `reference` |
 | [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `metadata-evaluation` |
@@ -181,6 +181,14 @@ metadata benchmark로 나눕니다.
 Assemblage/Decompile-Bench/BinKit은 취약점 label을 자동으로 제공한다고
 간주하지 않습니다. source–binary 정렬 또는 강건성 자료로 사용하고,
 취약점 SFT label은 검증된 patch/CWE 근거와 별도로 연결해야 합니다.
+
+Decompile-Bench 첫 Arrow shard 131,359건은 고정 100건 source–assembly
+수동 gate에서 96건을 통과했습니다. 그러나 `file` 경로로 repository를
+명시적으로 복원할 수 있는 행은 111,206건(84.66%)이고, 1,066개
+repository의 행별 license와 compiler/optimization metadata는 제공되지
+않습니다. 따라서 representation 참고 자료로만 보존하며, 세부 판정은
+[Decompile-Bench alignment 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)을
+따릅니다.
 
 ARVO의 sanitizer `crash_type`도 CWE gold label로 자동 등치하지 않습니다.
 heap/stack buffer read·write는 CWE-121/122/126의 후보 범주일 뿐이며,
@@ -229,9 +237,13 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
    - MegaVul: metadata hold
    - CVEfixes: archive·import·공급량·200쌍 자동 materialization PASS 뒤
      수동 `11/28 FAIL EARLY`; 남은 172건 미검토, direct-label 사용 금지
-6. Assemblage·Decompile-Bench의 metadata 및 소규모 aligned subset
-7. BinKit compiler-robustness subset
-8. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
+6. [완료] Decompile-Bench 첫 shard alignment·provenance gate
+   - alignment `96/100 PASS`
+   - provenance 84.66%, repository license·compiler·optimization 미완료
+   - `alignment_reference_only`, training false
+7. Assemblage metadata와 소규모 aligned subset
+8. BinKit compiler-robustness subset
+9. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
 
 전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.
 세부 근거는

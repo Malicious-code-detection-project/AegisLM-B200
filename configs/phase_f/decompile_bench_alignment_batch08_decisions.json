@@ -1,0 +1,86 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-f97534ddef86696a",
+      "error_kinds": [],
+      "operator_notes": "Byte-swapped control word, local ID, raw write, result branch, and success/error stream output align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-85b40683efe8e29f",
+      "error_kinds": [],
+      "operator_notes": "Metric collection, combined label reservation, both map traversals, label construction/appends, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-f81c4d0e2bf91053",
+      "error_kinds": [],
+      "operator_notes": "Map/timer construction, memory readings, predicted resize, insertion loop, elapsed time, report call, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-0ccfe1d143835895",
+      "error_kinds": [],
+      "operator_notes": "Type/default reads, null fast return, physical-type switch, scalar/nested deserialization branches, exceptions, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-d31f0249f6e4f823",
+      "error_kinds": [],
+      "operator_notes": "Validity entry loops, all/none/partial valid branches, selection writes and counters, and true-count return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-16869068462db680",
+      "error_kinds": [],
+      "operator_notes": "The active pthread branch passes key and destructor to pthread_key_create and maps zero/nonzero to success/error.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-f7bde5b7e71bd15e",
+      "error_kinds": [],
+      "operator_notes": "Combined-length and newline checks select the inline or multiline stream format with matching operands and operator.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-a03d1a58697eb095",
+      "error_kinds": [],
+      "operator_notes": "Has-bit gated string/options clears, has-bits zeroing, unknown-field clear, and tail return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-97337f16a2f2b4a2",
+      "error_kinds": [],
+      "operator_notes": "Oversize direct allocation path, alignment adjustment, exhausted-block rollover, upstream allocation, position update, and pointer return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-64ec9fc3e0de5781",
+      "error_kinds": [],
+      "operator_notes": "Sequential X=1, Y=1, Z=0 calls with error short-circuiting and returned status align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

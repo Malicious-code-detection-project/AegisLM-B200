@@ -13,6 +13,7 @@
 - [PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md) - Binary role target v2 r1/r2 supply PASS, manual FAIL, and strict CWE extractor decision.
 - [PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md](PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md) - ARVO public developer-patch collection, 200-record manual FAIL EARLY, and training rejection.
 - [PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md](PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md) - CVEfixes verified archive/import and 6,248-pair supply PASS followed by manual `11/28 FAIL EARLY`.
+- [PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md) - Decompile-Bench 100-pair alignment `96/100 PASS`, partial repository provenance, and training hold.
 - [SOURCE_MANUAL_REVIEW_RUBRIC.md](SOURCE_MANUAL_REVIEW_RUBRIC.md) - Source label, execution path, exact span, and causal-evidence review rubric.
 
 이 디렉터리는 `AegisLM`의 세부 기준과 실험 문서를 관리합니다.
@@ -33,6 +34,7 @@
 | [PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md) | Binary role target v2 실패, strict v4–v7 quarantine, 644-pair 품질 승인·공급 차단 결정 |
 | [PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md](PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md) | ARVO 200건 patch↔buffer-family 수동 `FAIL EARLY`와 학습 불승인 결정 |
 | [PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md](PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md) | CVEfixes archive·SQLite·6,248쌍 공급 PASS 뒤 수동 `11/28 FAIL EARLY`, direct-label 학습 거부 |
+| [PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md) | Decompile-Bench 정렬 `96/100 PASS`, repository provenance 84.66%, compiler·license metadata 부족으로 학습 보류 |
 | [SOURCE_MANUAL_REVIEW_RUBRIC.md](SOURCE_MANUAL_REVIEW_RUBRIC.md) | Source target의 label·실행 경로·exact span·인과관계 수동 검토 기준 |
 | [EXPERIMENT_LOG_TEMPLATE.md](EXPERIMENT_LOG_TEMPLATE.md) | baseline/adapter 평가 결과를 같은 형식으로 기록하기 위한 템플릿 |
 | [PHASE_D_EXIT_CRITERIA.md](PHASE_D_EXIT_CRITERIA.md) | Phase D 완료 조건과 Phase E tiny SFT PoC 착수 gate |

@@ -1,0 +1,86 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-596e509fc6d21f3e",
+      "error_kinds": [],
+      "operator_notes": "Writer/spec/value initialization, negative-value prefix and magnitude conversion, plus/space prefix selection, and size updates align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-54a4bae6c65c54cd",
+      "error_kinds": [],
+      "operator_notes": "All five character cases update exclusion or mode and return the matching boolean.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-7d90b9cc89dcd253",
+      "error_kinds": [],
+      "operator_notes": "Pixel-store setup/error checks, input and framebuffer preparation, draw/check, failure cleanup, normal cleanup, and result align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-fbe99b4606fd3313",
+      "error_kinds": [],
+      "operator_notes": "Concrete subcase allocation/construction, shared control-block allocation, returned shared pointer, and exception cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-523ac3c224d610f7",
+      "error_kinds": [],
+      "operator_notes": "The fixed vertex-shader byte range is copied into and returned as a std::string.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-510bcf1b87e73640",
+      "error_kinds": [],
+      "operator_notes": "Sampler creation, three validation sections and error expectations including the conditional ES 3.2 branch, deletion, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-0e1bc486f4077854",
+      "error_kinds": [],
+      "operator_notes": "Context/extension predicate, shader and data-type loops, all generated shader variants, verification calls, section boundaries, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-244af159e92e9237",
+      "error_kinds": [],
+      "operator_notes": "Environment initialization/bindings, body execute loop, return evaluation, four argument write-backs, environment cleanup, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-c4f54765c61fc85b",
+      "error_kinds": [],
+      "operator_notes": "One-time guard, common/table initialization, C function-pointer table setup, CPU feature probes and optimized overrides, final guard state, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-d2103a8e5fa3ce71",
+      "error_kinds": [],
+      "operator_notes": "Two stack pops and pointer peek, comparison, unordered diagnostic path, category value lookup/assertions, field setter, and boolean return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

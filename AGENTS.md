@@ -376,5 +376,14 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
 - 남은 172건은 미검토이며 PASS가 아니다. CVEfixes commit-level CWE를
   direct training label로 사용하지 않고 repository license gate도
   착수하지 않는다.
+- Decompile-Bench 고정 Arrow shard의 source–assembly 수동 정렬은
+  `96/100`으로 통과했다. 오류 4건은 모두 다른 함수가 짝지어진
+  `different_function + semantic_mismatch`다.
+- 전체 `131,359`행 중 명시 repository 복원은
+  `111,206`행(`84.6581%`)이고 repository별 license,
+  compiler·optimization metadata가 없다.
+- Decompile-Bench disposition은 `alignment_reference_only`이며
+  `approved_for_training=false`다. 다음 gate는 전체 executable이 아니라
+  Assemblage metadata-only 감사다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.

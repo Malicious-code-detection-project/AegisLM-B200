@@ -2516,3 +2516,35 @@ commit hash를 전달하지 않습니다.
   patch unrelated 1
 - label quality·repository license review·processing·training 승인:
   모두 `false`
+
+### Decompile-Bench Alignment·Provenance 진행표
+
+| 단계 | 상태 | 통과 기준 | 실제 기록 |
+| --- | --- | --- | --- |
+| 고정 shard 획득 | `Pass` | revision·size·SHA-256 고정 | 489,618,088 bytes, `2a68cfda…32b5` |
+| 비실행 inventory | `Pass` | row·schema·중복 기록 | 131,359 rows, exact duplicate 1,298 |
+| 100건 review queue | `Pass` | seed·순서·hash 고정 | seed `20260731`, queue `01f6b95e…c39` |
+| source–assembly 수동 gate | `Pass` | 오류·불확실 ≤ `5/100` | 96 pass, 4 error, unfinished 0 |
+| repository provenance | `Fail` | 승인 행 100% 명시 출처 | 111,206/131,359 (`84.6581%`) |
+| repository별 license | `Blocked` | 행별 검증 가능한 evidence | 공개 row에 없음 |
+| compiler·optimization | `Blocked` | variant 분리 가능 | 공개 row에 없음 |
+| 취약점 label | `N/A` | patch-localized CWE | 공급하지 않음 |
+| processing 승인 | `Pass` | 정적 alignment 참고 가능 | `true` |
+| training 승인 | `Fail` | provenance·license·build metadata PASS | `false` |
+
+수동 오류 4건은 모두 `different_function + semantic_mismatch`입니다.
+정렬 gate 통과를 binary 취약점 학습 승인으로 확대 해석하지 않습니다.
+최종 disposition은 `alignment_reference_only`입니다.
+
+- review decisions SHA-256:
+  `0bf418152ca87cad6fffdc1f2700d67580f96da75b43e23767c9454c79445c16`
+- review result SHA-256:
+  `87104c7b9225820b2f0f935dcdd71ecf6a8cb0ad612908517ef70243c9bc2795`
+- provenance audit SHA-256:
+  `68b4b51d3968a53bd711886e3d75ea02d9de5c8794c6eef733bb5b06c5525c36`
+- 상세 결정:
+  [Decompile-Bench 정렬·출처 gate 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)
+
+다음 실행은 Assemblage metadata-only gate입니다. repository license,
+compiler, optimization, architecture를 먼저 감사하고 전체 PE/ELF corpus나
+실행파일은 이 단계에서 다운로드·실행하지 않습니다.

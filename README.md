@@ -164,6 +164,16 @@ repository license gate는 중단했고 processing·training은 false입니다.
 [`docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md`](docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
 보존합니다.
 
+후속 source–assembly alignment 공급 감사에서는 Decompile-Bench 고정
+shard 100건 중 96건이 같은 함수·의미 정렬을 통과했습니다. 다만 전체
+131,359건 중 명시 repository를 복원할 수 있는 행은
+`111,206`건(`84.6581%`)이고, repository별 license와 compiler·optimization
+metadata가 없습니다. 따라서 `alignment_reference_only`로 보존하고
+`approved_for_training=false`로 판정했습니다. 다음 후보는 전체 실행파일
+corpus가 아니라 Assemblage metadata만 먼저 감사합니다. 상세 근거는
+[`docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md`](docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
+보존합니다.
+
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
 허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
 규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
@@ -310,6 +320,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
 - `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` - ARVO 200건 공개 개발자 패치 수집, 수동 `FAIL EARLY`, 학습 불승인 결정
 - `docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` - CVEfixes archive·SQLite·6,248쌍 공급 PASS 뒤 수동 `11/28 FAIL EARLY`, direct-label 학습 거부
+- `docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md` - Decompile-Bench source–assembly 정렬 96/100 PASS, provenance·compiler metadata 부족으로 reference-only 판정
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽
