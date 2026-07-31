@@ -50,6 +50,26 @@ def test_safe_zip_passes_without_extracting_payloads(tmp_path: Path) -> None:
     assert result["safety"]["member_extraction_count"] == 0
 
 
+def test_safe_zip_accepts_upstream_sha256_without_md5(tmp_path: Path) -> None:
+    archive_path = tmp_path / "dataset.zip"
+    with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("dataset/features.jsonl", b'{"x": 1}\n')
+    expected_sha256 = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+
+    result = inventory_zip_archive(
+        archive_path,
+        expected_bytes=archive_path.stat().st_size,
+        expected_sha256=expected_sha256,
+        max_uncompressed_bytes=1_000,
+    )
+
+    assert result["decision"] == "inventory_pass"
+    assert result["checks"]["upstream_sha256_matches"] is True
+    assert "upstream_md5_matches" not in result["checks"]
+    assert result["archive"]["expected_md5"] is None
+    assert result["archive"]["expected_sha256"] == expected_sha256
+
+
 def test_inventory_rejects_unsafe_paths_encryption_symlinks_and_executables(
     tmp_path: Path,
 ) -> None:

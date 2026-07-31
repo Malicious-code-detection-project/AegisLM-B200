@@ -280,8 +280,9 @@ def inventory_zip_archive(
     archive_path: Path,
     *,
     expected_bytes: int,
-    expected_md5: str,
     max_uncompressed_bytes: int,
+    expected_md5: str | None = None,
+    expected_sha256: str | None = None,
     max_compression_ratio: float = 100.0,
     forbidden_suffixes: Iterable[str] = DEFAULT_FORBIDDEN_SUFFIXES,
 ) -> dict[str, Any]:
@@ -292,7 +293,14 @@ def inventory_zip_archive(
         raise ArchiveInventoryError("max_uncompressed_bytes must be positive")
     if max_compression_ratio < 1:
         raise ArchiveInventoryError("max_compression_ratio must be at least 1")
-    normalized_md5 = _validated_md5(expected_md5)
+    if expected_md5 is None and expected_sha256 is None:
+        raise ArchiveInventoryError(
+            "at least one expected archive checksum is required"
+        )
+    normalized_md5 = _validated_md5(expected_md5) if expected_md5 is not None else None
+    normalized_sha256 = (
+        _validated_sha256(expected_sha256) if expected_sha256 is not None else None
+    )
     suffixes = {
         suffix.lower() if suffix.startswith(".") else f".{suffix.lower()}"
         for suffix in forbidden_suffixes
@@ -358,7 +366,6 @@ def inventory_zip_archive(
     )
     checks = {
         "archive_size_matches": observed_bytes == expected_bytes,
-        "upstream_md5_matches": observed_md5 == normalized_md5,
         "zip_central_directory_readable": not bad_zip,
         "archive_has_members": member_count > 0,
         "unsafe_member_paths_absent": not unsafe_paths,
@@ -370,6 +377,10 @@ def inventory_zip_archive(
         ),
         "compression_ratio_within_limit": compression_ratio <= max_compression_ratio,
     }
+    if normalized_md5 is not None:
+        checks["upstream_md5_matches"] = observed_md5 == normalized_md5
+    if normalized_sha256 is not None:
+        checks["upstream_sha256_matches"] = observed_sha256 == normalized_sha256
     passed = all(checks.values())
     return {
         "schema_version": ARCHIVE_INVENTORY_SCHEMA_VERSION,
@@ -378,6 +389,7 @@ def inventory_zip_archive(
             "expected_bytes": expected_bytes,
             "observed_bytes": observed_bytes,
             "expected_md5": normalized_md5,
+            "expected_sha256": normalized_sha256,
             "observed_md5": observed_md5,
             "observed_sha256": observed_sha256,
         },
@@ -431,6 +443,15 @@ def _validated_md5(value: str) -> str:
         char not in "0123456789abcdef" for char in normalized
     ):
         raise ArchiveInventoryError("expected_md5 must be a 32-character hex digest")
+    return normalized
+
+
+def _validated_sha256(value: str) -> str:
+    normalized = value.removeprefix("sha256:").strip().lower()
+    if len(normalized) != 64 or any(
+        char not in "0123456789abcdef" for char in normalized
+    ):
+        raise ArchiveInventoryError("expected_sha256 must be a 64-character hex digest")
     return normalized
 
 

@@ -174,7 +174,7 @@ metadata benchmark로 나눕니다.
 | [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–assembly representation과 정렬 회귀 | `alignment-reference-only`; 첫 shard 수동 `96/100 PASS`, repository 명시 84.66%, 행별 license·compiler·optimization 부재로 학습 불승인 |
 | [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `metadata-hold`; matrix 문서 PASS, Drive artifact size·checksum·dataset license·row schema 부재, pickle 역직렬화 금지 |
 | [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) | decompilation format와 representation 연구 | `reference` |
-| [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `metadata-evaluation` |
+| [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `independent-benchmark-with-required-dedup`; ELF raw 12,000행 → `(week_id, sha256)` 6,000관측치, SFT false |
 | SOREL-20M full | 대규모 PE feature/disarmed binary | `hold` |
 | BODMAS raw, BIG 2015 | raw malware/old byte·assembly corpus | `hold` |
 
@@ -205,6 +205,15 @@ asset이 없고 실제 binary·pickle은 Google Drive에서만 배포되어
 revision·size·checksum·dataset license·row schema를 고정할 수 없습니다.
 따라서 다운로드하지 않으며 세부 판정은
 [BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)을
+따릅니다.
+
+EMBER2024 ELF test 고정 artifact는 12개 weekly JSONL과 12,000행을
+포함하지만 동일 `(week_id, sha256)` 6,000행이 중복입니다. primary
+malware label과 static feature 충돌은 0건이므로 6,000개 시간 관측치로
+중복 제거한 독립 절대평가는 승인합니다. CAPS/MBC/TTP 차이는 별도 merge
+계약 전까지 사용하지 않고 source/binary SFT에는 혼합하지 않습니다.
+세부 판정은
+[EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)을
 따릅니다.
 
 ARVO의 sanitizer `crash_type`도 CWE gold label로 자동 등치하지 않습니다.
@@ -264,7 +273,10 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 8. [완료/보류] BinKit compiler-robustness metadata gate
    - compile matrix 문서 PASS
    - 고정 dataset artifact·license·schema 부재로 download false
-9. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
+9. [완료/조건부 승인] EMBER2024 static-feature 독립 malware benchmark
+   - archive·schema·feature shape PASS
+   - raw 12,000행 → `(week_id, sha256)` 6,000관측치 필수 중복 제거
+   - SFT·raw executable download false
 
 전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.
 세부 근거는

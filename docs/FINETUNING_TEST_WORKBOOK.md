@@ -2612,3 +2612,39 @@ extracted function feature의 license로 간주하지 않습니다. pickle은
 
 다음 실행은 EMBER2024 metadata/static-feature benchmark gate입니다.
 초기 역할은 SFT가 아니라 독립 malware-feature 절대평가입니다.
+
+### EMBER2024 ELF Static-Feature Benchmark 진행표
+
+| 단계 | 상태 | 통과 기준 | 실제 기록 |
+| --- | --- | --- | --- |
+| fixed artifact | `Pass` | revision·size·SHA-256 | 16,763,975 bytes, `c86fa721…28bfe` |
+| ZIP inventory | `Pass` | JSONL only, unsafe member 0 | 12 members, extraction 0 |
+| schema·feature shape | `Pass` | parse·required key·shape 1.00 | raw 12,000행, invalid 0 |
+| temporal split | `Pass` | member별 단일 week | week 52–63 |
+| primary label | `Pass` | binary·양 클래스 존재 | `0: 6,000`, `1: 6,000` |
+| duplicate audit | `Pass with required dedup` | label·static feature conflict 0 | 12,000 → 6,000 observations |
+| auxiliary labels | `Blocked` | deterministic merge contract | CAPS/MBC/TTP 차이 존재 |
+| benchmark materialization | `Ready` | `(week_id, sha256)` dedup 고정 | approved |
+| SFT / raw executable | `Fail` | 별도 승인 필요 | `false / false` |
+
+운영 규칙:
+
+- 원본 12,000행을 그대로 평가한 결과는 인정하지 않습니다.
+- `(week_id, sha256)`로 6,000관측치를 materialize합니다.
+- 동일 관측치의 primary label 또는 static feature가 충돌하면 중단합니다.
+- 여러 week에 다시 등장한 같은 hash는 temporal observation으로 유지하고
+  hash-level aggregate를 추가 기록합니다.
+- CAPS/MBC/TTP는 merge 계약 전까지 target으로 쓰지 않습니다.
+- 이 결과는 source CWE adapter 절대평가와 합산하지 않습니다.
+
+Evidence:
+
+- archive inventory SHA-256:
+  `99ca5beccd2e5bcab32b3714cb635bc6b528faa458500190adc995d66ce96e9c`
+- benchmark audit SHA-256:
+  `f37ae45b619ad2274827ebba2d37c9a06f8448406b4dc9e4c6cba639ca618a8e`
+- 상세 결정:
+  [EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)
+
+다음 실행은 deduplicated 6,000관측치 materializer와 별도 malware
+classifier absolute gate입니다. Qwen SFT는 이 benchmark와 분리합니다.

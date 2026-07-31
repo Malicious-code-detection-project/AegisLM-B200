@@ -394,6 +394,13 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
   외부 Drive artifact의 size·SHA-256·dataset license·row schema 부재로
   `metadata_hold`다.
 - BinKit binary와 pickle은 받지 않으며 pickle을 역직렬화하지 않는다.
-- 다음 gate는 EMBER2024 metadata/static-feature benchmark 계약 감사다.
+- EMBER2024 ELF test는 archive·schema·static-feature gate를 통과했지만
+  원본 12,000행의 동일 `(week_id, sha256)` 중복을 제거한 6,000관측치만
+  독립 malware benchmark로 허용한다.
+- EMBER2024의 primary label과 static feature 충돌은 0건이다. 서로 다른
+  CAPS/MBC/TTP annotation은 별도 merge 계약 전까지 사용하지 않는다.
+- EMBER2024는 SFT에 혼합하지 않고 raw executable도 받지 않는다.
+- 다음 실행은 deduplicated 6,000관측치 materializer와 독립 classifier
+  절대평가 계약이다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.

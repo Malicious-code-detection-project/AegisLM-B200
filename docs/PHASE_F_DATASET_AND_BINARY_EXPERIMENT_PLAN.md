@@ -2074,3 +2074,34 @@ toolchain, 함수 pickle은 받지 않았습니다.
 malware benchmark 후보로 감사합니다. 상세 결정은
 [BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)에
 보존합니다.
+
+### EMBER2024 ELF static-feature 실제 결과 — 2026-07-31
+
+고정 Hugging Face revision의 `ELF_test.zip`만 받았고 executable payload는
+받거나 실행하지 않았습니다.
+
+| Gate | 결과 | 판정 |
+| --- | --- | --- |
+| artifact size·SHA-256 | `16,763,975` bytes, exact match | PASS |
+| ZIP safety inventory | 12 JSONL, unsafe·encrypted·executable 0 | PASS |
+| raw rows | `12,000` | 확인 |
+| primary label | benign `6,000`, malware `6,000` | PASS |
+| week split | week 52–63, member별 단일 week | PASS |
+| schema·feature shape | invalid 0 | PASS |
+| 동일 week·SHA 중복 | `6,000` rows | 필수 dedup |
+| post-dedup observation | `6,000` | PASS |
+| primary label·static feature conflict | `0 / 0` | PASS |
+| CAPS/MBC/TTP 차이 | `1,263 / 1,235 / 1,111` observations | merge 전 사용 금지 |
+| SFT / raw binary 승인 | `false / false` | 분리 유지 |
+
+- archive inventory SHA-256:
+  `99ca5beccd2e5bcab32b3714cb635bc6b528faa458500190adc995d66ce96e9c`
+- benchmark audit SHA-256:
+  `f37ae45b619ad2274827ebba2d37c9a06f8448406b4dc9e4c6cba639ca618a8e`
+- final disposition: `independent_benchmark_with_required_dedup`
+
+다음 실행은 `(week_id, sha256)` 중복 제거 materializer와 별도 malware
+classifier 절대평가 계약입니다. source CWE adapter 점수와 합치지 않으며
+Qwen SFT 데이터에도 혼합하지 않습니다. 상세 결정은
+[EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)에
+보존합니다.

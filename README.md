@@ -193,6 +193,16 @@ Google Drive 링크입니다. code MIT license를 compiled package dataset에
 [`docs/PHASE_F_BINKIT_METADATA_DECISION_20260731.md`](docs/PHASE_F_BINKIT_METADATA_DECISION_20260731.md)에
 보존합니다.
 
+EMBER2024 ELF test artifact는 archive·schema·feature-shape gate를
+통과했습니다. 원본 12,000행에는 동일 `(week_id, sha256)` 중복 6,000행이
+있어 6,000개 관측치로 필수 중복 제거합니다. primary label과 static
+feature 충돌은 0건이지만 CAPS/MBC/TTP 보조 annotation은 일부 중복 행에서
+다르므로 별도 merge 계약 전에는 사용하지 않습니다. 이 데이터는
+`independent_benchmark_with_required_dedup`이며 SFT와 raw binary download는
+승인하지 않습니다. 상세 근거는
+[`docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md`](docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)에
+보존합니다.
+
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
 허용했습니다. eligible 공급은 `1,301/2,924` pair로 줄었고 검토 가능한
 규모는 확보했지만, 새 100건에서 CWE-124/127/457/690 extractor 오류 6건으로
@@ -342,6 +352,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md` - Decompile-Bench source–assembly 정렬 96/100 PASS, provenance·compiler metadata 부족으로 reference-only 판정
 - `docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md` - Assemblage artifact·schema PASS 뒤 strict metadata 교집합 0건으로 raw ELF·학습 불승인
 - `docs/PHASE_F_BINKIT_METADATA_DECISION_20260731.md` - BinKit compile matrix 확인 뒤 고정 artifact·license·schema 부재로 binary·pickle 다운로드 보류
+- `docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md` - EMBER2024 ELF 12,000행을 6,000관측치로 필수 중복 제거한 독립 static-feature benchmark 승인
 - `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
 - `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
 - `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽

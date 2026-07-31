@@ -16,6 +16,7 @@
 - [PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md) - Decompile-Bench 100-pair alignment `96/100 PASS`, partial repository provenance, and training hold.
 - [PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md) - Assemblage artifact/schema PASS and strict metadata intersection `0`, with raw ELF and training rejected.
 - [PHASE_F_BINKIT_METADATA_DECISION_20260731.md](PHASE_F_BINKIT_METADATA_DECISION_20260731.md) - BinKit matrix documentation PASS and external dataset artifact/license/schema hold.
+- [PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md) - EMBER2024 ELF archive/schema PASS and required 12,000-to-6,000 observation deduplication contract.
 - [SOURCE_MANUAL_REVIEW_RUBRIC.md](SOURCE_MANUAL_REVIEW_RUBRIC.md) - Source label, execution path, exact span, and causal-evidence review rubric.
 
 이 디렉터리는 `AegisLM`의 세부 기준과 실험 문서를 관리합니다.
@@ -39,6 +40,7 @@
 | [PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md) | Decompile-Bench 정렬 `96/100 PASS`, repository provenance 84.66%, compiler·license metadata 부족으로 학습 보류 |
 | [PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md) | Assemblage artifact·schema PASS 뒤 strict complete row 0으로 raw ELF·학습 불승인 |
 | [PHASE_F_BINKIT_METADATA_DECISION_20260731.md](PHASE_F_BINKIT_METADATA_DECISION_20260731.md) | BinKit matrix 확인 뒤 고정 dataset artifact·license·schema 부재로 binary·pickle 다운로드 보류 |
+| [PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md) | EMBER2024 ELF 12,000행의 중복을 제거한 6,000관측치 독립 static-feature benchmark 승인 |
 | [SOURCE_MANUAL_REVIEW_RUBRIC.md](SOURCE_MANUAL_REVIEW_RUBRIC.md) | Source target의 label·실행 경로·exact span·인과관계 수동 검토 기준 |
 | [EXPERIMENT_LOG_TEMPLATE.md](EXPERIMENT_LOG_TEMPLATE.md) | baseline/adapter 평가 결과를 같은 형식으로 기록하기 위한 템플릿 |
 | [PHASE_D_EXIT_CRITERIA.md](PHASE_D_EXIT_CRITERIA.md) | Phase D 완료 조건과 Phase E tiny SFT PoC 착수 gate |
