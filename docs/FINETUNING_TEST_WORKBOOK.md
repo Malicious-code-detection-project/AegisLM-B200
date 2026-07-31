@@ -2585,3 +2585,30 @@ raw ELF archive를 받아도 현재 metadata 계약 실패는 해결되지 않�
 다음 실행은 BinKit 2.0 metadata-only gate입니다. compiler,
 architecture, optimization과 sample identity를 먼저 감사하며 binary
 package는 metadata gate 전까지 다운로드하지 않습니다.
+
+### BinKit 2.0 Metadata 진행표
+
+| 단계 | 상태 | 통과 기준 | 실제 기록 |
+| --- | --- | --- | --- |
+| code release | `Pass` | immutable tag·commit·license | v2.0.0, `82bc979…eb8`, MIT |
+| compile matrix | `Pass` | arch·compiler·optimization 명시 | 8 / 23 / 6 |
+| documented binaries | `Pass` | 수량과 예외 기록 | 371,928, GSL 누락 8 |
+| GitHub dataset asset | `Fail` | release-bound artifact | asset 0 |
+| external artifact | `Fail` | revision·size·SHA-256 | Google Drive 링크만 존재 |
+| dataset license | `Fail` | compiled payload 조건 명시 | 확인 불가 |
+| row/function schema | `Fail` | sample·source-package identity | 확인 불가 |
+| pickle load | `Blocked` | 안전한 비실행 변환 | 다운로드·역직렬화 0 |
+| binary download | `Blocked` | metadata gate PASS | 0 |
+| training 승인 | `Fail` | provenance·license·schema PASS | `false` |
+
+repository MIT license는 build script에만 적용하며 compiled GNU package와
+extracted function feature의 license로 간주하지 않습니다. pickle은
+신뢰 전 로드하지 않습니다.
+
+- metadata preflight SHA-256:
+  `285c0e514b2c958620f7b060d5b0e3817df9423133e0a7f4acd7a99974c76530`
+- 상세 결정:
+  [BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)
+
+다음 실행은 EMBER2024 metadata/static-feature benchmark gate입니다.
+초기 역할은 SFT가 아니라 독립 malware-feature 절대평가입니다.

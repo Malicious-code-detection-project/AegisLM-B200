@@ -390,7 +390,10 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
 - build trace가 있는 63,031행과 architecture가 있는 113,329행의 strict
   교집합은 0건이다. `metadata_reference_only`로 보존하며 raw ELF
   다운로드와 training은 false다.
-- 다음 gate는 BinKit metadata-only compiler·architecture·optimization
-  계약 감사다.
+- BinKit 2.0 compile matrix는 확인했지만 GitHub release asset 0개,
+  외부 Drive artifact의 size·SHA-256·dataset license·row schema 부재로
+  `metadata_hold`다.
+- BinKit binary와 pickle은 받지 않으며 pickle을 역직렬화하지 않는다.
+- 다음 gate는 EMBER2024 metadata/static-feature benchmark 계약 감사다.
 - PoC, crash output, reproducer command를 읽거나 Docker image·object를
   실행하지 않는다.

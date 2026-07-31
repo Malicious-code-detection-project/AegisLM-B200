@@ -172,7 +172,7 @@ metadata benchmark로 나눕니다.
 | [ARVO v3](https://github.com/n132/ARVO-Meta/releases/tag/v3.0.0) | 재현 가능한 C/C++ vulnerable/fixed patch와 buffer extractor 복구 | `manual-gate-failed`; 200건 중 오류 11건으로 `FAIL EARLY`, crash family→CWE 변환·학습 금지 |
 | [Assemblage](https://assemblage-dataset.net/) | source-built PE/ELF와 compiler variant | `metadata-reference-only`; artifact·schema PASS, strict complete row 0으로 raw ELF·학습 불승인 |
 | [Decompile-Bench](https://arxiv.org/abs/2505.12668) | source–assembly representation과 정렬 회귀 | `alignment-reference-only`; 첫 shard 수동 `96/100 PASS`, repository 명시 84.66%, 행별 license·compiler·optimization 부재로 학습 불승인 |
-| [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `benchmark-candidate` |
+| [BinKit 2.0](https://github.com/SoftSec-KAIST/BinKit) | architecture/compiler/optimization robustness | `metadata-hold`; matrix 문서 PASS, Drive artifact size·checksum·dataset license·row schema 부재, pickle 역직렬화 금지 |
 | [LLM4Decompile](https://github.com/albertan017/LLM4Decompile) | decompilation format와 representation 연구 | `reference` |
 | [EMBER2024](https://github.com/FutureComputing4AI/EMBER2024) | malware static-feature absolute benchmark | `metadata-evaluation` |
 | SOREL-20M full | 대규모 PE feature/disarmed binary | `hold` |
@@ -197,6 +197,14 @@ commit·build mode는 약 31.15%입니다. build trace cohort와 architecture
 cohort의 strict 교집합이 0건이므로 raw ELF를 받지 않고
 `metadata_reference_only`로 종료합니다. 세부 판정은
 [Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)을
+따릅니다.
+
+BinKit 2.0은 371,928 binaries와 8 architectures·23 compilers·6
+optimization levels를 문서화합니다. 그러나 v2.0.0 release에 dataset
+asset이 없고 실제 binary·pickle은 Google Drive에서만 배포되어
+revision·size·checksum·dataset license·row schema를 고정할 수 없습니다.
+따라서 다운로드하지 않으며 세부 판정은
+[BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)을
 따릅니다.
 
 ARVO의 sanitizer `crash_type`도 CWE gold label로 자동 등치하지 않습니다.
@@ -253,7 +261,9 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 7. [완료/실패] Assemblage metadata gate
    - artifact·zstd·schema PASS
    - strict complete row 0, raw ELF·training false
-8. BinKit compiler-robustness metadata와 subset
+8. [완료/보류] BinKit compiler-robustness metadata gate
+   - compile matrix 문서 PASS
+   - 고정 dataset artifact·license·schema 부재로 download false
 9. EMBER2024 static-feature subset을 별도 malware benchmark로 확보
 
 전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.

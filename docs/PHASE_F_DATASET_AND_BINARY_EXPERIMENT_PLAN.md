@@ -2049,3 +2049,28 @@ dataset-level 설명이나 다른 행의 값을 이용해 결손 metadata를 추
 같은 sample identity에 연결할 수 있는지 확인하는 것입니다. 상세 결정은
 [Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)에
 보존합니다.
+
+### BinKit 2.0 metadata 실제 결과 — 2026-07-31
+
+공식 v2.0.0 README와 release metadata만 감사했습니다. binary dataset,
+toolchain, 함수 pickle은 받지 않았습니다.
+
+| Gate | 결과 | 판정 |
+| --- | --- | --- |
+| immutable code release | commit `82bc979…eb8`, MIT | `Pass` |
+| compile matrix | 8 arch·23 compiler·6 optimization·371,928 binaries | `Pass` |
+| GitHub dataset release asset | 0 | `Fail` |
+| external artifact revision·size·checksum | Google Drive, 모두 없음 | `Fail` |
+| dataset license | 확인 불가 | `Fail` |
+| row/function schema | 확인 불가 | `Fail` |
+| pickle safety | 신뢰 전 역직렬화 금지 | `Blocked` |
+
+- metadata preflight SHA-256:
+  `285c0e514b2c958620f7b060d5b0e3817df9423133e0a7f4acd7a99974c76530`
+- final disposition: `metadata_hold`
+- download / processing / training: `false / false / false`
+
+다음 gate는 EMBER2024 static-feature metadata를 SFT 공급이 아닌 독립
+malware benchmark 후보로 감사합니다. 상세 결정은
+[BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)에
+보존합니다.
