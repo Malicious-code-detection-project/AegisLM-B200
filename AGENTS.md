@@ -22,7 +22,7 @@ Project NuriLab과 협업 방식과 보안 철학은 공유하지만, 이 저장
 | label-blind 코드 challenge와 절대평가 gate | `docs/evaluation/ABSOLUTE_EVALUATION.md` |
 | B200 수동 파인튜닝 검증 실행·기록 워크북 | `docs/operations/b200/FINETUNING_TEST_WORKBOOK.md` |
 | Phase F 데이터 재설계·binary-derived 실험 정본 | `docs/experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` |
-| Sol·Terra·implementation agent 역할과 수동 orchestration 규칙 | `docs/governance/AGENT_WORKFLOW.md` |
+| 역할 기반 custom agent와 orchestration 규칙 | `docs/governance/AGENT_WORKFLOW.md` |
 | 현재 Phase F 브랜치 20개 커밋의 한국어 리뷰 지도 | `review/guides/COMMIT_REVIEW_GUIDE_KO.md` |
 | 커밋·영역·파일별 상세 코드 리뷰와 발견 사항 | `review/README.md` |
 | 로컬 LLM과 analyzer MCP의 미확정 책임 경계 아이디어 | `docs/design/architecture/LOCAL_LLM_MCP_BOUNDARY_IDEA.md` |
@@ -180,70 +180,23 @@ Phase F의 우선순위는 다음과 같다.
 
 ---
 
-## 3.1 다중 모델 직접 배정과 수동 orchestration
+## 3.1 역할 기반 custom-agent 운영
 
-사용자가 여러 모델에 작업을 직접 지시할 때 사용자가 Owner이자
-orchestrator이고, 메인 에이전트는 사용자가 승인할 Work Order를 작성하고
-판정을 종합한다. 요구사항과 gate의 설계 권한을 검토 에이전트에 넘기지
-않는다.
+사용자는 목적·불변 조건·allowlist와 설치·다운로드·GPU·Git 권한을 승인한다.
+`sol_main`만 동결된 Work Order에서 worker를 배정하고 최종 `PASS` 또는 `BLOCK`을
+판정한다. 요구사항·gate 설계 권한은 worker에게 넘기지 않는다.
 
-**서브에이전트와 재위임은 금지다.** 사용자가 Terra에게 배정한 작업은
-Terra가 직접 수행하고, Luna에게 배정한 구현은 Luna가 직접 수행하며, Sol에게
-배정한 검토는 Sol이 직접 수행한다. 어떤 에이전트도 `spawn_agent`, 자동
-handoff, 하위 작업자 생성 또는 다른 모델로의 재위임을 사용하지 않는다.
-개별 Work Order는 이 금지를 해제할 수 없다. 향후 서브에이전트를 도입하려면
-사용자가 이 운영 규칙 자체의 개정을 별도로 명시하고 승인해야 한다. 일반적인
-작업 승인, 파일 범위 승인이나 모델 선택은 재위임 승인으로 해석하지 않는다.
+- `sol_main`의 배정은 depth 1, 최대 2명으로 제한한다.
+- planner, implementer, mechanical-worker, security-reviewer는 재위임·자동 handoff·하위 worker 생성을 하지 않는다.
+- 같은 파일을 병렬 수정하지 않는다. 동일 `head_sha`와 동일 `worktree_diff_sha256`에 완전한 evidence가 있으면 같은 gate를 반복하지 않으며, 재검증은 `head_changed`, `worktree_changed`, `evidence_missing`, `evidence_conflict`일 때만 한다.
+- worker evidence에는 항상 `delegation_used: false`, `delegated_to: []`를 기록한다. `sol_main`은 worker를 배정했을 때만 실제 대상과 함께 `delegation_used: true`를 기록한다.
+- 설치, dependency 변경, 모델·데이터 다운로드, GPU·외부 서비스 실행, Git stage/commit/push는 별도 사용자 승인 없이는 금지한다.
+- TOML의 sandbox는 기본값이며 live permission·approval override 또는 `--yolo`보다 우선하지 않는다. `sol_main`은 dispatch 전에 effective permission과 sandbox를 확인한다.
+- planner 또는 security-reviewer가 write-capable override나 `--yolo` 환경이면 read-only로 바꾼 뒤 dispatch하거나 `BLOCK`한다.
+- workspace-write allowlist는 filesystem enforcement가 아닌 운영 계약이다. `sol_main`은 최종 changed path를 allowlist와 대조하고, 기존 dirty 변경은 baseline 기록으로 보존한다.
 
-| 역할 | 책임 | 변경 권한 |
-| --- | --- | --- |
-| 사용자 / Owner | 목적·불변 조건·PASS/BLOCK gate 동결, 파일·설치·GPU·Git 승인 | 최종 결정권 |
-| 메인 에이전트 | Work Order 작성, 증거 종합, 다음 gate와 최종 판정 보고 | 사용자가 승인한 범위만 |
-| Sol reviewer | 요구사항·안전성·고위험 결과의 독립 검토 | 읽기 전용 |
-| Terra planner | 저장소 조사와 파일 단위 변경·테스트 계획 | 읽기 전용 |
-| implementation agent | 승인된 파일만 구현하고 테스트 증거 제출 | 승인된 파일만 |
-| Terra reviewer | 사용자가 직접 연 별도 Terra 작업에서 diff·테스트·범위 회귀 검토 | 읽기 전용 |
-
-`implementation agent`는 사용자가 직접 선택해 연 모델 작업에 부여하는
-역할명이다. Luna를 선택하면 Luna가 직접 구현하고, Terra를 선택하면 Terra가
-직접 구현한다. 배정받은 모델이 다른 에이전트에게 구현을 넘겨서는 안 된다.
-같은 대화나 작업이 구현과 독립 검토를 동시에 맡아서는 안 된다.
-
-기본 순서는 다음과 같다.
-
-```text
-메인 Work Order 동결
--> 사용자가 직접 연 Sol 작업의 요구사항·안전성 독립 검토
--> 사용자가 직접 연 Terra 작업의 읽기 전용 파일 계획
--> 사용자 파일 범위 승인
--> 사용자가 직접 지정한 implementation agent의 순차 구현·테스트
--> 사용자가 직접 연 별도 Terra 작업의 diff·증거 검토
--> 고위험 변경이면 사용자가 직접 연 별도 Sol 작업의 최종 검토
--> 메인 판정과 사용자 보고
-```
-
-운영 규칙:
-
-- 구현과 검토는 순차 실행하고 같은 파일을 여러 에이전트가 병렬 수정하지 않는다.
-- 배정받은 에이전트는 작업을 직접 수행하며 서브에이전트 생성, 자동 handoff,
-  재위임과 대리 수행을 하지 않는다.
-- 다른 모델의 검토나 구현이 필요하면 현재 작업을 `BLOCK`하고 사용자가 직접
-  새 작업을 열어 배정하도록 요청한다.
-- 검토자는 요구사항이나 gate를 수정하지 않고 `PASS`,
-  `REQUEST_CHANGES`, `BLOCK` 중 하나만 판정한다.
-- 동결된 gate를 바꿔야 하면 현재 작업을 `BLOCK`하고 새 Work Order 버전과
-  사용자 재승인을 요구한다.
-- 승인 파일 밖의 변경이 필요하면 implementation agent는 작업을 중단한다.
-- 의존성 설치, 모델·데이터 다운로드, GPU 실행, Git stage/commit/push는
-  각각 별도 사용자 승인 없이는 수행하지 않는다.
-- 모델 revision, 데이터·평가 artifact hash, schema, 학습 금지 범위와 과거
-  실험 보존 조건은 Work Order의 불변값으로 기록한다.
-- `PASS` 증거에는 실행 명령, 종료 코드, 핵심 출력, 변경 파일, 실패·skip·
-  미실행 항목, 알려진 제한과 `delegation_used: false`를 포함한다.
-
-상세 역할 지시문, Work Order, 구현 증거와 검토 양식은
-`docs/governance/AGENT_WORKFLOW.md`를 따른다. 특정 모델·데이터·gate 값은 이 문서에
-고정하지 않고 작업별 Work Order와 `review/workflows/<task>/`에 기록한다.
+실행 가능한 역할 설정은 [`.codex/agents/`](.codex/agents/)에, Work Order·증거·판정의 정본은
+[`docs/governance/AGENT_WORKFLOW.md`](docs/governance/AGENT_WORKFLOW.md)에 둔다. 특정 모델·데이터·실험 gate는 이 정책이 아니라 개별 Work Order에 기록한다.
 
 ---
 
@@ -391,7 +344,7 @@ PR 본문은 `docs/templates/PR_DESCRIPTION_TEMPLATE.md`를 기준으로 작성�
 - `docs/evaluation/SOURCE_MANUAL_REVIEW_RUBRIC.md`는 source target의 label·경로·exact span·인과관계 수동 판정 기준의 정본이다.
 - `docs/evaluation/PHASE_D_EXIT_CRITERIA.md`는 Phase D 완료 조건과 Phase E 착수 gate의 정본이다.
 - `docs/experiments/plans/FINETUNING_EXPERIMENT_PLAN.md`는 학습 로드맵, 실험 전략, dataset/evaluation 기준의 정본이다.
-- `docs/governance/AGENT_WORKFLOW.md`는 모델별 역할, 권한, 수동 orchestration, Work Order와 증거 형식의 정본이다.
+- `docs/governance/AGENT_WORKFLOW.md`는 역할 기반 custom agent의 권한, orchestration, Work Order와 증거 형식의 정본이다.
 - `docs/templates/PR_DESCRIPTION_TEMPLATE.md`는 PR 본문 작성 형식과 체크리스트의 정본이다.
 - `docs/evaluation/TEST_CRITERIA.md`는 Phase C 테스트 기준과 평가 레퍼런스의 정본이다.
 - `AGENTS.md`는 작업 규칙과 에이전트 행동 기준의 정본이다.

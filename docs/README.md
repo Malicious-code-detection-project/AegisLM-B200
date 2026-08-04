@@ -50,7 +50,7 @@
 - [ABSOLUTE_EVALUATION.md](evaluation/ABSOLUTE_EVALUATION.md) - Label-blind challenge, serving, and absolute pass/fail gates.
 - [FINETUNING_TEST_WORKBOOK.md](operations/b200/FINETUNING_TEST_WORKBOOK.md) - Manual B200 test progress, copyable commands, evidence, and decision workbook.
 - [PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md) - Phase F F0–F9 data audit, Qwen retraining, source/binary gates, and NuriLab handoff.
-- [AGENT_WORKFLOW.md](governance/AGENT_WORKFLOW.md) - Sol·Terra·implementation agent 역할, 승인 경계, Work Order와 검토 증거 형식.
+- [AGENT_WORKFLOW.md](governance/AGENT_WORKFLOW.md) - 역할 기반 custom agent, 승인 경계, Work Order와 검토 증거 형식.
 - [COMMIT_REVIEW_GUIDE_KO.md](../review/guides/COMMIT_REVIEW_GUIDE_KO.md) - 현재 Phase F 브랜치 20개 커밋의 목적, 결과, 읽기 순서, 유지 판정을 설명하는 한국어 리뷰 안내서.
 - [코드 리뷰 기록](../review/README.md) - 커밋·영역·파일별 상세 리뷰, 발견 사항, 수정 상태 기록.
 - [LOCAL_LLM_MCP_BOUNDARY_IDEA.md](design/architecture/LOCAL_LLM_MCP_BOUNDARY_IDEA.md) - 기존 analyzer MCP가 절대 gate를 통과할 때 fine-tuning을 생략할 수 있는지 검증하는 미확정 architecture 아이디어.
@@ -79,7 +79,7 @@
 | [EVALUATION_PLAN.md](evaluation/EVALUATION_PLAN.md) | Phase D/E 평가 계획, 점수화 기준, JSON/HTML 리포트 형식 |
 | [FINETUNING_TEST_WORKBOOK.md](operations/b200/FINETUNING_TEST_WORKBOOK.md) | B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록란, NuriLab 연결 가설, 120B 후보 |
 | [PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md) | Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary 절대 gate와 실행 순서 |
-| [AGENT_WORKFLOW.md](governance/AGENT_WORKFLOW.md) | 사용자·메인·Sol·Terra·implementation agent의 역할, 권한, 승인과 증거 제출 규칙 |
+| [AGENT_WORKFLOW.md](governance/AGENT_WORKFLOW.md) | 사용자·sol_main·역할 기반 custom agent의 권한, 승인과 증거 제출 규칙 |
 | [COMMIT_REVIEW_GUIDE_KO.md](../review/guides/COMMIT_REVIEW_GUIDE_KO.md) | Phase F 브랜치 20개 커밋의 시간순 목적, 실제 결과, 핵심 파일, 현재 유지 판정을 설명하는 한국어 리뷰 지도 |
 | [코드 리뷰 기록](../review/README.md) | 커밋·영역·파일 단위 상세 코드 리뷰와 데이터 품질·운영·구조별 발견 사항 추적 |
 | [LOCAL_LLM_MCP_BOUNDARY_IDEA.md](design/architecture/LOCAL_LLM_MCP_BOUNDARY_IDEA.md) | Base local LLM+analyzer MCP 우선 검증, AegisLM/NuriLab 책임 경계와 보안 조건을 기록한 미확정 아이디어 |

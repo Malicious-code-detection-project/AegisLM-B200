@@ -366,7 +366,7 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `docs/evaluation/ABSOLUTE_EVALUATION.md` - label-blind 코드 challenge, adapter 서빙, 절대평가 gate
 - `docs/operations/b200/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
 - `docs/experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
-- `docs/governance/AGENT_WORKFLOW.md` - Sol·Terra·implementation agent의 권한, 수동 orchestration, Work Order와 증거 제출 규칙
+- `docs/governance/AGENT_WORKFLOW.md` - 역할 기반 custom agent의 권한, orchestration, Work Order와 증거 제출 규칙
 - `review/guides/COMMIT_REVIEW_GUIDE_KO.md` - 현재 Phase F 브랜치 20개 커밋의 목적, 결과, 읽기 순서와 유지·보류 판정을 설명하는 한국어 리뷰 안내서
 - `review/README.md` - 커밋·영역·파일별 상세 코드 리뷰와 수정 후보 기록
 - `docs/design/architecture/LOCAL_LLM_MCP_BOUNDARY_IDEA.md` - Base local LLM+기존 analyzer MCP가 절대 gate를 통과하면 해당 fine-tuning을 생략할 수 있다는 미확정 architecture 가설
