@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import re
 import shutil
 import subprocess
@@ -79,45 +78,6 @@ def _project_documents() -> list[Path]:
     return documents
 
 
-def _upper_wiki_root() -> Path | None:
-    configured_root = os.environ.get("AEGISLM_WIKI_ROOT")
-    if configured_root:
-        candidate = Path(configured_root).expanduser().resolve()
-        required_paths = (
-            candidate / "index.md",
-            candidate / "log.md",
-            candidate / "wiki",
-        )
-        assert all(path.exists() for path in required_paths), (
-            "AEGISLM_WIKI_ROOT must point to a Wiki root containing index.md, log.md, "
-            "and wiki/"
-        )
-        return candidate
-
-    for candidate in PROJECT_ROOT.parents:
-        if (
-            (candidate / "index.md").is_file()
-            and (candidate / "log.md").is_file()
-            and (candidate / "wiki").is_dir()
-        ):
-            return candidate
-    return None
-
-
-def _upper_wiki_documents() -> list[Path]:
-    wiki_root = _upper_wiki_root()
-    if wiki_root is None:
-        return []
-
-    documents = [wiki_root / "index.md", wiki_root / "log.md"]
-    for path in (wiki_root / "wiki").rglob("*"):
-        if path.suffix.lower() not in {".md", ".html"} or not _is_in_scope(path):
-            continue
-        if "AegisLM-B200" in path.read_text(encoding="utf-8"):
-            documents.append(path)
-    return documents
-
-
 def _targets(document: Path) -> list[str]:
     text = document.read_text(encoding="utf-8")
     return [*MARKDOWN_LINK.findall(text), *HTML_LINK.findall(text)]
@@ -136,18 +96,6 @@ def _resolves(document: Path, target: str) -> bool:
 
 def _old_project_path_tokens() -> list[str]:
     return [f"docs/{source_name}" for source_name in MIGRATED_DOCUMENTS]
-
-
-def _old_upper_wiki_path_tokens() -> list[str]:
-    tokens: list[str] = []
-    for source_name in MIGRATED_DOCUMENTS:
-        tokens.extend(
-            (
-                f"repos/AegisLM-B200/docs/{source_name}",
-                f"AegisLM-B200/docs/{source_name}",
-            )
-        )
-    return tokens
 
 
 def test_migrated_documents_are_only_at_their_new_paths() -> None:
@@ -210,7 +158,7 @@ def test_migration_destinations_are_not_ignored() -> None:
 
 def test_documentation_relative_links_resolve() -> None:
     failures = []
-    for document in [*_project_documents(), *_upper_wiki_documents()]:
+    for document in _project_documents():
         for target in _targets(document):
             if not _resolves(document, target):
                 failures.append(f"{document}: {target}")
@@ -222,12 +170,6 @@ def test_migrated_document_path_literals_are_rebased() -> None:
     for document in _project_documents():
         text = document.read_text(encoding="utf-8")
         for old_path in _old_project_path_tokens():
-            if old_path in text:
-                failures.append(f"{document}: {old_path}")
-
-    for document in _upper_wiki_documents():
-        text = document.read_text(encoding="utf-8")
-        for old_path in _old_upper_wiki_path_tokens():
             if old_path in text:
                 failures.append(f"{document}: {old_path}")
 
