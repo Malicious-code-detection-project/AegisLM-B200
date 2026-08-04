@@ -90,8 +90,8 @@ strict v3는 문제를 CWE-124, CWE-127, CWE-457, CWE-690 extractor로
 extractor도 새 표본으로 다시 검증하기 전에는 학습 승인을 받지 않습니다.
 
 관련 기준은
-[Phase F 계획](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)과
-[수동 검증 워크북](FINETUNING_TEST_WORKBOOK.md)을 따릅니다.
+[Phase F 계획](../../plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)과
+[수동 검증 워크북](../../../operations/b200/FINETUNING_TEST_WORKBOOK.md)을 따릅니다.
 
 ## Strict Supply v4–v7 Result
 

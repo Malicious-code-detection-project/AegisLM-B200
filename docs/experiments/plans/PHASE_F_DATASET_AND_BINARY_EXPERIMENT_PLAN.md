@@ -2,7 +2,7 @@
 
 이 문서는 Phase F의 단일 기준 문서(SSOT)입니다. 단계별 실제 명령,
 운영자 기록과 판정은
-[FINETUNING_TEST_WORKBOOK.md](FINETUNING_TEST_WORKBOOK.md)에 남깁니다.
+[FINETUNING_TEST_WORKBOOK.md](../../operations/b200/FINETUNING_TEST_WORKBOOK.md)에 남깁니다.
 
 Phase F는 “데이터 수정 후 재학습”을 한 단계로 처리하지 않습니다.
 실패 원인을 재학습 전에 차단하도록 F0~F9로 나눕니다.
@@ -33,6 +33,7 @@ flowchart LR
 | F3 | `Complete` | `phase-f-source-v3` 전체 gate·결정적 재빌드 hash 통과, 학습 승인 |
 | F4 | `Complete — smoke FAIL` | base·legacy 모두 source-v2 schema `0/20`; oracle `20/20` PASS |
 | F5 | `Complete — lifecycle PASS with constrained decoding` | 두 BF16 merge·vLLM TP2 완료; guided JSON Schema와 semantic validator에서 전체 gate PASS |
+| F5-X | `Ready — preflight only` | Mistral Small 4 119B A6B decision-only Axolotl QLoRA 1/10/100-step; evidence·full run 미승인 |
 | F6-A | `Complete` | 후보·license·local source·toolchain inventory 동결 |
 | F6-B | `Complete — strict re-audit 99/145` | 최초 100 pair 중 CWE-563 1 pair 추가 격리; 부족분은 F7에서 대체 |
 | F7 | `Running — target v1–v5·v7·v9 manual FAIL; contract redesign` | v7·v9 자동 PASS 뒤 수동 6-error FAIL; v8 공급 2,326/2,450; frozen queue 소진 |
@@ -54,7 +55,8 @@ contract로 교체하고 새 고정 100건 수동 검토를 통과하는 것입�
 relation을 검증하며, v1 target artifact를 변경하지 않습니다. 남은 순서는
 v2 target builder, tokenizer/supply gate, model-ready materialization,
 고정 100건 수동 review입니다.
-NuriLab·RAG/MCP와 GPT-OSS는 기존 순서대로 뒤에 둡니다.
+NuriLab·RAG/MCP는 기존 순서대로 뒤에 둡니다. 교차 모델 검증은 Qwen
+source 결론이 이미 확정됐으므로 F5-X에서 별도로 수행합니다.
 
 ## 최종 연구 질문
 
@@ -273,7 +275,7 @@ paired 파일에서 provenance가 서로 다른 예외 1쌍은 자동 quarantine
 - model-visible 입력 검사: `11,900`, 누출·language control key `0`
 - 동일 raw·config·seed 재생성 artifact 19개 SHA-256 불일치: `0`
 - artifact root:
-  `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v2-r2`
+  `<REDACTED_SERVER_PATH>/Data/processed/phase-f-source-v2-r2`
 - `SHA256SUMS` hash:
   `b17fa32296042ebc9377dcef8915aeabaac895d9ed682cef096fa08328de87e6`
 
@@ -518,7 +520,7 @@ record가 부족하면 실제 수량을 줄여 동결합니다.
 | 최종 판정 | `PASS`; `approved_for_training=true` |
 
 절대경로는
-`/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v3`
+`<REDACTED_SERVER_PATH>/Data/processed/phase-f-source-v3`
 입니다. `challenge.jsonl`만 inference에 전달하며 `gold.jsonl`은 평가
 프로세스까지 분리합니다.
 
@@ -579,9 +581,10 @@ PASS했습니다. 따라서 challenge·canonical record·source evaluator 경로
 
 ## F5 — Qwen3-Coder-Next 80B 신규 LoRA 학습
 
-상태: `Q1R1 Complete — diagnostic FAIL / training-budget diagnosis required`
+상태: `Complete — F5-M1 lifecycle PASS with required constrained decoding`
 
-Qwen 80B는 현재 주 실험입니다. GPT-OSS-20B는 Qwen의 선행 gate가 아닙니다.
+Qwen 80B는 Phase F source 주 실험입니다. 교차 모델 F5-X는 Qwen의
+선행 gate가 아니며 Qwen 최종 결과를 변경하지 않습니다.
 
 ### 학습 사전 수정
 
@@ -773,15 +776,52 @@ Loss는 기록만 하고 진행·채택 gate로 사용하지 않습니다.
 채택 후보가 생겼을 때만 BF16 merge 후 vLLM TP2로 검증합니다. 기존
 환경에서 dynamic MoE LoRA vLLM은 hang, merged vLLM은 성공했기 때문입니다.
 
-### GPT-OSS-20B의 위치
+### F5-X — Mistral Small 4 119B A6B 교차 모델 preflight
 
-Qwen F5 결론 이후 필요할 때만 별도 100-step 이식성 실험을 합니다.
+선택 모델은 `mistralai/Mistral-Small-4-119B-2603`입니다. 2026년 3월
+공개된 Apache 2.0 MoE 모델로 119B total, 6.5B active parameter이며
+Instruct·Reasoning·Devstral 계열 coding/agentic 능력을 하나의 모델에
+통합합니다. 현재 Qwen과 다른 model family라 교차 모델 검증 의미가 있고,
+공식 model card가 Axolotl fine-tuning과 vLLM TP2 serving을 안내합니다.
 
-- 같은 source contract/evaluator의 타 모델 호환성
-- 작은 모델의 비용·속도 기준선
-- 차기 GPT-OSS-120B preflight 준비
+F5-X는 현재 LLaMA-Factory 환경을 수정하지 않습니다. 별도
+Axolotl QLoRA 환경을 만들고 공식 Mistral 4 text QLoRA recipe를 기준으로
+다음 순서를 적용합니다.
 
-GPT-OSS 결과는 Qwen Q1~Q3의 시작·중단 조건이 아닙니다.
+1. model·Axolotl·Transformers revision과 Apache 2.0 license를 동결합니다.
+2. text-only, `reasoning_effort=none`, sequence length 2,048로 tokenizer와
+   chat-template round trip을 검증합니다.
+3. QLoRA 4-bit, MoE expert quantization, micro batch 1로 1-step load/forward/
+   backward를 수행합니다.
+4. 10-step에서 checkpoint save·새 process reload·단일 inference를 확인합니다.
+5. 모두 통과한 경우에만 기존 Q1R10 decision dataset으로 base-start
+   100-step canary를 실행합니다.
+6. Q1R10과 동일한 decision 절대 gate를 독립 적용합니다. 이미 공개한
+   500건은 blind가 아니라 regression set으로 기록합니다.
+7. decision PASS와 현재 source/evidence 코드 리뷰의 P1 해결이 모두 끝난
+   경우에만 evidence adapter를 별도 승인합니다.
+
+즉시 중단 조건:
+
+- GPU 한 장의 peak VRAM `165 GiB` 초과 또는 OOM
+- 1/10-step checkpoint 저장·재로드 실패
+- chat template가 `[THINK]` trace를 decision JSON에 섞음
+- 양자화된 MoE expert 또는 LoRA target의 save/reload 불일치
+- prediction 누락, 단일 label 붕괴, parse/schema gate 실패
+- 100-step decision 절대 gate 실패
+
+공식 Axolotl 예시는 text QLoRA에서 expert layer를 포함할 때 약 93 GiB를
+보고하지만, 이 수치는 현재 2×B200 topology의 보장이 아닙니다. 실제
+GPU별 peak, NCCL 동작, step time, checkpoint 크기를 1/10-step에서 다시
+측정합니다. 100-step PASS 전에는 merge, evidence 학습, full epoch를
+시작하지 않습니다.
+
+근거:
+
+- [Mistral Small 4 공식 발표](https://mistral.ai/news/mistral-small-4/)
+- [Mistral Small 4 공식 model card](https://huggingface.co/mistralai/Mistral-Small-4-119B-2603)
+- [Axolotl Mistral 4 QLoRA 예제](https://github.com/axolotl-ai-cloud/axolotl/tree/main/examples/mistral4)
+- [NVIDIA NeMo AutoModel Mistral 4 지원](https://github.com/NVIDIA-NeMo/Automodel)
 
 ---
 
@@ -835,7 +875,7 @@ F6-A 산출물:
 
 ### F6-B B0 100 pair
 
-상태: `Running — toolchain ready, 1-pair smoke PASS`
+상태: `Complete — strict re-audit 99/145; F7 replacement required`
 
 - build 가능한 before/after 100 pair, 총 200 함수
 - GCC·Clang, `O0/O2`
@@ -862,7 +902,7 @@ pseudo-C 또는 제한된 assembly에서 관찰되는 경우에만 100-pair mani
 
 ## F7 — Binary Dataset v1과 별도 Adapter
 
-상태: `Running — target v1–v4 manual gate FAIL / strict v5 recovery`
+상태: `Running — target quality blocked; versioned role-structured contract redesign`
 
 - pair 최대 2,000
 - before `present`: 최대 2,000
@@ -1068,7 +1108,7 @@ identifier-overlap이 다시 잘못된 관계를 만들었습니다.
 계산은 2,450 pair를 먼저 요구하지 않고 CWE별 완전한 role extractor를
 통과한 pair만 집계합니다. unsupported CWE는 quarantine하고 실제 공급량에
 맞춰 dataset을 축소합니다. 자세한 결정은
-[Binary Role Target v2 Decision](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
+[Binary Role Target v2 Decision](../decisions/phase-f/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
 기록합니다.
 
 strict v3 공급 감사에서 generic fallback을 제거하자
@@ -1898,7 +1938,7 @@ binary compile/decompile로 진행하지 않습니다. 다음 공급 감사는
 patch-localized CWE 후보인 MegaVul/CVEfixes와 representation alignment
 후보인 Assemblage/Decompile-Bench를 서로 분리합니다. 자세한 판정과
 artifact hash는
-[ARVO patch gate 결정문](PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
+[ARVO patch gate 결정문](../decisions/phase-f/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
 보존합니다.
 
 ## Patch-localized CWE Label Supply Gate
@@ -1930,7 +1970,7 @@ before/after 공급량, CWE/commit 연결, null·중복·overlap을 확인한 �
 Metadata preflight artifact SHA-256은
 `786836f0a91e41d947e693942c1f2e34311dc32f91c13983b22ec5132ef4390e`입니다.
 자세한 상태와 중단 조건은
-[patch label supply 결정문](PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
+[patch label supply 결정문](../decisions/phase-f/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
 보존합니다.
 
 ### CVEfixes 실제 실행 결과 — 2026-07-31
@@ -2008,7 +2048,7 @@ Arrow shard 하나만 감사했습니다. raw binary·executable, 전체 17개 s
 다음 gate는 Assemblage의 repository license와 compiler·optimization
 metadata 계약입니다. 전체 executable corpus를 받지 않고 metadata만 먼저
 감사하며, 이 단계도 취약점 label 공급과는 분리합니다. 상세 결정은
-[Decompile-Bench 정렬·출처 gate 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
+[Decompile-Bench 정렬·출처 gate 결정문](../decisions/phase-f/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
 보존합니다.
 
 ### Assemblage LinuxELF metadata 실제 결과 — 2026-07-31
@@ -2047,7 +2087,7 @@ dataset-level 설명이나 다른 행의 값을 이용해 결손 metadata를 추
 
 다음 gate는 BinKit 2.0 metadata에서 compiler·architecture·optimization을
 같은 sample identity에 연결할 수 있는지 확인하는 것입니다. 상세 결정은
-[Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)에
+[Assemblage metadata 결정문](../decisions/phase-f/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)에
 보존합니다.
 
 ### BinKit 2.0 metadata 실제 결과 — 2026-07-31
@@ -2072,7 +2112,7 @@ toolchain, 함수 pickle은 받지 않았습니다.
 
 다음 gate는 EMBER2024 static-feature metadata를 SFT 공급이 아닌 독립
 malware benchmark 후보로 감사합니다. 상세 결정은
-[BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)에
+[BinKit metadata 결정문](../decisions/phase-f/PHASE_F_BINKIT_METADATA_DECISION_20260731.md)에
 보존합니다.
 
 ### EMBER2024 ELF static-feature 실제 결과 — 2026-07-31
@@ -2103,9 +2143,9 @@ malware benchmark 후보로 감사합니다. 상세 결정은
 `(week_id, sha256)` 중복 제거 materializer와 별도 malware classifier
 절대평가는 완료했습니다. source CWE adapter 점수와 합치지 않으며 Qwen
 SFT 데이터에도 혼합하지 않습니다. 공급 결정은
-[EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md),
+[EMBER2024 benchmark 결정문](../decisions/phase-f/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md),
 분류기 결과는
-[EMBER2024 classifier 결정문](PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
+[EMBER2024 classifier 결정문](../decisions/phase-f/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
 보존합니다.
 
 ### EMBER2024 ELF classifier 실제 결과 — 2026-07-31

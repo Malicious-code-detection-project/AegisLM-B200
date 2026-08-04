@@ -78,7 +78,7 @@ Assemblage/Decompile-Bench는 source–binary representation 후보입니다.
 
 ## Related Documents
 
-- [Phase F plan](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)
-- [Fine-tuning test workbook](FINETUNING_TEST_WORKBOOK.md)
-- [Dataset candidates](DATASET_CANDIDATES.md)
+- [Phase F plan](../../plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)
+- [Fine-tuning test workbook](../../../operations/b200/FINETUNING_TEST_WORKBOOK.md)
+- [Dataset candidates](../../../design/datasets/DATASET_CANDIDATES.md)
 - [Binary strict target decision](PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)

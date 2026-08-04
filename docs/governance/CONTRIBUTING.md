@@ -2,7 +2,7 @@
 
 이 문서는 `AegisLM`에 기여하는 팀원이 작업을 시작하고, 브랜치를 만들고, PR을 제출하기 위해 따라야 하는 절차를 정리합니다.
 
-협업 규칙의 정본은 [AGENTS.md](../AGENTS.md)입니다. 이 문서는 팀원이 실제로 작업을 진행할 때 참고하는 실행 가이드입니다.
+협업 규칙의 정본은 [AGENTS.md](../../AGENTS.md)입니다. 이 문서는 팀원이 실제로 작업을 진행할 때 참고하는 실행 가이드입니다.
 
 ---
 
@@ -20,13 +20,13 @@
 
 새 PC에서 작업하거나 오랜만에 저장소를 열었다면 아래 순서로 확인합니다.
 
-1. [README.md](../README.md) - 프로젝트 정체성, 현재 단계, Phase A-G 로드맵
-2. [DATA_STRATEGY.md](DATA_STRATEGY.md) - Phase C 데이터 활용 전략
-3. [FINETUNING_EXPERIMENT_PLAN.md](FINETUNING_EXPERIMENT_PLAN.md) - 파인튜닝 학습 로드맵과 실험 전략
-4. [PHASE_D_EXIT_CRITERIA.md](PHASE_D_EXIT_CRITERIA.md) - Phase D 완료 조건과 Phase E 착수 gate
-5. [PHASE_E_TEAM_ONBOARDING.html](PHASE_E_TEAM_ONBOARDING.html) - Phase E 이슈 처리와 팀 교육 주제 인포그래픽
-6. [TEST_CRITERIA.md](TEST_CRITERIA.md) - 테스트 기준, 평가 기준, 참고 레퍼런스
-7. [AGENTS.md](../AGENTS.md) - 협업 운영 규칙과 PR 기준
+1. [README.md](../../README.md) - 프로젝트 정체성, 현재 단계, Phase A-G 로드맵
+2. [DATA_STRATEGY.md](../design/datasets/DATA_STRATEGY.md) - Phase C 데이터 활용 전략
+3. [FINETUNING_EXPERIMENT_PLAN.md](../experiments/plans/FINETUNING_EXPERIMENT_PLAN.md) - 파인튜닝 학습 로드맵과 실험 전략
+4. [PHASE_D_EXIT_CRITERIA.md](../evaluation/PHASE_D_EXIT_CRITERIA.md) - Phase D 완료 조건과 Phase E 착수 gate
+5. [PHASE_E_TEAM_ONBOARDING.html](../onboarding/PHASE_E_TEAM_ONBOARDING.html) - Phase E 이슈 처리와 팀 교육 주제 인포그래픽
+6. [TEST_CRITERIA.md](../evaluation/TEST_CRITERIA.md) - 테스트 기준, 평가 기준, 참고 레퍼런스
+7. [AGENTS.md](../../AGENTS.md) - 협업 운영 규칙과 PR 기준
 8. [CONTRIBUTING.md](CONTRIBUTING.md) - 팀원 작업 가이드
 
 작업 전에는 원격 상태를 먼저 확인합니다.
@@ -47,7 +47,7 @@ git status
 ```text
 AegisLM/
 ├── AGENTS.md                         # 협업 운영 매뉴얼
-├── CONTRIBUTING.md                   # docs/CONTRIBUTING.md 안내 링크
+├── CONTRIBUTING.md                   # docs/governance/CONTRIBUTING.md 안내 링크
 ├── README.md                         # 프로젝트 정체성과 개발 로드맵
 ├── docs/
 │   ├── README.md                     # 문서 인덱스와 문서 관리 규칙
@@ -97,7 +97,7 @@ uv run scripts/verify_gpu.py
 uv run scripts/dry_run_training.py --config configs/tiny_sft_config.json
 ```
 
-자세한 검증 사양 및 환경 메타데이터 기록 방법은 [FINETUNING_EXPERIMENT_PLAN.md](FINETUNING_EXPERIMENT_PLAN.md)의 `8.1 공유 작업용 PC 런타임 무결성 관리` 지침을 참고하십시오.
+자세한 검증 사양 및 환경 메타데이터 기록 방법은 [FINETUNING_EXPERIMENT_PLAN.md](../experiments/plans/FINETUNING_EXPERIMENT_PLAN.md)의 `8.1 공유 작업용 PC 런타임 무결성 관리` 지침을 참고하십시오.
 
 ### 테스트와 정적 분석
 
@@ -232,7 +232,7 @@ PR 제목:
 [AegisLM] <summary>
 ```
 
-PR 본문은 [PR_DESCRIPTION_TEMPLATE.md](PR_DESCRIPTION_TEMPLATE.md)를 기준으로 작성합니다. 최소한 다음을 포함합니다.
+PR 본문은 [PR_DESCRIPTION_TEMPLATE.md](../templates/PR_DESCRIPTION_TEMPLATE.md)를 기준으로 작성합니다. 최소한 다음을 포함합니다.
 
 - 변경 목적
 - 주요 변경 내용

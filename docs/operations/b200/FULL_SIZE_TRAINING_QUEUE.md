@@ -1,7 +1,8 @@
 ﻿# B200 Full-Size Training Queue
 
 This document records the current full-size training queue for
-`/home/wyhwang/workspace/MalwareAnalysisLLM`.
+the legacy `MalwareAnalysisLLM` workspace. Its server path is redacted because
+it is not a portable project setting.
 
 The project is no longer using one-step smoke tests as the main decision point.
 The next runs should use the full LLaMA-Factory dataset registration and keep
@@ -20,7 +21,11 @@ observe-only telemetry enabled while the user monitors the GPU server directly.
 Load `.env` first so `HF_TOKEN` is available only in the shell.
 
 ```bash
-cd /home/wyhwang/workspace/MalwareAnalysisLLM
+export AEGISLM_PROJECT_ROOT="/path/to/MalwareAnalysisLLM"
+export AEGISLM_DATA_ROOT="/path/to/LLM/Data"
+export AEGISLM_ARTIFACT_ROOT="/path/to/LLM/TrainingArtifacts"
+
+cd "${AEGISLM_PROJECT_ROOT}"
 set -a
 . ./.env
 set +a
@@ -67,7 +72,11 @@ uv run python scripts/download_hf_model.py \
 Environment:
 
 ```bash
-cd /home/wyhwang/workspace/MalwareAnalysisLLM
+export AEGISLM_PROJECT_ROOT="/path/to/MalwareAnalysisLLM"
+export AEGISLM_DATA_ROOT="/path/to/LLM/Data"
+export AEGISLM_ARTIFACT_ROOT="/path/to/LLM/TrainingArtifacts"
+
+cd "${AEGISLM_PROJECT_ROOT}"
 set -a
 . ./.env
 set +a

@@ -8,9 +8,9 @@ submodule, locks the training stack with `uv`, separates persistent model/data
 storage, and mirrors the latest complete checkpoint without signaling the
 trainer.
 
-Start with [docs/B200_2GPU_SETUP.md](docs/B200_2GPU_SETUP.md) and hand training
+Start with [docs/operations/b200/B200_2GPU_SETUP.md](docs/operations/b200/B200_2GPU_SETUP.md) and hand training
 control to the operator with
-[docs/B200_TRAINING_HANDOFF.md](docs/B200_TRAINING_HANDOFF.md).
+[docs/operations/b200/B200_TRAINING_HANDOFF.md](docs/operations/b200/B200_TRAINING_HANDOFF.md).
 
 `AegisLM`은 Project NuriLab과 연계할 수 있는 별도 LLM 모델 개발 프로젝트입니다.
 
@@ -55,6 +55,14 @@ recommendation은 일반적인 재확인 문구입니다. 따라서 calibration,
 8-range 상한을 넘었으므로 `response_format=json_schema` constrained
 decoding과 AegisLM semantic validator를 배포 필수조건으로 고정합니다.
 이 조건에서 decision과 evidence의 전체 절대 gate가 통과했습니다.
+
+Qwen 결과의 교차 모델 이식성 검증에는
+`mistralai/Mistral-Small-4-119B-2603`을 차기 모델로 선택했습니다. 이
+모델은 119B total·6.5B active MoE, Apache 2.0이며 2026년 3월 공개된
+Instruct·Reasoning·Devstral 계열 coding/agentic 통합 모델입니다. 기존
+Qwen adapter를 연장하지 않고 별도 Axolotl QLoRA 환경에서 decision-only
+1/10/100-step preflight를 수행하며, 현재 코드 리뷰의 P1 항목을 반영하기
+전에는 evidence adapter와 full run으로 확장하지 않습니다.
 
 F6-A binary 후보·서버 preflight와 F6-B B0 lifecycle을 완료했습니다.
 SARD/Juliet CC0 원천과 사용자 영역의 GCC·Clang 18·Ghidra 12.1.2
@@ -127,7 +135,7 @@ v2 r1과 r2는 role target builder, 실제 Qwen tokenizer gate, 고정 seed
 금지합니다. 다음 iteration은 generic identifier-overlap fallback을
 폐기하고 CWE별 완전한 role extractor가 있는 범주만 eligible로
 인정합니다. 상세 결정은
-[`docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`](docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
 보존합니다.
 
 다음 binary 작업으로 ARVO v3 metadata 6,138건을 안전하게 감사해
@@ -143,7 +151,7 @@ patch 관계로 재설계하기 위한 후보이며, crash type을 CWE gold로 �
 패치 5건은 queue 생성 단계에서 제외했습니다. ARVO crash family를
 CWE-121/122/126 gold로 변환하지 않으며 binary adapter 학습도 시작하지
 않습니다. 상세 근거는
-[`docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md`](docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)에
 보존합니다.
 
 다음 patch-localized CWE 공급 metadata gate에서는 CVEfixes v1.0.8만
@@ -161,7 +169,7 @@ repository code license 검토가 남아 있었습니다. 고정 순서 수동 �
 CVEfixes commit-level CWE를 direct training label로 사용하는 경로와
 repository license gate는 중단했고 processing·training은 false입니다.
 상세 상태는
-[`docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md`](docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)에
 보존합니다.
 
 후속 source–assembly alignment 공급 감사에서는 Decompile-Bench 고정
@@ -171,7 +179,7 @@ shard 100건 중 96건이 같은 함수·의미 정렬을 통과했습니다. �
 metadata가 없습니다. 따라서 `alignment_reference_only`로 보존하고
 `approved_for_training=false`로 판정했습니다. 다음 후보는 전체 실행파일
 corpus가 아니라 Assemblage metadata만 먼저 감사합니다. 상세 근거는
-[`docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md`](docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)에
 보존합니다.
 
 Assemblage LinuxELF는 21.97GB compressed DuckDB의 size·SHA-256·zstd
@@ -181,7 +189,7 @@ binary format·repo commit·build mode는 각각 약 31.15%뿐입니다. build
 trace가 있는 cohort와 architecture가 있는 cohort의 strict 교집합은
 0건이므로 `metadata_reference_only`, binary download·training false로
 판정했습니다. raw ELF archive는 받지 않았습니다. 상세 근거는
-[`docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md`](docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)에
 보존합니다.
 
 BinKit 2.0은 8 architectures·23 compilers·6 optimization levels의
@@ -190,7 +198,7 @@ dataset·함수 pickle은 revision·size·checksum·dataset license가 없는
 Google Drive 링크입니다. code MIT license를 compiled package dataset에
 확대 적용하지 않고 `metadata_hold`, download·training false로
 판정했습니다. pickle은 역직렬화하지 않았습니다. 상세 근거는
-[`docs/PHASE_F_BINKIT_METADATA_DECISION_20260731.md`](docs/PHASE_F_BINKIT_METADATA_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_BINKIT_METADATA_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_BINKIT_METADATA_DECISION_20260731.md)에
 보존합니다.
 
 EMBER2024 ELF test artifact는 archive·schema·feature-shape gate를
@@ -200,7 +208,7 @@ feature 충돌은 0건이지만 CAPS/MBC/TTP 보조 annotation은 일부 중복 
 다르므로 별도 merge 계약 전에는 사용하지 않습니다. 이 데이터는
 `independent_benchmark_with_required_dedup`이며 SFT와 raw binary download는
 승인하지 않습니다. 상세 근거는
-[`docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md`](docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)에
 보존합니다.
 
 train 26,000건과 test 6,000건을 label-blind feature/gold로 분리해
@@ -210,7 +218,7 @@ gate로 평가했습니다. 자체 모델은 precision/recall
 실패했습니다. 공식 모델도 calibration threshold에서 FPR `0.1097`,
 주별 최대 FPR `0.208`로 실패했습니다. 따라서 NuriLab static-signal
 연결과 Qwen SFT 혼합은 승인하지 않습니다. 상세 근거는
-[`docs/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md`](docs/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
+[`docs/experiments/decisions/phase-f/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md`](docs/experiments/decisions/phase-f/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
 보존합니다.
 
 후속 strict 공급 감사에서는 generic fallback을 완전히 끄고 12개 CWE만
@@ -228,12 +236,13 @@ merge, vLLM serving, 5건 smoke와 500건 절대평가까지 완료했습니다.
 label·provenance 누출과 반복 target을 제거하고 1만~1.2만 건의 균형 잡힌
 source dataset부터 다시 검증합니다.
 
-현재 주 실험 모델은 Phase E와 동일한 `Qwen/Qwen3-Coder-Next` 80B입니다.
+Phase F source 주 실험 모델은 `Qwen/Qwen3-Coder-Next` 80B였습니다.
 먼저 정제 데이터에서 base와 기존 Phase E adapter를 각각 절대평가하고,
 그 다음 새 LoRA를 base에서 100 step 학습합니다. 진단 gate를 통과한
 경우에만 250 step, 필요하면 1 epoch(약 313 step)까지 이어갑니다.
-`openai/gpt-oss-20b`는 Qwen 실험 결론 이후 파이프라인 이식성을 확인하는
-보조 후보이며 Qwen 재학습의 선행 조건이 아닙니다.
+Qwen two-stage가 100-step 절대 gate를 통과했으므로 차기 교차 모델은
+`mistralai/Mistral-Small-4-119B-2603`으로 변경했습니다. GPT-OSS는 현재
+실행 후보에서 제외하고 기존 문서는 초기 연구 기록으로만 보존합니다.
 
 2026-07-29 F2 감사에서 source 전용 v2 계약과 실제 Qwen tokenizer gate를
 적용했습니다. 기존 core 11,500건은 exact code/patch 근거가 없어 모두
@@ -289,7 +298,7 @@ v0 단계에서는 악성코드 유사 스크립트 동작 설명, 취약점 맥
 
 **Phase A: 문서/저장소 정체성 정리 (완료)**
 
-이 프로젝트는 Project Nurilab : 로컬 LLM 기반 악성코드 분석 자동화 시스템 개발 프로젝트에서 `로컬 LLM 파인 튜닝 또는 LLM 모델링` 부분을 담당하는 프로젝트입니다. `README.md`, `AGENTS.md`, `docs/CONTRIBUTING.md`의 방향성은 이 기준에 맞춰 정리했습니다.
+이 프로젝트는 Project Nurilab : 로컬 LLM 기반 악성코드 분석 자동화 시스템 개발 프로젝트에서 `로컬 LLM 파인 튜닝 또는 LLM 모델링` 부분을 담당하는 프로젝트입니다. `README.md`, `AGENTS.md`, `docs/governance/CONTRIBUTING.md`의 방향성은 이 기준에 맞춰 정리했습니다.
 
 
 **Phase B: 최소 코드 뼈대 생성 (완료, 최초 push 준비)**
@@ -350,27 +359,31 @@ Project NuriLab은 나중에 AegisLM에서 만든 모델, LoRA adapter, 평가 �
 - `AGENTS.md` - 협업 운영 규칙
 - `CONTRIBUTING.md` - 기여 절차 안내
 - `docs/README.md` - 세부 문서 인덱스와 문서 관리 규칙
-- `docs/ARTIFACT_STORAGE_POLICY.md` - fine-tuning 산출물 저장 정책
-- `docs/DATASET_CANDIDATES.md` - 공개 데이터셋 후보 registry와 안전성/용도 분류
-- `docs/DATA_STRATEGY.md` - Phase C 데이터 활용 전략
-- `docs/EVALUATION_PLAN.md` - Phase D/E 평가 계획과 결과 리포트 기준
-- `docs/ABSOLUTE_EVALUATION.md` - label-blind 코드 challenge, adapter 서빙, 절대평가 gate
-- `docs/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
-- `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
-- `docs/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` - ARVO 200건 공개 개발자 패치 수집, 수동 `FAIL EARLY`, 학습 불승인 결정
-- `docs/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` - CVEfixes archive·SQLite·6,248쌍 공급 PASS 뒤 수동 `11/28 FAIL EARLY`, direct-label 학습 거부
-- `docs/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md` - Decompile-Bench source–assembly 정렬 96/100 PASS, provenance·compiler metadata 부족으로 reference-only 판정
-- `docs/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md` - Assemblage artifact·schema PASS 뒤 strict metadata 교집합 0건으로 raw ELF·학습 불승인
-- `docs/PHASE_F_BINKIT_METADATA_DECISION_20260731.md` - BinKit compile matrix 확인 뒤 고정 artifact·license·schema 부재로 binary·pickle 다운로드 보류
-- `docs/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md` - EMBER2024 ELF 12,000행을 6,000관측치로 필수 중복 제거한 독립 static-feature benchmark 승인
-- `docs/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md` - 자체 temporal LightGBM·공식 모델 절대평가 FAIL과 NuriLab 연결 보류
-- `docs/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
-- `docs/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
-- `docs/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽
-- `docs/FINETUNING_EXPERIMENT_PLAN.md` - 파인튜닝 실험 계획
-- `docs/PR_DESCRIPTION_TEMPLATE.md` - PR 본문 작성 템플릿
-- `docs/QUALITY_GATES.md` - 코드 변경 PR 검사 기준
-- `docs/TEST_CRITERIA.md` - Phase C 테스트 기준과 평가 레퍼런스
+- `docs/operations/policies/ARTIFACT_STORAGE_POLICY.md` - fine-tuning 산출물 저장 정책
+- `docs/design/datasets/DATASET_CANDIDATES.md` - 공개 데이터셋 후보 registry와 안전성/용도 분류
+- `docs/design/datasets/DATA_STRATEGY.md` - Phase C 데이터 활용 전략
+- `docs/evaluation/EVALUATION_PLAN.md` - Phase D/E 평가 계획과 결과 리포트 기준
+- `docs/evaluation/ABSOLUTE_EVALUATION.md` - label-blind 코드 challenge, adapter 서빙, 절대평가 gate
+- `docs/operations/b200/FINETUNING_TEST_WORKBOOK.md` - B200 수동 파인튜닝 검증 진행표, 실행 명령, 기록·판정 워크북
+- `docs/experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` - Phase F F0–F9 데이터 감사, Qwen 신규 학습, source/binary gate와 NuriLab 연결 기준
+- `docs/governance/AGENT_WORKFLOW.md` - Sol·Terra·implementation agent의 권한, 수동 orchestration, Work Order와 증거 제출 규칙
+- `review/guides/COMMIT_REVIEW_GUIDE_KO.md` - 현재 Phase F 브랜치 20개 커밋의 목적, 결과, 읽기 순서와 유지·보류 판정을 설명하는 한국어 리뷰 안내서
+- `review/README.md` - 커밋·영역·파일별 상세 코드 리뷰와 수정 후보 기록
+- `docs/design/architecture/LOCAL_LLM_MCP_BOUNDARY_IDEA.md` - Base local LLM+기존 analyzer MCP가 절대 gate를 통과하면 해당 fine-tuning을 생략할 수 있다는 미확정 architecture 가설
+- `docs/experiments/decisions/phase-f/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` - ARVO 200건 공개 개발자 패치 수집, 수동 `FAIL EARLY`, 학습 불승인 결정
+- `docs/experiments/decisions/phase-f/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` - CVEfixes archive·SQLite·6,248쌍 공급 PASS 뒤 수동 `11/28 FAIL EARLY`, direct-label 학습 거부
+- `docs/experiments/decisions/phase-f/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md` - Decompile-Bench source–assembly 정렬 96/100 PASS, provenance·compiler metadata 부족으로 reference-only 판정
+- `docs/experiments/decisions/phase-f/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md` - Assemblage artifact·schema PASS 뒤 strict metadata 교집합 0건으로 raw ELF·학습 불승인
+- `docs/experiments/decisions/phase-f/PHASE_F_BINKIT_METADATA_DECISION_20260731.md` - BinKit compile matrix 확인 뒤 고정 artifact·license·schema 부재로 binary·pickle 다운로드 보류
+- `docs/experiments/decisions/phase-f/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md` - EMBER2024 ELF 12,000행을 6,000관측치로 필수 중복 제거한 독립 static-feature benchmark 승인
+- `docs/experiments/decisions/phase-f/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md` - 자체 temporal LightGBM·공식 모델 절대평가 FAIL과 NuriLab 연결 보류
+- `docs/templates/EXPERIMENT_LOG_TEMPLATE.md` - baseline/adapter 평가 결과 기록 템플릿
+- `docs/evaluation/PHASE_D_EXIT_CRITERIA.md` - Phase D 완료 조건과 Phase E 착수 gate
+- `docs/onboarding/PHASE_E_TEAM_ONBOARDING.html` - Phase E 이슈 처리와 팀 교육 주제 인포그래픽
+- `docs/experiments/plans/FINETUNING_EXPERIMENT_PLAN.md` - 파인튜닝 실험 계획
+- `docs/templates/PR_DESCRIPTION_TEMPLATE.md` - PR 본문 작성 템플릿
+- `docs/governance/QUALITY_GATES.md` - 코드 변경 PR 검사 기준
+- `docs/evaluation/TEST_CRITERIA.md` - Phase C 테스트 기준과 평가 레퍼런스
 
 README에는 프로젝트의 큰 방향과 현재 상태만 유지합니다. 세부 기준, 실험 계획, 기여 규칙, 테스트 기준은 `docs/` 아래 문서에 기록합니다.
 
@@ -385,5 +398,5 @@ CWE-134/190/191/194/195 공급은 `644` pair이며, 고정 100건 수동 검토�
 `quality-approved / supply-blocked` seed로만 동결합니다. 현 단계에서는
 binary materialization과 adapter 학습을 시작하지 않습니다. 세부 이력과
 artifact hash는
-[binary role target 결정문](docs/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
+[binary role target 결정문](docs/experiments/decisions/phase-f/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md)에
 보존합니다.

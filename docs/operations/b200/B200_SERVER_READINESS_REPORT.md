@@ -67,7 +67,11 @@ run at the current commit.
 Follow [B200_TRAINING_HANDOFF.md](B200_TRAINING_HANDOFF.md). The first run is:
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+export AEGISLM_PROJECT_ROOT="/path/to/AegisLM-B200"
+export AEGISLM_DATA_ROOT="/path/to/LLM/Data"
+export AEGISLM_ARTIFACT_ROOT="/path/to/LLM/TrainingArtifacts"
+
+cd "${AEGISLM_PROJECT_ROOT}"
 bash scripts/run_train_qwen3_coder_next_full.sh \
   --profile stable \
   --resume fresh

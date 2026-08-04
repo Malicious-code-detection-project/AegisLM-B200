@@ -117,7 +117,7 @@ Exit criteria:
 - Base inference works on the target GPU machine.
 - A small prompt set and expected JSON schema are documented.
 - Failure modes are recorded before training starts.
-- Phase E starts only after the gate in `docs/PHASE_D_EXIT_CRITERIA.md` is satisfied.
+- Phase E starts only after the gate in `docs/evaluation/PHASE_D_EXIT_CRITERIA.md` is satisfied.
 
 ### Stage 1: Tiny SFT PoC
 
@@ -127,7 +127,7 @@ Goal: learn the full training loop with minimal risk.
 - Run one Unsloth QLoRA PoC.
 - Run one Hugging Face TRL LoRA / QLoRA PoC if compatibility allows it.
 - Save adapter outputs outside the Git repository according to
-  `docs/ARTIFACT_STORAGE_POLICY.md`.
+  `docs/operations/policies/ARTIFACT_STORAGE_POLICY.md`.
 - Compare JSON validity, output quality, VRAM usage, training time, and
   inference latency.
 
@@ -339,7 +339,7 @@ uv run scripts/verify_gpu.py
 * **Check Items**:
   * **Dependency Integrity**: Detects whether core packages (PyTorch, CUDA, Unsloth, etc.) have been altered or corrupted by other workloads.
   * **Security Leak Prevention (Git Ignore)**: Prevents large weights, caching directories (`checkpoints/`, `adapters/`, `models/`, `unsloth_compiled_cache/`), and `.env` files from being accidentally staged or committed to Git.
-  * **Experiment Metadata Archiving**: Automatically updates [experiments/env_check_report.json](../experiments/env_check_report.json) upon execution. You should copy the `versions` block from this report into the `environment` metadata of your experiment log to maintain a trace of the workstation's runtime configuration history.
+  * **Experiment Metadata Archiving**: Automatically updates `experiments/env_check_report.json` upon execution. You should copy the `versions` block from this generated report into the `environment` metadata of your experiment log to maintain a trace of the workstation's runtime configuration history.
 
 
 ### 8.2 SFT Training Configuration Dry-run Check
@@ -387,10 +387,10 @@ Record for each PoC:
 
 ## 10. Evaluation
 
-Phase D/E evaluation follows `docs/EVALUATION_PLAN.md`. The baseline run is
+Phase D/E evaluation follows `docs/evaluation/EVALUATION_PLAN.md`. The baseline run is
 recorded as the before state; adapter runs are compared against the same
 held-out fixture set. Phase D completion and Phase E readiness are judged with
-`docs/PHASE_D_EXIT_CRITERIA.md`.
+`docs/evaluation/PHASE_D_EXIT_CRITERIA.md`.
 
 Primary v0 evaluation metrics:
 
@@ -423,7 +423,7 @@ output against curated labels, deterministic analyzer signals, and human review.
 ## 11. Safety and Storage Rules
 
 Detailed adapter, checkpoint, model card, and evaluation artifact storage
-rules are maintained in `docs/ARTIFACT_STORAGE_POLICY.md`.
+rules are maintained in `docs/operations/policies/ARTIFACT_STORAGE_POLICY.md`.
 
 - Do not commit real malware samples.
 - Do not commit downloaded datasets.

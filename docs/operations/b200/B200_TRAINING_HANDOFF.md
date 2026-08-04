@@ -19,7 +19,11 @@
 ## Operator Checklist
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+export AEGISLM_PROJECT_ROOT="/path/to/AegisLM-B200"
+export AEGISLM_DATA_ROOT="/path/to/LLM/Data"
+export AEGISLM_ARTIFACT_ROOT="/path/to/LLM/TrainingArtifacts"
+
+cd "${AEGISLM_PROJECT_ROOT}"
 set -a
 . ./.env
 set +a

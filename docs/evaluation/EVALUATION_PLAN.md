@@ -189,7 +189,7 @@ uv run python scripts/evaluate_predictions.py \
 ## 10. Phase F Absolute Evaluation
 
 Phase E 이후 모델 채택은 composite score나 loss가 아니라
-[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)의
+[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](../experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)의
 절대 gate로 결정합니다.
 
 Source 100-step 진단은 빠른 중단용이며 최종 채택 근거가 아닙니다.

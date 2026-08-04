@@ -2,7 +2,7 @@
 
 ## Target
 
-- Project: `/home/daegu/workspace/AegisLM-B200`
+- Project: `${AEGISLM_PROJECT_ROOT}`
 - GPUs: two NVIDIA B200 devices
 - Effective container memory: 400 GiB
 - Model: `Qwen/Qwen3-Coder-Next` BF16
@@ -16,10 +16,10 @@ container.
 
 | Kind | Path |
 | --- | --- |
-| Model | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Model` |
-| Dataset | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data` |
-| Checkpoints and logs | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/TrainingArtifacts` |
-| HF cache | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Cache/huggingface` |
+| Model | `${AEGISLM_ARTIFACT_ROOT}/model` |
+| Dataset | `${AEGISLM_DATA_ROOT}` |
+| Checkpoints and logs | `${AEGISLM_ARTIFACT_ROOT}` |
+| HF cache | `${AEGISLM_ARTIFACT_ROOT}/cache/huggingface` |
 
 `model` and `data` in the repository are symlinks to the first two paths.
 The active checkpoint under `training_artifacts/` remains on the container
@@ -28,13 +28,21 @@ filesystem and is mirrored to persistent storage.
 ## Install
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+export AEGISLM_PROJECT_ROOT="/path/to/AegisLM-B200"
+export AEGISLM_DATA_ROOT="/path/to/LLM/Data"
+export AEGISLM_ARTIFACT_ROOT="/path/to/LLM/TrainingArtifacts"
+
+cd "${AEGISLM_PROJECT_ROOT}"
 python scripts/setup_b200_workspace.py
 bash scripts/setup_server_env.sh
 uv sync --frozen --group training
 .venv/bin/python scripts/patch_deepspeed_zero3_dtype.py --apply
 .venv/bin/python scripts/patch_deepspeed_zero3_dtype.py --check
 ```
+
+Set these variables to the approved server locations before running commands.
+They keep server-specific absolute paths out of the repository while preserving
+the project, data, and artifact-root roles.
 
 Set `HF_TOKEN` and `WANDB_API_KEY` only in `.env`. Never commit the file.
 

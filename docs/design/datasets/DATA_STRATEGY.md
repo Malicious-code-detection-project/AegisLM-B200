@@ -121,7 +121,7 @@ AegisLM의 데이터 전략은 원본 구조를 외우는 것이 아니라, 각 
 - model checkpoint
 - adapter artifact
 
-Model adapter, checkpoint, model card, and evaluation artifact storage rules are maintained in [ARTIFACT_STORAGE_POLICY.md](ARTIFACT_STORAGE_POLICY.md).
+Model adapter, checkpoint, model card, and evaluation artifact storage rules are maintained in [ARTIFACT_STORAGE_POLICY.md](../../operations/policies/ARTIFACT_STORAGE_POLICY.md).
 
 다음 내용은 fine-tuning target output에 포함하지 않습니다.
 
@@ -292,8 +292,8 @@ Phase C tiny dataset이 통과해야 할 질문:
 
 Phase C 완료 전 산출물:
 
-- `docs/DATA_STRATEGY.md`
-- `docs/TEST_CRITERIA.md`
+- `docs/design/datasets/DATA_STRATEGY.md`
+- `docs/evaluation/TEST_CRITERIA.md`
 - JSON output contract draft
 - tiny dataset fixture
 - schema validation test
@@ -359,7 +359,7 @@ Phase D/E의 adapter 비교에는 `tests/fixtures/heldout_evaluation_records.jso
 ## 18. Phase F Data Contract
 
 Phase F의 실행 정본은
-[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)입니다.
+[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](../../experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)입니다.
 대규모 학습 데이터는 다음 세 계층으로 관리합니다.
 
 ```text

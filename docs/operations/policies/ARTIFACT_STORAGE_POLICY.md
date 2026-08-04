@@ -2,7 +2,7 @@
 
 이 문서는 `AegisLM` fine-tuning 산출물의 저장 위치, 공개 범위, 금지 항목을 정의합니다.
 
-`docs/DATA_STRATEGY.md`가 데이터 저장/제외 정책의 정본이라면, 이 문서는 모델 개발 산출물인 adapter, checkpoint, model card, evaluation artifact의 저장 정책 정본입니다.
+`docs/design/datasets/DATA_STRATEGY.md`가 데이터 저장/제외 정책의 정본이라면, 이 문서는 모델 개발 산출물인 adapter, checkpoint, model card, evaluation artifact의 저장 정책 정본입니다.
 
 ## 1. Goal
 
@@ -143,7 +143,7 @@ The experiment log may live in Git only if it contains no secrets, private data,
 ## 8. Related Work
 
 - Linear: THE-63
-- `docs/DATA_STRATEGY.md`
-- `docs/DATASET_CANDIDATES.md`
-- `docs/EVALUATION_PLAN.md`
-- `docs/FINETUNING_EXPERIMENT_PLAN.md`
+- `docs/design/datasets/DATA_STRATEGY.md`
+- `docs/design/datasets/DATASET_CANDIDATES.md`
+- `docs/evaluation/EVALUATION_PLAN.md`
+- `docs/experiments/plans/FINETUNING_EXPERIMENT_PLAN.md`

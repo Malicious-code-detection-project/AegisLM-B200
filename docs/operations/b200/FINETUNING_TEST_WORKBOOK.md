@@ -25,7 +25,7 @@
 아래 값은 실시간 상태가 아니라 **2026-07-27 13:23:32 KST**에 다시 조회한 초기값입니다.
 
 - 서버: `DAEGU-AIENGR-LLM`
-- 저장소: `/home/daegu/workspace/AegisLM-B200`
+- 저장소: `<REDACTED_SERVER_PATH>/AegisLM-B200` (historical server path)
 - GPU: NVIDIA B200 2장, GPU당 183,359 MiB
 - 학습: `10,335 / 10,401 step`, 99.37%, 실행 중
 - 조회 시 VRAM: GPU 0 `111,284 MiB`, GPU 1 `111,304 MiB`
@@ -78,12 +78,16 @@
 `RUN_ID`의 운영자 표기를 실제 값으로 바꾼 뒤, 같은 shell에서 이후 명령을 실행합니다.
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+export AEGISLM_PROJECT_ROOT="/path/to/AegisLM-B200"
+export AEGISLM_DATA_ROOT="/path/to/LLM/Data"
+export AEGISLM_ARTIFACT_ROOT="/path/to/LLM/TrainingArtifacts"
+
+cd "${AEGISLM_PROJECT_ROOT}"
 
 export RUN_ID="aegislm-qwen3next-$(date +%Y%m%dT%H%M%S)-operator"
-export EVAL_DIR="artifacts/evaluation/${RUN_ID}"
-export BASE_MODEL="model/base/qwen3-coder-next"
-export ADAPTER_DIR="training_artifacts/qwen3-coder-next/lora/full"
+export EVAL_DIR="${AEGISLM_ARTIFACT_ROOT}/evaluation/${RUN_ID}"
+export BASE_MODEL="${AEGISLM_ARTIFACT_ROOT}/model/base/qwen3-coder-next"
+export ADAPTER_DIR="${AEGISLM_ARTIFACT_ROOT}/training_artifacts/qwen3-coder-next/lora/full"
 export SERVED_MODEL="aegislm-qwen3-coder-next"
 
 mkdir -p "${EVAL_DIR}"/{inventory,challenge,smoke,full,repeats,manual}
@@ -120,7 +124,7 @@ date --iso-8601=seconds | tee "${EVAL_DIR}/inventory/start-time.txt"
 | Run ID           | aegislm-qwen3next-20260728T100259-operator                         |
 | Git commit       | c90de3bd19d74417be4d7d67e639392c223a12e5                           |
 | Git dirty 여부와 이유 | Yes - 절대평가 코드, API runner, 테스트 워크북이 아직 commit되지 않은 상태              |
-| Artifact 절대 경로   | `/home/daegu/workspace/AegisLM-B200/artifacts/evaluation/aegislm-qwen3next-20260728T100259-operator` |
+| Artifact 절대 경로   | `<REDACTED_SERVER_PATH>/artifacts/evaluation/aegislm-qwen3next-20260728T100259-operator` |
 | 사용자 메모           |                                                                    |
 
 ## 1. 학습 산출물 동결
@@ -136,7 +140,7 @@ date --iso-8601=seconds | tee "${EVAL_DIR}/inventory/start-time.txt"
 ### 실행 명령
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+cd "${AEGISLM_PROJECT_ROOT}"
 
 pgrep -af 'llamafactory-cli|torchrun|llamafactory/launcher.py' || true
 tail -n 10 "${ADAPTER_DIR}/trainer_log.jsonl"
@@ -205,7 +209,7 @@ sha256sum configs/llamafactory/b200/qwen3_coder_next_lora_full.yaml \
 | 학습 종료 시각                 | "elapsed_time": "7 days, 0:34:41"                                                                                                                    |
 | 마지막 step/epoch           | "current_steps": 10401, "total_steps": 10401, "epoch": 1.0,                                                                                          |
 | 마지막 loss(판정 기준 아님)       | "loss": 1.508740388089791e-06                                                                                                                        |
-| Adapter 경로               | ```<br>/home/daegu/workspace/AegisLM-B200/training_artifacts/qwen3-coder-next/lora/full<br>```                                                       |
+| Adapter 경로               | ```<br><REDACTED_SERVER_PATH>/training_artifacts/qwen3-coder-next/lora/full<br>```                                                       |
 | Adapter SHA-256 manifest | ```<br>${EVAL_DIR}/inventory/adapter-sha256.txt / adapter_model.safetensors: d6f6487dd593e82217672b64a0dbcfe5f88a44e266c85ab123fda63a728e2613<br>``` |
 | Trainer state/log 경로     | ```<br>training_artifacts/qwen3-coder-next/lora/full/trainer_state.json / training_artifacts/qwen3-coder-next/lora/full/trainer_log.jsonl<br>```     |
 | 정상 종료 확인 근거              | ```<br>trainer log가 10,401/10,401, epoch 1.0, 100%로 종료됨. 학습 process가 남아 있지 않고 최종 adapter_config.json과 adapter_model.safetensors가 생성됨.<br>```         |
@@ -226,7 +230,7 @@ sha256sum configs/llamafactory/b200/qwen3_coder_next_lora_full.yaml \
 ### 2-1. 환경 생성과 inventory
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+cd "${AEGISLM_PROJECT_ROOT}"
 
 uv venv --python 3.12 .venv-serving
 uv pip install --python .venv-serving/bin/python vllm
@@ -255,7 +259,7 @@ uv pip freeze --python .venv-serving/bin/python \
 첫 번째 SSH terminal에서 실행하고 로그를 관찰합니다.
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+cd "${AEGISLM_PROJECT_ROOT}"
 
 CUDA_VISIBLE_DEVICES=0,1 .venv-serving/bin/vllm serve "${BASE_MODEL}" \
   --tensor-parallel-size 2 \
@@ -415,10 +419,10 @@ trust_remote_code: true
 첫 terminal:
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+cd "${AEGISLM_PROJECT_ROOT}"
 
 export RUN_ID="aegislm-qwen3next-20260728T100259-operator"
-export EVAL_DIR="artifacts/evaluation/${RUN_ID}"
+export EVAL_DIR="${AEGISLM_ARTIFACT_ROOT}/evaluation/${RUN_ID}"
 
 sha256sum configs/inference/qwen3_coder_next_lora_hf_api.yaml \
   | tee "${EVAL_DIR}/inventory/hf-api-config-sha256.txt"
@@ -483,10 +487,10 @@ nvidia-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu \
 새 terminal에서 config와 출력 경로를 고정하고 export합니다. 기존 base와 adapter를 덮어쓰지 않습니다.
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+cd "${AEGISLM_PROJECT_ROOT}"
 
 export RUN_ID="aegislm-qwen3next-20260728T100259-operator"
-export EVAL_DIR="artifacts/evaluation/${RUN_ID}"
+export EVAL_DIR="${AEGISLM_ARTIFACT_ROOT}/evaluation/${RUN_ID}"
 export MERGED_MODEL="model/merged/aegislm-qwen3-coder-next-20260728T100259"
 
 mkdir -p model/merged
@@ -608,7 +612,7 @@ B200 처리량 최적화 가능성은 높지만 engine build, model conversion, 
 ### 실행 명령
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+cd "${AEGISLM_PROJECT_ROOT}"
 
 .venv/bin/python scripts/build_blind_code_challenge.py \
   --test-dataset data/processed/hf-full-v1/aegislm_security_test.jsonl \
@@ -693,7 +697,7 @@ label/provenance scan에서는 코드 본문을 제외합니다. 소스 코드 �
 ### 실행 명령
 
 ```bash
-cd /home/daegu/workspace/AegisLM-B200
+cd "${AEGISLM_PROJECT_ROOT}"
 
 .venv/bin/python scripts/run_adapter_inference.py \
   --backend openai-compatible \
@@ -1214,62 +1218,53 @@ model-only
 - MCP server/tool version, 호출 성공률, timeout과 fallback
 - 외부 신호 없이 모델이 만든 주장과 실제 도구 근거의 분리
 
-## 10. 120B급 차기 모델 후보와 100-step preflight
+## 10. 차기 모델 — Mistral Small 4 119B A6B
 
-현재 확인된 120B급 보안 전용 base model은 뚜렷하지 않습니다. 따라서 코드/agent 역량, 실제 활성 parameter, 라이선스, 현재 2×B200 환경의 학습·서빙 가능성을 함께 봅니다.
-
-### 후보 1 — gpt-oss-120b: 우선 추천
-
-| 항목 | 내용 |
-| --- | --- |
-| 구조 | 116.8B total, 5.1B active MoE |
-| 장점 | 공식 checkpoint 약 60.8 GiB, Apache 2.0, Structured Outputs·코딩·도구 사용·fine-tuning 지원 |
-| 현재 환경 적합성 | 80B-A3B보다 total parameter는 크지만 active compute 증가는 제한적이며 LLaMA-Factory가 GPT-OSS 20B/120B 지원 |
-| 위험 | 보안/코드 전용 모델이 아니며 Harmony chat template, MXFP4 kernel, LoRA 저장·재로드를 실제 B200에서 검증해야 함 |
-| 판단 | 임대 기간과 메모리 현실성을 우선할 때 첫 preflight 후보 |
-
-근거: [OpenAI gpt-oss 소개](https://openai.com/index/introducing-gpt-oss/), [OpenAI gpt-oss model card](https://openai.com/index/gpt-oss-model-card/), [LLaMA-Factory](https://github.com/hiyouga/LlamaFactory)
-
-### 후보 2 — Qwen3.5-122B-A10B-FP8: 호환성 후보
+현재 차기 교차 모델은 `mistralai/Mistral-Small-4-119B-2603` 하나로
+고정합니다. GPT-OSS는 현재 실행 후보에서 제외하고, Qwen3.5-122B는 같은
+Qwen 계열이라 이번 교차 모델 실험의 우선순위를 낮춥니다. Devstral 2
+123B dense는 활성 계산량과 라이선스 제약 때문에 첫 2×B200 run으로
+선택하지 않습니다.
 
 | 항목 | 내용 |
 | --- | --- |
-| 구조 | 122B total, 10B active MoE, FP8 |
-| 장점 | Apache 2.0, 코딩·agent 역량, 현재 vendor LLaMA-Factory의 전용 template/model patch와 Qwen 운영 경험 재사용 |
-| 현재 환경 적합성 | 현재 Qwen 계열 설정·운영 지식을 재사용하기 쉬움 |
-| 위험 | 같은 모델군이라 연구 다양성이 낮고, multimodal 구성과 10B active로 gpt-oss보다 메모리·시간 부담이 큼 |
-| 판단 | gpt-oss 호환성 실패 또는 Qwen 계열 연속성이 더 중요할 때 두 번째 preflight |
+| 공개 시점 | 2026-03-16 |
+| 구조 | 119B total, 128 experts 중 4 active, 약 6.5B active MoE |
+| context | 256k; 이번 실험은 기존 계약과 맞춰 2,048로 제한 |
+| 역량 | Instruct·Reasoning·Devstral coding/agentic·multimodal 통합 |
+| 라이선스 | Apache 2.0 |
+| 학습 framework | 별도 Axolotl 환경의 text QLoRA; 현재 LLaMA-Factory 환경 보존 |
+| serving | 공식 model card의 vLLM TP2 base smoke부터 확인 |
+| 초기 모드 | text-only, `reasoning_effort=none`; vision과 thinking trace 사용 안 함 |
+| 현재 승인 | decision-only 1/10/100-step preflight |
+| 현재 금지 | evidence adapter, full epoch, raw binary/malware 혼합 |
 
-근거: [Qwen3.5-122B-A10B-FP8 model card](https://huggingface.co/Qwen/Qwen3.5-122B-A10B-FP8)
+근거:
 
-### 후보 3 — Devstral 2 123B: 코드 특화 연구 후보
+- [Mistral Small 4 공식 발표](https://mistral.ai/news/mistral-small-4/)
+- [공식 Hugging Face model card](https://huggingface.co/mistralai/Mistral-Small-4-119B-2603)
+- [Axolotl 공식 Mistral 4 예제](https://github.com/axolotl-ai-cloud/axolotl/tree/main/examples/mistral4)
+- [NeMo AutoModel fine-tuning 지원](https://github.com/NVIDIA-NeMo/Automodel)
 
-| 항목 | 내용 |
-| --- | --- |
-| 구조 | dense 123B 코드/소프트웨어 엔지니어링 모델 |
-| 장점 | 코드 agent 특화, 공식 model card 기준 SWE-bench Verified 72.2% |
-| 현재 환경 적합성 | 코드 특화 가설을 직접 시험할 수 있음 |
-| 위험 | 현재 80B-A3B 대비 단순 1.5배가 아니라 active parameter 기준 약 41배, Modified MIT 검토 필요, FP8 LoRA 저장 호환성·긴 학습 시간·공식 TP8 예시 |
-| 판단 | 2×B200 임대 서버의 첫 차기 full run으로는 위험하며 짧은 연구 preflight만 수행 |
+### 단계별 preflight
 
-근거: [Devstral 2 model card](https://huggingface.co/mistralai/Devstral-2-123B-Instruct-2512), [Mistral Devstral 2 발표](https://mistral.ai/fr/news/devstral-2-vibe-cli/)
+1. model revision, Axolotl revision, Transformers revision, license를 동결합니다.
+2. Qwen 학습·serving 환경과 분리한 Axolotl 환경을 만듭니다.
+3. 공식 text QLoRA recipe를 복사하되 dataset, output directory, seed를
+   AegisLM 실험용으로 명시합니다.
+4. `reasoning_effort=none`으로 system+user+assistant round trip과 2,048-token
+   cutoff를 검사합니다.
+5. 4-bit load, MoE expert quantization, micro batch 1로 1-step을 실행합니다.
+6. 10-step checkpoint를 저장하고 새 process에서 adapter를 재로드합니다.
+7. 1/10-step이 통과한 경우에만 기존 Q1R10 decision dataset으로
+   base-start 100-step을 실행합니다.
+8. 기존 Q1R10 decision absolute gate를 독립 적용합니다.
+9. 100-step PASS 뒤에만 merge·vLLM TP2 가능성을 별도 검증합니다.
+10. evidence adapter는 현재 source/evidence 코드 리뷰의 P1 항목 해결 뒤
+    별도로 승인합니다.
 
-### 보안 특화 보조 후보
-
-[Foundation-Sec-8B](https://huggingface.co/fdtn-ai/Foundation-Sec-8B)는 120B 대체 모델이 아닙니다. 보안 특화 auxiliary benchmark, teacher, 데이터 품질 검토 후보로만 분류합니다. 작은 보안 모델이 존재한다는 사실만으로 120B 범용 모델의 절대 보안 품질을 보장하지 않습니다.
-
-### 공통 100-step preflight
-
-세 후보 모두 full training 전에 같은 순서로 검증합니다.
-
-1. 모델 card, license, revision, tokenizer, chat template를 동결합니다.
-2. config parse와 dataset 1 batch tokenize dry-run을 수행합니다.
-3. 2×B200 model load와 idle VRAM을 기록합니다.
-4. 실제 full-run과 같은 sequence length, batch, LoRA target으로 100 step 학습합니다.
-5. GPU별 peak VRAM, step time, tokens/s, loss는 진단 자료로 기록합니다.
-6. checkpoint를 저장하고 새 process에서 재로드합니다.
-7. 저장한 adapter를 serving framework로 load해 단일 Chat Completions를 실행합니다.
-8. 100-step 평균으로 예상 전체 시간을 계산하고 25% 여유를 더합니다.
+학습 중에는 로컬 코드 리뷰를 계속하되 GPU 서버의 pinned worktree에는
+`git pull`이나 리뷰 중인 변경을 반영하지 않습니다.
 
 ### Full run 금지 조건
 
@@ -1281,24 +1276,28 @@ model-only
 - tokenizer/chat template/output contract가 평가 runner와 재현 가능하게 연결되지 않음
 - license나 배포 조건을 프로젝트 사용 방식에 적용할 수 있는지 확정하지 못함
 
-### 후보별 preflight 기록
+### Mistral Small 4 preflight 기록
 
-| 항목 | gpt-oss-120b | Qwen3.5-122B-A10B-FP8 | Devstral 2 123B |
-| --- | --- | --- | --- |
-| Model revision/hash |  |  |  |
-| License 검토 |  |  |  |
-| Template/tokenizer |  |  |  |
-| 학습 dtype/quantization |  |  |  |
-| LoRA target/rank |  |  |  |
-| 100 step 완료 |  |  |  |
-| GPU 0/1 peak VRAM |  |  |  |
-| 평균 step time/tokens/s |  |  |  |
-| Checkpoint save/reload |  |  |  |
-| Serving smoke |  |  |  |
-| 예상 full run ×1.25 |  |  |  |
-| 남은 임대 기간 |  |  |  |
-| 결정 (`Go/No-Go`) |  |  |  |
-| 결정 근거 |  |  |  |
+| 항목 | 기록 |
+| --- | --- |
+| Model revision/hash |  |
+| Axolotl/Transformers revision |  |
+| License 검토 |  |
+| Disk/cache 여유 |  |
+| Template/tokenizer round trip |  |
+| QLoRA dtype/quantization |  |
+| LoRA target/rank |  |
+| 1-step forward/backward |  |
+| 10-step checkpoint save/reload |  |
+| GPU 0/1 idle·peak VRAM |  |
+| 평균 step time/tokens/s |  |
+| 100-step decision 완료 |  |
+| Decision absolute gate |  |
+| Base/adapter serving smoke |  |
+| 예상 후속 run ×1.25 |  |
+| 남은 임대 기간 |  |
+| 결정 (`Go/No-Go`) |  |
+| 결정 근거 / 사용자 메모 |  |
 
 ## 11. 한 번의 실행에서 반드시 남길 최종 inventory
 
@@ -1317,7 +1316,7 @@ model-only
 ## 12. Phase F 재학습 진행표
 
 Phase F 상세 기준은
-[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)를
+[PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md](../../experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)를
 따릅니다.
 
 | 단계 | 상태 | 통과 기준 | Run ID / 증거 | 운영자 메모 |
@@ -1341,7 +1340,7 @@ Phase F 상세 기준은
 | F5-Q2 decision 250-step | `Skipped` | Q1R10이 100-step에서 이미 최종 decision gate 통과 | 미실행 | 추가 학습 근거 없음 |
 | F5-Q3 Qwen 80B 총 313-step | `Blocked` | Q2까지 개선 지속 시만 1 epoch |  | 선택 단계 |
 | F5-M1 최종 merge·vLLM | `Pass` | 두 채택 adapter를 각각 BF16 merge 후 vLLM TP2 검증 | `f5-m1-merged-vllm` | evidence는 constrained JSON Schema+semantic validator 필수 |
-| GPT-OSS-20B 보조 실험 | `Blocked` | F5 Qwen 결론 이후 이식성 확인 |  | Qwen 선행 조건 아님 |
+| F5-X Mistral Small 4 119B | `Ready` | decision-only Axolotl QLoRA 1/10/100-step |  | evidence·full run 미승인 |
 | F6-A binary 조사 | `Pass` | 후보·license·local source·toolchain inventory | `binary_candidate_inventory.json` | 외부 payload download 0 |
 | F6-B B0 100 pair | `Rerun` | strict re-audit에서 최초 승인 100 중 CWE-563 1 pair 추가 격리 | strict summary SHA `fde1e20b…b9f` | 엄격 기준 99/145; 부족분은 F7에서 대체 |
 | F7 binary adapter | `Running` | target v1–v5·v7·v9 수동 FAIL; v2 contract 구현 | v9 gate SHA `2292e38f…364c`; 수동 `6/100` FAIL | role schema/validator 완료 → target builder |
@@ -1385,8 +1384,8 @@ sha256sum \
 | 운영자 / 일시 / run ID | 사용자 + Codex / 2026-07-29 / `phase-f-source-v2-20260729` |
 | Git commit / dirty 이유 | `63e0a02bb02c...`; raw normalizer·계층 sampler 구현이 아직 미커밋 |
 | config hash | `93febdc560e4e9f89622b1694b0c4b68be3811175293d80b2743b47a58825d59` |
-| 입력 raw snapshot 절대경로·hash | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/raw_data`; `_manifests/*.sha256` 재검증 PASS |
-| output root 절대경로 | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v2` |
+| 입력 raw snapshot 절대경로·hash | `<REDACTED_SERVER_PATH>/Data/raw_data`; `_manifests/*.sha256` 재검증 PASS |
+| output root 절대경로 | `<REDACTED_SERVER_PATH>/Data/processed/phase-f-source-v2` |
 | raw catalog / manifest hash | `78b622a0...` / `845b0a38...` |
 | eligible / quarantine / reject 수 | `275,897 / 160,686 / 82,545` |
 | exact / near duplicate 수 | reject `71,427 / 11,118`; label 충돌 격리 `2,358 / 4,491` records |
@@ -1416,7 +1415,7 @@ sha256sum \
 | Language | sampling·prompt·gate 제외, source-provided audit metadata만 보존 |
 | 무결성 | group pool leakage `0`, cross incomplete pair `0`, model-visible dataset/language control 누출 `0/0` |
 | 재현성 | 동일 seed 재생성 artifact 19개 SHA-256 불일치 `0` |
-| artifact 절대경로 | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v2-r2` |
+| artifact 절대경로 | `<REDACTED_SERVER_PATH>/Data/processed/phase-f-source-v2-r2` |
 | `SHA256SUMS` hash | `b17fa32296042ebc9377dcef8915aeabaac895d9ed682cef096fa08328de87e6` |
 | 현재 판정 | `Pass` — F1 분류·분할 완료. F2 target·token gate 전까지 학습 입력 승인 금지 |
 
@@ -1502,7 +1501,7 @@ sha256sum -c SHA256SUMS
 | --- | --- |
 | 운영자 / 일시 / run ID | 사용자 + Codex / 2026-07-29 / `phase-f-source-v3-20260729` |
 | 입력 profile / manifest | `phase-f-sard-grounded-v2` / `bb25c0d6a350d4053d0c7210624b32cbf0f8d84e2807c5b1b1afa0d7f3e70795` |
-| artifact 절대경로 | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/Data/processed/phase-f-source-v3` |
+| artifact 절대경로 | `<REDACTED_SERVER_PATH>/Data/processed/phase-f-source-v3` |
 | train / validation / challenge / gold | `10,000 / 1,000 / 500 / 500`; 각 split `1:1` |
 | 최대 실제 Qwen token / cutoff | `1,913 / 2,048`; 초과 `0` |
 | group / content / record ID split overlap | `0 / 0 / 0` |
@@ -1557,7 +1556,8 @@ sha256sum -c SHA256SUMS
 
 Loss는 관찰값일 뿐 진행 gate가 아닙니다. Q1이 진단 gate를 통과하지
 못하면 Q2로 진행하지 않습니다. Q3는 Q2까지 품질이 계속 개선될 때만
-수행합니다. GPT-OSS-20B 결과는 Qwen 진행을 막지 않습니다.
+수행합니다. F5-X Mistral 실험은 완료된 Qwen 판정을 소급 변경하지 않는
+별도 교차 모델 preflight입니다.
 
 ### F5-Q1 실제 기록 — 2026-07-29
 
@@ -1570,8 +1570,8 @@ Loss는 관찰값일 뿐 진행 gate가 아닙니다. Q1이 진단 gate를 통�
 | wall time | `4,230.398초` |
 | GPU peak | GPU 0 `107,342 MiB`; GPU 1 `107,402 MiB` |
 | loss 관찰값 | aggregate train loss `0.30018`; final validation loss `0.06199` |
-| adapter 경로 | `/home/daegu/workspace/AegisLM-B200/training_artifacts/qwen3-coder-next/lora/phase-f-source-v3/q1-100` |
-| checkpoint mirror | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/TrainingArtifacts/checkpoints/qwen3-coder-next/lora/phase-f-source-v3/q1-100/checkpoint-100` |
+| adapter 경로 | `<REDACTED_SERVER_PATH>/training_artifacts/qwen3-coder-next/lora/phase-f-source-v3/q1-100` |
+| checkpoint mirror | `<REDACTED_SERVER_PATH>/TrainingArtifacts/checkpoints/qwen3-coder-next/lora/phase-f-source-v3/q1-100/checkpoint-100` |
 | adapter SHA-256 | `7f6fc7de49f7488c2d834422a3b267f9f83b76ed2df8f6c6d324935edb9b9eca` |
 | save / reload / API | `Pass / Pass / HTTP 200` |
 | 첫 reload 오류 | 서버에 inference config가 없어 즉시 종료; config 동기화 후 재시도 통과 |
@@ -1691,13 +1691,13 @@ SHA-256과 승인된 외부 artifact 경로만 기록합니다.
 
 ## 관련 문서
 
-- [Phase F 데이터 재설계 및 바이너리 분석 실험 계획](PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)
-- [절대평가 환경과 metric 정의](ABSOLUTE_EVALUATION.md)
-- [Phase D/E 평가 계획](EVALUATION_PLAN.md)
-- [실험 기록 템플릿](EXPERIMENT_LOG_TEMPLATE.md)
+- [Phase F 데이터 재설계 및 바이너리 분석 실험 계획](../../experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md)
+- [절대평가 환경과 metric 정의](../../evaluation/ABSOLUTE_EVALUATION.md)
+- [Phase D/E 평가 계획](../../evaluation/EVALUATION_PLAN.md)
+- [실험 기록 템플릿](../../templates/EXPERIMENT_LOG_TEMPLATE.md)
 - [B200 학습 handoff](B200_TRAINING_HANDOFF.md)
-- [Checkpoint 정책](CHECKPOINT_POLICY.md)
-- [Artifact 저장 정책](ARTIFACT_STORAGE_POLICY.md)
+- [Checkpoint 정책](../policies/CHECKPOINT_POLICY.md)
+- [Artifact 저장 정책](../policies/ARTIFACT_STORAGE_POLICY.md)
 
 ## F5-Q1R4 compact target 재학습 기록 — 2026-07-30
 
@@ -1714,7 +1714,7 @@ SHA-256과 승인된 외부 artifact 경로만 기록합니다.
 | config | `configs/llamafactory/b200/qwen3_coder_next_phase_f_q1r4_100.yaml` |
 | 학습 조건 | Qwen3-Coder-Next base, LoRA, global batch `32`, max step `100`, resume 없음 |
 | preflight | `Pass`; dataset hash·no-resume·output namespace·GPU idle 확인 |
-| run root | `/NHNHOME/WORKSPACE/26moel002_ex07/LLM/TrainingArtifacts/runs/qwen3-coder-next/lora/phase-f-source-v5-r1/q1r4-100` |
+| run root | `<REDACTED_SERVER_PATH>/TrainingArtifacts/runs/qwen3-coder-next/lora/phase-f-source-v5-r1/q1r4-100` |
 | adapter root | `training_artifacts/qwen3-coder-next/lora/phase-f-source-v5-r1/q1r4-100` |
 | 현재 상태 | `Fail` |
 | 학습 runtime / loss | `4,185.24초`; aggregate train `0.28684`; final validation `0.04602` |
@@ -2494,7 +2494,7 @@ uv run python scripts/inventory_phase_f_cvefixes_archive.py \
 이 명령은 outer archive hash와 ZIP central directory만 읽고 member를
 추출하지 않습니다. 실패 시 output의 `failure_reasons`를 기록하고
 archive를 풀지 않습니다. 상세 정책은
-[patch label supply 결정문](PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)을
+[patch label supply 결정문](../../experiments/decisions/phase-f/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)을
 따릅니다.
 
 수동 review queue는
@@ -2543,7 +2543,7 @@ commit hash를 전달하지 않습니다.
 - provenance audit SHA-256:
   `68b4b51d3968a53bd711886e3d75ea02d9de5c8794c6eef733bb5b06c5525c36`
 - 상세 결정:
-  [Decompile-Bench 정렬·출처 gate 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)
+  [Decompile-Bench 정렬·출처 gate 결정문](../../experiments/decisions/phase-f/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)
 
 다음 실행은 Assemblage metadata-only gate입니다. repository license,
 compiler, optimization, architecture를 먼저 감사하고 전체 PE/ELF corpus나
@@ -2580,7 +2580,7 @@ raw ELF archive를 받아도 현재 metadata 계약 실패는 해결되지 않�
 - field audit SHA-256:
   `7951a4cc5a9f47f5dc4408195446fc67552bb197b1c5d335a4285b40309d770c`
 - 상세 결정:
-  [Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)
+  [Assemblage metadata 결정문](../../experiments/decisions/phase-f/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)
 
 다음 실행은 BinKit 2.0 metadata-only gate입니다. compiler,
 architecture, optimization과 sample identity를 먼저 감사하며 binary
@@ -2608,7 +2608,7 @@ extracted function feature의 license로 간주하지 않습니다. pickle은
 - metadata preflight SHA-256:
   `285c0e514b2c958620f7b060d5b0e3817df9423133e0a7f4acd7a99974c76530`
 - 상세 결정:
-  [BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)
+  [BinKit metadata 결정문](../../experiments/decisions/phase-f/PHASE_F_BINKIT_METADATA_DECISION_20260731.md)
 
 다음 실행은 EMBER2024 metadata/static-feature benchmark gate입니다.
 초기 역할은 SFT가 아니라 독립 malware-feature 절대평가입니다.
@@ -2647,11 +2647,11 @@ Evidence:
 - benchmark audit SHA-256:
   `f37ae45b619ad2274827ebba2d37c9a06f8448406b4dc9e4c6cba639ca618a8e`
 - 상세 결정:
-  [EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)
+  [EMBER2024 benchmark 결정문](../../experiments/decisions/phase-f/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)
 
 materializer와 classifier absolute gate는 완료했습니다. 자체 모델과
 공식 모델 모두 낮은 FPR의 시간 안정성 gate에 실패했으므로 Qwen SFT 및
 NuriLab 연결과 분리합니다. 다음 실행은 FP 집중 주차의 label-blind
 feature drift 감사입니다. 상세 결과는
-[EMBER2024 classifier 결정문](PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
+[EMBER2024 classifier 결정문](../../experiments/decisions/phase-f/PHASE_F_EMBER2024_CLASSIFIER_BASELINE_DECISION_20260731.md)에
 보존합니다.

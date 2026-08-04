@@ -48,7 +48,7 @@ def _render(rows: list[dict[str, Any]]) -> str:
         f"- Labels: `{dict(sorted(labels.items()))}`",
         f"- CWE count: `{len(cwes)}`",
         f"- Review statuses: `{dict(sorted(statuses.items()))}`",
-        "- Rubric: `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md`",
+        "- Rubric: `docs/evaluation/SOURCE_MANUAL_REVIEW_RUBRIC.md`",
         "",
         "## Decision checklist",
         "",

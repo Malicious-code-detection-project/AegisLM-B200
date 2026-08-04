@@ -2,7 +2,7 @@
 
 이 문서는 `AegisLM` Phase D/E 이후에 검토할 공개 데이터셋 후보를 기록합니다.
 
-`docs/DATA_STRATEGY.md`가 데이터 사용 원칙과 안전 정책의 정본이라면, 이 문서는 외부 데이터셋 후보의 조사 상태와 AegisLM 적용 가능성을 추적하는 registry입니다.
+`docs/design/datasets/DATA_STRATEGY.md`가 데이터 사용 원칙과 안전 정책의 정본이라면, 이 문서는 외부 데이터셋 후보의 조사 상태와 AegisLM 적용 가능성을 추적하는 registry입니다.
 
 이 문서는 실제 데이터 다운로드 목록이 아닙니다. 후보의 출처, 라이선스/이용 조건, 데이터 타입, raw malware 포함 가능성, AegisLM 사용 목적을 먼저 검토하기 위한 문서입니다.
 
@@ -156,9 +156,9 @@ Phase E tiny SFT should start with text/metadata records, not raw binary dataset
 ## 8. Related Work
 
 - Linear: THE-62
-- `docs/DATA_STRATEGY.md`
-- `docs/EVALUATION_PLAN.md`
-- `docs/FINETUNING_EXPERIMENT_PLAN.md`
+- `docs/design/datasets/DATA_STRATEGY.md`
+- `docs/evaluation/EVALUATION_PLAN.md`
+- `docs/experiments/plans/FINETUNING_EXPERIMENT_PLAN.md`
 
 ## 9. Phase F Binary-derived Candidates
 
@@ -187,7 +187,7 @@ Decompile-Bench 첫 Arrow shard 131,359건은 고정 100건 source–assembly
 명시적으로 복원할 수 있는 행은 111,206건(84.66%)이고, 1,066개
 repository의 행별 license와 compiler/optimization metadata는 제공되지
 않습니다. 따라서 representation 참고 자료로만 보존하며, 세부 판정은
-[Decompile-Bench alignment 결정문](PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)을
+[Decompile-Bench alignment 결정문](../../experiments/decisions/phase-f/PHASE_F_DECOMPILE_BENCH_ALIGNMENT_DECISION_20260731.md)을
 따릅니다.
 
 Assemblage LinuxELF metadata 249,121행은 repository·optimization·binary
@@ -196,7 +196,7 @@ license 상한은 70.91%, architecture 68.84%, binary format·repo
 commit·build mode는 약 31.15%입니다. build trace cohort와 architecture
 cohort의 strict 교집합이 0건이므로 raw ELF를 받지 않고
 `metadata_reference_only`로 종료합니다. 세부 판정은
-[Assemblage metadata 결정문](PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)을
+[Assemblage metadata 결정문](../../experiments/decisions/phase-f/PHASE_F_ASSEMBLAGE_METADATA_DECISION_20260731.md)을
 따릅니다.
 
 BinKit 2.0은 371,928 binaries와 8 architectures·23 compilers·6
@@ -204,7 +204,7 @@ optimization levels를 문서화합니다. 그러나 v2.0.0 release에 dataset
 asset이 없고 실제 binary·pickle은 Google Drive에서만 배포되어
 revision·size·checksum·dataset license·row schema를 고정할 수 없습니다.
 따라서 다운로드하지 않으며 세부 판정은
-[BinKit metadata 결정문](PHASE_F_BINKIT_METADATA_DECISION_20260731.md)을
+[BinKit metadata 결정문](../../experiments/decisions/phase-f/PHASE_F_BINKIT_METADATA_DECISION_20260731.md)을
 따릅니다.
 
 EMBER2024 ELF test 고정 artifact는 12개 weekly JSONL과 12,000행을
@@ -213,7 +213,7 @@ malware label과 static feature 충돌은 0건이므로 6,000개 시간 관측�
 중복 제거한 독립 절대평가는 승인합니다. CAPS/MBC/TTP 차이는 별도 merge
 계약 전까지 사용하지 않고 source/binary SFT에는 혼합하지 않습니다.
 세부 판정은
-[EMBER2024 benchmark 결정문](PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)을
+[EMBER2024 benchmark 결정문](../../experiments/decisions/phase-f/PHASE_F_EMBER2024_BENCHMARK_DECISION_20260731.md)을
 따릅니다.
 
 ARVO의 sanitizer `crash_type`도 CWE gold label로 자동 등치하지 않습니다.
@@ -228,7 +228,7 @@ object 실행도 수행하지 않았습니다.
 `11/200`으로 5% gate를 초과했습니다. Git binary patch 13건과 C/C++
 source hunk가 없는 패치 5건은 queue에서 자동 제외했습니다. ARVO는
 현 상태에서 binary SFT label 공급원이 아니며, 상세 결과는
-[ARVO patch gate 결정문](PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)을
+[ARVO patch gate 결정문](../../experiments/decisions/phase-f/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md)을
 따릅니다.
 
 SOREL-20M full 약 8 TB download는 현재 shared storage를 거의 소진하므로
@@ -282,5 +282,5 @@ Language coverage 자체는 quota로 사용하지 않습니다. 다음 후보는
 
 전체 raw binary corpus나 malware payload는 이 순서에 포함하지 않습니다.
 세부 근거는
-[patch label supply 결정문](PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)을
+[patch label supply 결정문](../../experiments/decisions/phase-f/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md)을
 따릅니다.

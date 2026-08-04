@@ -136,7 +136,7 @@ Phase E tiny SFT PoC로 넘어가기 전 확인합니다.
 
 - Linear: THE-61
 - Blockers completed: THE-58, THE-59, THE-60
-- `docs/EVALUATION_PLAN.md`
-- `docs/EXPERIMENT_LOG_TEMPLATE.md`
-- `docs/ARTIFACT_STORAGE_POLICY.md`
-- `docs/FINETUNING_EXPERIMENT_PLAN.md`
+- `docs/evaluation/EVALUATION_PLAN.md`
+- `docs/templates/EXPERIMENT_LOG_TEMPLATE.md`
+- `docs/operations/policies/ARTIFACT_STORAGE_POLICY.md`
+- `docs/experiments/plans/FINETUNING_EXPERIMENT_PLAN.md`

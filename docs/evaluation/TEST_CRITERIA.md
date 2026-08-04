@@ -44,7 +44,7 @@ Phase D 이후 baseline/adaptor 비교에서 사용할 후보 지표:
 
 ### Phase D/E 점수 표현
 
-파인튜닝 전후 비교는 `docs/EVALUATION_PLAN.md`의 기준을 따른다.
+파인튜닝 전후 비교는 `docs/evaluation/EVALUATION_PLAN.md`의 기준을 따른다.
 
 - hard gate: JSON parse, JSON Schema validation, unsafe guidance 여부
 - composite score: 0-100
