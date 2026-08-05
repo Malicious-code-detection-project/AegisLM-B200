@@ -1,0 +1,48 @@
+{
+  "schema_version": "aegislm.phase-f-binary-manual-review-decisions.v1",
+  "review_artifact_sha256": "059ba69fb9edb5cea19a73e930dd2ecb193642bdd96cc802790615dade6f342b",
+  "review_policy": {
+    "maximum_error_count": 5,
+    "early_stop_on_sixth_error": true,
+    "label_error_meaning": "The scoped present/not_observed assessment is not supported by the supplied pseudo-C.",
+    "evidence_error_meaning": "The target finding does not expose the target-CWE relation needed to teach or justify the assessment."
+  },
+  "decisions": [
+    {
+      "id": "binary-b0-4ed2a9fa36f06ff3-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-400 not_observed target cites only result messages and omits the visible 1..2000 range guard that makes the sleep duration bounded."
+    },
+    {
+      "id": "binary-b0-79e6ac83744f3009-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-401 not_observed target cites allocation and stack-canary checks but omits the visible free(pvVar1) operations that establish resource release."
+    },
+    {
+      "id": "binary-b0-018374cdff0d1540-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-23 present target cites only buffer zero-initialization; it omits the untrusted fgets append followed by open(dataBuffer), which is the path-traversal relation."
+    },
+    {
+      "id": "binary-b0-cb4563ec6fdbd572-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-23 not_observed target again cites only buffer zero-initialization; it omits the fixed file.txt append and subsequent open operation."
+    },
+    {
+      "id": "binary-b0-cdf527abc9905006-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-195 not_observed target cites allocation and memory writes but omits the visible data = 99 assignment that removes the negative-size conversion relation."
+    },
+    {
+      "id": "binary-b0-a4828352893a17d6-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-134 not_observed target mixes safe %s calls with variable-format calls but omits the fixed-string source assignment needed to justify why the latter is scoped as not observed."
+    }
+  ]
+}

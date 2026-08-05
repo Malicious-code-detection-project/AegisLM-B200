@@ -1,0 +1,11 @@
+{
+  "schema_version": "aegislm.phase-f-binary-b0-review-decisions.v1",
+  "review_scope": "phase-f-binary-b0-replacement-r2-decompile-v1",
+  "required_target_preservation_rate": 1.0,
+  "pairs": {
+    "2dbdaaea5a05b5c4": {
+      "default": "pass",
+      "notes": "CWE-194 random signed-short length passed to memcpy remains distinct from the fixed 99-byte copy across GCC/Clang O0/O2."
+    }
+  }
+}

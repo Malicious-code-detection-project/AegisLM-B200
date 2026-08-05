@@ -1,0 +1,41 @@
+{
+  "review_artifact_sha256": "ae926174c7b1ecdbb01fea4037f7f0f745510c5354f8b5ef074d52434f975f27",
+  "decisions": [
+    {
+      "id": "binary-b0-923fd4b90d9c14c2-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-124 present selects a socket error condition and recv as bound/sink, omitting the negative destination index or pointer offset required for a buffer underwrite."
+    },
+    {
+      "id": "binary-b0-4dfa802cb4db4fc6-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-127 present selects a socket status condition and recv as bound/sink, not the negative source index and out-of-bounds read."
+    },
+    {
+      "id": "binary-b0-ae3b0457fc321fd4-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-457 not_observed cites a five-iteration initialization loop and a ten-iteration read loop, which exposes the vulnerable partial-initialization relation rather than a fixed relation."
+    },
+    {
+      "id": "binary-b0-6334adf8f036f45a-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-690 present assigns the same malloc operation both source and sink roles and omits the unchecked dereference or use."
+    },
+    {
+      "id": "binary-b0-839dbc22b970cb82-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-690 not_observed links a null guard and allocation back to the allocation as sink instead of the dereference constrained by the guard."
+    },
+    {
+      "id": "binary-b0-2dd86dc208d6ec4f-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-124 present treats an unrelated printIntLine call as the bound for an indexed write and omits the index-producing negative relation."
+    }
+  ]
+}

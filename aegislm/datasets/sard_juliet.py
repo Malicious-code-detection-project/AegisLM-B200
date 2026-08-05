@@ -19,7 +19,11 @@ from aegislm.datasets.source import (
     format_source_prompt,
     validate_source_record,
 )
-from aegislm.datasets.source_audit import count_source_training_tokens
+from aegislm.datasets.source_audit import (
+    SOURCE_ASSISTANT_TOKEN_LIMIT,
+    count_source_assistant_tokens,
+    count_source_training_tokens,
+)
 
 SARD_JULIET_PROFILE = "phase-f-sard-grounded-v2"
 SARD_JULIET_SOURCE = "NIST SARD Juliet C/C++ 1.3"
@@ -27,7 +31,7 @@ SARD_JULIET_REVISION = "2017-10-01-juliet-test-suite-for-c-cplusplus-v1-3"
 SARD_JULIET_URL = "https://samate.nist.gov/SARD/test-suites/112"
 SARD_JULIET_LICENSE = "NIST SARD public-domain/CC0-1.0 dataset declaration"
 SARD_JULIET_SEED = 20260728
-MAX_EVIDENCE_SPANS = 10
+MAX_EVIDENCE_SPANS = 8
 _SINGLE_FILE = re.compile(
     r"^C/testcases/(?P<cwe_dir>CWE(?P<cwe>\d+)_.*?)/"
     r"(?:s\d+/)?(?P<stem>.+)_(?P<variant>0[1-9]|10)\.(?P<extension>c|cpp)$"
@@ -171,13 +175,21 @@ def materialize_juliet_profile(
     functions: Sequence[JulietFunction],
     *,
     tokenizer: Any,
+    profile: str = SARD_JULIET_PROFILE,
     seed: int = SARD_JULIET_SEED,
     cutoff_len: int = 2048,
     train_pairs: int = 5000,
     validation_pairs: int = 500,
     test_pairs: int = 250,
+    excluded_group_ids: frozenset[str] = frozenset(),
+    excluded_code_hashes: frozenset[str] = frozenset(),
+    evaluation_only: bool = False,
 ) -> dict[str, Any]:
     """Apply group-first quotas, F2 contract validation, and exact token gating."""
+    if evaluation_only and (train_pairs or validation_pairs):
+        raise ValueError(
+            "evaluation-only profiles cannot contain train or validation pairs"
+        )
     by_group: dict[str, list[JulietFunction]] = {}
     for function in functions:
         by_group.setdefault(function.group_id, []).append(function)
@@ -195,10 +207,18 @@ def materialize_juliet_profile(
     )
     ordered: list[list[JulietFunction]] = []
     seen_code_hashes: set[str] = set()
+    excluded_existing_group_count = 0
+    excluded_existing_content_group_count = 0
     for group in ordered_candidates:
         group_code_hashes = {
             hashlib.sha256(item.code.encode()).hexdigest() for item in group
         }
+        if group[0].group_id in excluded_group_ids:
+            excluded_existing_group_count += 1
+            continue
+        if group_code_hashes & excluded_code_hashes:
+            excluded_existing_content_group_count += 1
+            continue
         if seen_code_hashes & group_code_hashes:
             continue
         seen_code_hashes.update(group_code_hashes)
@@ -226,8 +246,10 @@ def materialize_juliet_profile(
     canonical_records: list[dict[str, Any]] = []
     exclusions: Counter[str] = Counter()
     target_hashes: Counter[str] = Counter()
+    input_target_hashes: Counter[str] = Counter()
     code_hashes: Counter[str] = Counter()
     maximum_tokens = 0
+    maximum_assistant_tokens = 0
     semantic_basis_failure_count = 0
     for group in selected:
         staged: list[tuple[dict[str, Any], dict[str, Any], int, JulietFunction]] = []
@@ -249,9 +271,20 @@ def materialize_juliet_profile(
             )
             prompt = format_source_prompt(record)
             token_count = count_source_training_tokens(tokenizer, prompt, result.target)
+            assistant_token_count = count_source_assistant_tokens(
+                tokenizer,
+                result.target,
+            )
             maximum_tokens = max(maximum_tokens, token_count)
+            maximum_assistant_tokens = max(
+                maximum_assistant_tokens,
+                assistant_token_count,
+            )
             if token_count > cutoff_len:
                 group_reason = "tokenizer_cutoff_exceeded"
+                break
+            if assistant_token_count > SOURCE_ASSISTANT_TOKEN_LIMIT:
+                group_reason = "assistant_token_limit_exceeded"
                 break
             staged.append((record, result.target, token_count, function))
         if group_reason:
@@ -281,6 +314,20 @@ def materialize_juliet_profile(
                         ensure_ascii=False,
                         sort_keys=True,
                         separators=(",", ":"),
+                    ).encode()
+                ).hexdigest()
+            ] += 1
+            input_target_hashes[
+                hashlib.sha256(
+                    (
+                        str(record["code"]["sha256"])
+                        + "\0"
+                        + json.dumps(
+                            target,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
                     ).encode()
                 ).hexdigest()
             ] += 1
@@ -324,6 +371,9 @@ def materialize_juliet_profile(
     exact_target_duplicate_count = sum(
         count - 1 for count in target_hashes.values() if count > 1
     )
+    input_target_duplicate_count = sum(
+        count - 1 for count in input_target_hashes.values() if count > 1
+    )
     exact_code_duplicate_count = sum(
         count - 1 for count in code_hashes.values() if count > 1
     )
@@ -340,6 +390,9 @@ def materialize_juliet_profile(
     exact_target_duplicate_rate = (
         exact_target_duplicate_count / record_count if record_count else 0.0
     )
+    input_target_duplicate_rate = (
+        input_target_duplicate_count / record_count if record_count else 0.0
+    )
     maximum_exact_target_count = max(target_hashes.values(), default=0)
     maximum_exact_target_fraction = (
         maximum_exact_target_count / record_count if record_count else 0.0
@@ -347,24 +400,31 @@ def materialize_juliet_profile(
     quality_gates = {
         "model_visible_label_leakage": model_visible_label_leakage_count == 0,
         "exact_code_duplicate_rate": exact_code_duplicate_rate <= 0.05,
-        "exact_target_duplicate_rate": exact_target_duplicate_rate <= 0.05,
+        "input_target_duplicate_rate": input_target_duplicate_rate == 0.0,
         "maximum_exact_target_fraction": maximum_exact_target_count
         <= max(1, int(record_count * 0.02)),
         "tokenizer_cutoff": not exclusions["tokenizer_cutoff_exceeded"],
+        "assistant_token_budget": (
+            not exclusions["assistant_token_limit_exceeded"]
+            and maximum_assistant_tokens <= SOURCE_ASSISTANT_TOKEN_LIMIT
+        ),
         "semantic_basis": semantic_basis_failure_count == 0,
     }
     automated_pass = quota_pass and all(quality_gates.values())
     return {
-        "profile": SARD_JULIET_PROFILE,
+        "profile": profile,
         "output_contract": "aegislm.source-vulnerability-assessment.v2",
         "status": (
-            "manual_review_required"
+            "frozen_blind"
+            if automated_pass and evaluation_only
+            else "manual_review_required"
             if automated_pass
             else "evidence_supply_blocked"
             if not quota_pass
             else "automated_quality_gate_failed"
         ),
         "approved_for_training": False,
+        "evaluation_only": evaluation_only,
         "seed": seed,
         "cutoff_len": cutoff_len,
         "required_pairs": {
@@ -374,16 +434,24 @@ def materialize_juliet_profile(
         },
         "available_complete_pairs": len(complete_groups),
         "available_unique_complete_pairs": len(ordered),
+        "excluded_existing_group_count": excluded_existing_group_count,
+        "excluded_existing_content_group_count": (
+            excluded_existing_content_group_count
+        ),
         "selected_pairs_before_token_gate": len(selected),
         "eligible_counts": counts,
         "eligible_record_count": len(manifest),
         "excluded_group_counts": dict(exclusions),
         "maximum_observed_tokens": maximum_tokens,
+        "maximum_assistant_tokens": maximum_assistant_tokens,
+        "assistant_token_limit": SOURCE_ASSISTANT_TOKEN_LIMIT,
         "model_visible_label_leakage_count": model_visible_label_leakage_count,
         "exact_code_duplicate_count": exact_code_duplicate_count,
         "exact_code_duplicate_rate": exact_code_duplicate_rate,
         "exact_target_duplicate_count": exact_target_duplicate_count,
         "exact_target_duplicate_rate": exact_target_duplicate_rate,
+        "input_target_duplicate_count": input_target_duplicate_count,
+        "input_target_duplicate_rate": input_target_duplicate_rate,
         "maximum_exact_target_fraction": maximum_exact_target_fraction,
         "maximum_exact_target_count": maximum_exact_target_count,
         "quality_gates": quality_gates,
@@ -564,12 +632,28 @@ def _build_function(
         for item in fix_annotations
     ):
         return None
-    selected_annotations = (
-        flaw_annotations
-        if label == "present"
-        else [*fix_annotations, *flaw_annotations]
-    )
-    annotated_spans = _select_annotated_spans(sanitized, selected_annotations)
+    if label == "present":
+        annotated_spans = _select_annotated_spans(sanitized, flaw_annotations)
+    else:
+        fix_spans = _select_annotated_spans(sanitized, fix_annotations)
+        fix_boundary = max(
+            (
+                sanitized.find(span) + len(span)
+                for span in fix_spans
+                if sanitized.find(span) >= 0
+            ),
+            default=-1,
+        )
+        downstream_operation_spans = [
+            span
+            for item in flaw_annotations
+            for span in item.code_spans
+            if sanitized.find(span) >= fix_boundary >= 0
+        ]
+        annotated_spans = _ordered_unique_spans(
+            sanitized,
+            [*fix_spans, *downstream_operation_spans],
+        )[:MAX_EVIDENCE_SPANS]
     supporting_spans = _supporting_spans(
         sanitized,
         annotated_spans,
@@ -579,6 +663,10 @@ def _build_function(
     required_spans = _required_cwe_spans(cwe, label, sanitized, spans)
     spans = _merge_required_spans(sanitized, spans, required_spans)
     if not spans:
+        return None
+    if any(sanitized.count(span) != 1 for span in spans):
+        # The v2 contract identifies evidence by exact substring rather than
+        # source location. Repeated occurrences are therefore ambiguous.
         return None
     if _cwe_evidence_errors(cwe, label, spans):
         return None
@@ -601,9 +689,7 @@ def _build_function(
     else:
         relationship = (
             f"Defensive condition: {fix_description} "
-            f"Relevant operation: {flaw_description}"
-            if flaw_description
-            else f"Defensive condition: {fix_description}"
+            "The selected operation executes with this defensive setup."
         )
         conclusion = (
             f"The selected defensive setup or check prevents the scoped {cwe} "
@@ -857,15 +943,35 @@ def _required_cwe_spans(
 ) -> list[str]:
     required: list[str] = []
     if cwe in {"CWE-121", "CWE-122"}:
-        sinks = [
+        call_sinks = [
             span
             for span in selected
             if re.search(
                 r"\b(?:memcpy|memmove|strcpy|strncpy|wcscpy|wcsncpy|strcat|"
-                r"strncat)\s*\(|\b[A-Za-z_]\w*\s*\[[^\]]+\]\s*=",
+                r"strncat)\s*\(",
                 span,
             )
         ]
+        if not call_sinks:
+            call_sinks = _matching_statements(
+                code,
+                r"\b(?:memcpy|memmove|strcpy|strncpy|wcscpy|wcsncpy|strcat|"
+                r"strncat)\s*\(",
+                limit=100,
+            )
+        sinks = call_sinks
+        if not sinks:
+            sinks = [
+                span
+                for span in selected
+                if re.search(r"\b[A-Za-z_]\w*\s*\[[^\]]+\]\s*=", span)
+            ]
+        if not sinks:
+            sinks = _matching_statements(
+                code,
+                r"\b[A-Za-z_]\w*\s*\[[^\]]+\]\s*=",
+                limit=100,
+            )
         if sinks:
             sink = sinks[-1]
             required.append(sink)
@@ -941,6 +1047,54 @@ def _required_cwe_spans(
                     limit=1,
                 )
             )
+    elif cwe == "CWE-124":
+        sinks = _matching_statements(
+            code,
+            r"\b(?:memcpy|memmove|strcpy|strncpy|wcscpy|wcsncpy)\s*\(",
+            limit=100,
+        )
+        if not sinks:
+            sinks = _matching_statements(
+                code,
+                r"\b[A-Za-z_]\w*\s*\[[^\]]+\]\s*="
+                r"\s*[A-Za-z_]\w*\s*\[[^\]]+\]",
+                limit=100,
+            )
+        if sinks:
+            sink = sinks[-1]
+            required.append(sink)
+            required.extend(
+                _matching_statements_before(
+                    code,
+                    sink,
+                    r"^(?:for|while)\s*\(",
+                    limit=1,
+                )
+            )
+            destination = _destination_identifier(sink)
+            if destination:
+                assignment = _last_statement_before(
+                    code,
+                    sink,
+                    rf"\b{re.escape(destination)}\s*=\s*([A-Za-z_]\w*)\s*;",
+                )
+                if assignment:
+                    required.append(assignment)
+                    match = re.search(
+                        rf"\b{re.escape(destination)}\s*=\s*([A-Za-z_]\w*)\s*;",
+                        assignment,
+                    )
+                    if match:
+                        backing = match.group(1)
+                        allocation = _last_statement_before(
+                            code,
+                            assignment,
+                            rf"\b{re.escape(backing)}\s*=\s*"
+                            r"(?:\([^;]+\)\s*)?"
+                            r"(?:malloc|calloc|realloc)\s*\(",
+                        )
+                        if allocation:
+                            required.append(allocation)
     elif cwe == "CWE-457":
         required.extend(
             _matching_statements(
@@ -1038,14 +1192,24 @@ def _required_cwe_spans(
                 limit=2,
             )
         )
-        required.extend(
-            _matching_statements(
+        effects = _matching_statements(
+            code,
+            r"\b(?:memcpy|memmove)\s*\(",
+            limit=1,
+        )
+        if not effects:
+            effects = _matching_statements(
                 code,
-                r"\b(?:memcpy|memmove)\s*\(|\bdest\s*\[[^\]]+\]\s*="
-                r"|\bprint\w*\s*\(\s*buffer\s*\[",
+                r"\bdest\s*\[[^\]]+\]\s*=\s*\bdata\s*\[[^\]]+\]",
                 limit=1,
             )
-        )
+        if not effects:
+            effects = _matching_statements(
+                code,
+                r"\bdest\s*\[[^\]]+\]\s*=|\bprint\w*\s*\(\s*buffer\s*\[",
+                limit=1,
+            )
+        required.extend(effects)
         required.extend(
             _matching_statements(
                 code,
@@ -1409,7 +1573,11 @@ def _ordered_unique_spans(code: str, spans: Sequence[str]) -> list[str]:
         for span in spans
         if span.strip() and span.strip() != ";" and span.strip() in code
     }
-    return sorted(unique, key=lambda span: code.find(span))
+    # Multiple excerpts can start at the same character (for example, a
+    # single-line prefix and its full multi-line call).  A position-only key
+    # leaves those ties to set iteration order, which varies with Python's
+    # hash seed and makes otherwise identical dataset builds non-reproducible.
+    return sorted(unique, key=lambda span: (code.find(span), len(span), span))
 
 
 def _clean_annotation(value: str) -> str:
@@ -1503,13 +1671,39 @@ def _evidence_identifiers(spans: Sequence[str]) -> set[str]:
         "float",
         "double",
         "null",
+        "alloca",
+        "malloc",
+        "calloc",
+        "realloc",
+        "memcpy",
+        "memmove",
+        "strcpy",
+        "strncpy",
+        "wcscpy",
+        "wcsncpy",
+        "new",
+        "delete",
+        "free",
     }
-    return {
-        token
-        for span in spans
-        for token in re.findall(r"\b[A-Za-z_]\w*\b", span)
-        if token.lower() not in ignored
-    }
+    identifiers: set[str] = set()
+    for span in spans:
+        identifier_text = re.sub(r"\bsizeof\s*\([^)]*\)", "", span)
+        declaration = re.match(
+            r"^(?:const\s+)?(?:(?:struct|class)\s+)?"
+            r"(?P<type>[A-Za-z_]\w*)\s+(?:[*&]\s*)?"
+            r"[A-Za-z_]\w*(?:\s*\[|[\s=;,])",
+            identifier_text.strip(),
+        )
+        declared_type = declaration.group("type") if declaration else ""
+        for token in re.findall(r"\b[A-Za-z_]\w*\b", identifier_text):
+            if token == declared_type:
+                continue
+            if token.lower() in ignored:
+                continue
+            if re.fullmatch(r"(?:u?int\d+_t|[A-Za-z_]\w*_t)", token):
+                continue
+            identifiers.add(token)
+    return identifiers
 
 
 def _target_semantic_basis_errors(target: Mapping[str, Any]) -> list[str]:

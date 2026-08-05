@@ -1,0 +1,82 @@
+{
+  "profile": "phase-f-patch-label-supply-preflight-v1",
+  "observed_at": "2026-07-31",
+  "storage": {
+    "minimum_archive_multiplier": 5.0
+  },
+  "sources": [
+    {
+      "source_id": "cvefixes-v1.0.8",
+      "dataset_role": "patch_localized_cwe_label_supply",
+      "version": "v1.0.8",
+      "immutable_release": true,
+      "metadata_url": "https://zenodo.org/api/records/13118970",
+      "release_url": "https://zenodo.org/records/13118970",
+      "artifact": {
+        "name": "CVEfixes_v1.0.8.zip",
+        "url": "https://zenodo.org/api/records/13118970/files/CVEfixes_v1.0.8.zip/content",
+        "archive_bytes": 12708711268,
+        "upstream_checksum": "md5:4586a358977acfa4c60b1a2cdd096221",
+        "post_download_sha256_required": true
+      },
+      "licenses": {
+        "dataset": "CC-BY-4.0",
+        "collector": "MIT"
+      },
+      "required_field_evidence": {
+        "cve_id": true,
+        "cwe_ids": true,
+        "repository": true,
+        "fix_commit": true,
+        "function_before": true,
+        "function_after": true,
+        "localized_diff": true
+      },
+      "selected_components": [
+        "relational_database",
+        "cve_metadata",
+        "cwe_metadata",
+        "source_before_after"
+      ]
+    },
+    {
+      "source_id": "megavul-main-2b34eb3",
+      "dataset_role": "patch_localized_cwe_label_supply",
+      "version": "main@2b34eb3685b2a215d44c08d34fe9cec0f49eada3",
+      "immutable_release": false,
+      "metadata_url": "https://github.com/Icyrockton/MegaVul",
+      "release_url": "https://github.com/Icyrockton/MegaVul",
+      "artifact": {
+        "name": "megavul_simple.json",
+        "url": "",
+        "archive_bytes": null,
+        "upstream_checksum": "",
+        "post_download_sha256_required": true
+      },
+      "licenses": {
+        "dataset": "unverified",
+        "collector": "GPL-3.0"
+      },
+      "required_field_evidence": {
+        "cve_id": true,
+        "cwe_ids": true,
+        "repository": true,
+        "fix_commit": true,
+        "function_before": true,
+        "function_after": true,
+        "localized_diff": true
+      },
+      "selected_components": [
+        "simple_json",
+        "source_before_after"
+      ]
+    }
+  ],
+  "safety": {
+    "download_graph_archive": false,
+    "download_binary": false,
+    "read_poc": false,
+    "execute_reproducer": false,
+    "execute_object": false
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-879b60a582bdccb6",
+      "error_kinds": [],
+      "operator_notes": "Network preparation, protocol-dependent hints, address resolution, socket/connect loop, close/free, and result align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-2c80c0e78961b1cc",
+      "error_kinds": [],
+      "operator_notes": "Iterator creation, dictionary/items validation, two inserts, iterator reset/split calls, and returned iterator align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-2e7b3adbb7ecd7df",
+      "error_kinds": [],
+      "operator_notes": "Existing-name error/clear, location recorders, token consumption, string parse, cleanup, and boolean paths align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-7d1ef20ce75149cb",
+      "error_kinds": [],
+      "operator_notes": "Visibility branch, size-hint allocation/query/update/free, window move, and display flush align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-471b68ad445cfd7e",
+      "error_kinds": [],
+      "operator_notes": "Clock read, message and delimiters, elapsed millisecond calculation/output, newline, and string cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-deaeafe712523088",
+      "error_kinds": [],
+      "operator_notes": "Template-decl fast path and canonical-template pointer substitution fallback align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-7981a15626e5a24b",
+      "error_kinds": [],
+      "operator_notes": "Uniform-name construction, matrix address selection, setUniform call, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-4dd6fef6636d3737",
+      "error_kinds": [],
+      "operator_notes": "Byte-range search, alternate creation, cached-head cloning, outgoing-link edits, recursive suffix call, assertions, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-eac731ef109296c4",
+      "error_kinds": [],
+      "operator_notes": "Both operands are stringified, reconstructed-expression formatter is called with the operator, and temporaries are cleaned up.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-0af18adbfd86c51b",
+      "error_kinds": [],
+      "operator_notes": "All Reader fields, strings, features, and comment collection state are initialized with matching unwind cleanup.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

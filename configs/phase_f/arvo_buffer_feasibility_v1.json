@@ -1,0 +1,48 @@
+{
+  "profile": "phase-f-arvo-buffer-feasibility-v1",
+  "source": {
+    "release": "v3.0.0",
+    "release_url": "https://github.com/n132/ARVO-Meta/releases/tag/v3.0.0",
+    "asset": "arvo.db",
+    "asset_sha256": "331184ca807c2f136f98dac9f1df94c893f4ee2fdf9329dca517ff88e72f97ce",
+    "license_status": "unverified-do-not-redistribute"
+  },
+  "selection": {
+    "seed": 20260731,
+    "family_quota": 50,
+    "families": {
+      "heap_buffer_read": "CWE-126 candidate",
+      "heap_buffer_write": "CWE-122 candidate",
+      "stack_buffer_read": "CWE-126 candidate",
+      "stack_buffer_write": "CWE-121 candidate"
+    }
+  },
+  "patch_review": {
+    "supported_hosts": [
+      "github.com"
+    ],
+    "max_patch_bytes": 5242880,
+    "require_unique_repository_commit": true,
+    "require_reviewable_c_cpp_hunk": true,
+    "reject_git_binary_patch": true,
+    "required_records": 200,
+    "maximum_error_rate": 0.05,
+    "result": "fail_early",
+    "confirmed_errors": 11,
+    "error_budget": 10,
+    "approved_for_training": false
+  },
+  "safety": {
+    "read_poc": false,
+    "read_crash_output": false,
+    "read_reproducer_commands": false,
+    "pull_docker_images": false,
+    "execute_reproducer": false,
+    "execute_compiled_objects": false
+  },
+  "approval": {
+    "initial_disposition": "quarantine",
+    "manual_patch_and_cwe_mapping_required": true,
+    "approved_for_training": false
+  }
+}

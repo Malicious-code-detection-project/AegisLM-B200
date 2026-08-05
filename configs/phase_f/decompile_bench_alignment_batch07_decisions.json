@@ -1,0 +1,86 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-5a7b7f5f9697f64d",
+      "error_kinds": [],
+      "operator_notes": "Bitmap allocation, portable deserialize, failure free, copy-on-write bit clear, and pointer/null returns align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-2d49f56097d9a674",
+      "error_kinds": [],
+      "operator_notes": "Variant array test, result reservation, element type checks/appends, default move path, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-241e37c11456a30d",
+      "error_kinds": [],
+      "operator_notes": "Both comparison messages, EqFailure call with false flag, result return, and temporary cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-84ca986418042bce",
+      "error_kinds": [],
+      "operator_notes": "Null guard, existing-argument search, ownership-disabled wrapper construction, command-line assignment, push, and both exception paths align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-04658b4b3395c132",
+      "error_kinds": [],
+      "operator_notes": "Argument loop, value-object creation and qualification, aggregate/summary handling, representation selection, formatting branches, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-f49100c301875cec",
+      "error_kinds": [],
+      "operator_notes": "Integer subtraction constant tests, symmetric/relational fast path, float operation switch, constant cast, NaN test, and boolean returns align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-1f04d66fcdefdf42",
+      "error_kinds": [],
+      "operator_notes": "String buffer/stream construction, format insertion, StringError creation with error code, and unwind cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-474f4f6400c7590e",
+      "error_kinds": [],
+      "operator_notes": "The noinline wrapper is specialized into the RepeatedEnum parser body and preserves the must-tail fallback path.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-d70a281ddcf4c968",
+      "error_kinds": [],
+      "operator_notes": "Quick-immediate decode, effective address/read, subtraction, N/Z/X/C/V flag calculations, and write-back align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-6a066a0d9d5d668f",
+      "error_kinds": [],
+      "operator_notes": "Ostringstream creation, four argument insertions, returned string construction, and stream cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

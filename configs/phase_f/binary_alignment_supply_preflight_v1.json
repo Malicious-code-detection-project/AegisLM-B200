@@ -1,0 +1,136 @@
+{
+  "profile": "phase-f-binary-alignment-supply-preflight-v1",
+  "observed_at": "2026-07-31",
+  "storage": {
+    "minimum_artifact_multiplier": 3.0
+  },
+  "sources": [
+    {
+      "source_id": "decompile-bench-shard-00000",
+      "dataset_role": "source_assembly_alignment_feasibility",
+      "requested_scope": "one_shard_alignment_feasibility",
+      "revision": "4b708c2211cd7d4af403675db56322aa4ed7050c",
+      "public": true,
+      "gated": false,
+      "dataset_license": "CC0-1.0",
+      "training_requested": false,
+      "acquire_now": true,
+      "artifact": {
+        "name": "data-00000-of-00017.arrow",
+        "url": "https://huggingface.co/datasets/LLM4Binary/decompile-bench/resolve/4b708c2211cd7d4af403675db56322aa4ed7050c/data-00000-of-00017.arrow",
+        "bytes": 489618088,
+        "sha256": "2a68cfda840f0c1aa1b6846b78fa9cce961cd2da42be5043579c53c1f69332b5"
+      },
+      "required_fields": [
+        "function_identity",
+        "source_code",
+        "assembly",
+        "source_path"
+      ],
+      "field_evidence": {
+        "function_identity": true,
+        "source_code": true,
+        "assembly": true,
+        "source_path": true,
+        "compiler": false,
+        "optimization": false,
+        "architecture": false,
+        "repository": false,
+        "repository_license": false,
+        "pseudo_c": false
+      },
+      "selected_components": [
+        "arrow_text_shard",
+        "source_function",
+        "assembly_function"
+      ]
+    },
+    {
+      "source_id": "decompile-eval-github",
+      "dataset_role": "independent_decompilation_benchmark",
+      "requested_scope": "reserved_benchmark",
+      "revision": "b9271fae3c556e46948559f4176ffa6f8b4f9491",
+      "public": true,
+      "gated": false,
+      "dataset_license": "CC0-1.0",
+      "training_requested": false,
+      "acquire_now": false,
+      "artifact": {
+        "name": "github/data-00000-of-00002.arrow",
+        "url": "https://huggingface.co/datasets/LLM4Binary/decompile-eval/resolve/b9271fae3c556e46948559f4176ffa6f8b4f9491/github/data-00000-of-00002.arrow",
+        "bytes": 321103960,
+        "sha256": "93e6ab6fcf32b9b887bb29bba489561a3cdafdf9ab2413e5a40b35669f723c2f"
+      },
+      "required_fields": [
+        "function_identity",
+        "source_code",
+        "assembly",
+        "optimization",
+        "language",
+        "pseudo_c"
+      ],
+      "field_evidence": {
+        "function_identity": true,
+        "source_code": true,
+        "assembly": true,
+        "optimization": true,
+        "language": true,
+        "pseudo_c": true,
+        "repository": false,
+        "repository_license": false
+      },
+      "selected_components": [
+        "arrow_text_shard",
+        "source_function",
+        "assembly_function",
+        "pseudo_c"
+      ]
+    },
+    {
+      "source_id": "assemblage-linuxelf-metadata",
+      "dataset_role": "source_binary_build_alignment_metadata",
+      "requested_scope": "future_metadata_schema_inventory",
+      "revision": "5d58b08b500ea279a9880f80fd4b217e1897035a",
+      "public": true,
+      "gated": false,
+      "dataset_license": "other-original-repository-licenses-apply",
+      "training_requested": false,
+      "acquire_now": false,
+      "artifact": {
+        "name": "linux_licensed.duckdb.zst",
+        "url": "https://huggingface.co/datasets/changliu8541/Assemblage_LinuxELF/resolve/5d58b08b500ea279a9880f80fd4b217e1897035a/linux_licensed.duckdb.zst",
+        "bytes": 21971861569,
+        "sha256": "a5b12c3353cd0f653c9543e78343b45dca4207f072a7d5d17b2ab07a4540eb5e"
+      },
+      "required_fields": [
+        "function_identity",
+        "source_code",
+        "binary_pointer",
+        "repository",
+        "build_configuration"
+      ],
+      "field_evidence": {
+        "function_identity": true,
+        "source_code": true,
+        "binary_pointer": true,
+        "repository": true,
+        "build_configuration": true,
+        "repository_license": true,
+        "pseudo_c": false
+      },
+      "selected_components": [
+        "compressed_duckdb_metadata",
+        "source_function",
+        "binary_pointer",
+        "build_configuration"
+      ]
+    }
+  ],
+  "safety": {
+    "download_raw_binary": false,
+    "download_executable": false,
+    "execute_source": false,
+    "execute_tests": false,
+    "pull_docker": false
+  }
+}

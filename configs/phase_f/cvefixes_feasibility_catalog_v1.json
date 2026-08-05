@@ -1,0 +1,14 @@
+{
+  "schema_version": "aegislm.phase-f-cvefixes-feasibility-catalog-config.v1",
+  "profile": "phase-f-cvefixes-feasibility-catalog-v1",
+  "dataset_name": "CVEfixes",
+  "dataset_version": "1.0.8",
+  "selection_seed": 20260731,
+  "sample_size": 200,
+  "language_quotas": {
+    "C": 150,
+    "C++": 50
+  },
+  "max_per_cwe": 20,
+  "max_per_commit_group": 1
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "aegislm.phase-f-binary-b0-review-decisions.v1",
+  "review_scope": "phase-f-binary-b0-replacement-r1-decompile-v1",
+  "required_target_preservation_rate": 1.0,
+  "pairs": {
+    "20d0fe6fd82f7327": {
+      "default": "pass",
+      "notes": "CWE-401 allocation without deallocation remains distinct from free or stack-backed alternatives across compilers."
+    },
+    "212954796eaf21c7": {
+      "default": "pass",
+      "notes": "CWE-665 uninitialized destination remains distinct from dataBuffer[0] initialization across all variants."
+    },
+    "6ab69e00d7b87f25": {
+      "default": "pass",
+      "notes": "CWE-775 open-without-close remains distinct from the close paths across all variants."
+    },
+    "ff27df4e49b9c3af": {
+      "default": "pass",
+      "notes": "CWE-369 explicit modulo by zero remains visible at O0.",
+      "overrides": {
+        "clang-O2": {
+          "decision": "fail",
+          "notes": "The optimized present body reduces the operation to an argument-less print call; modulo-by-zero evidence is not recoverable."
+        },
+        "gcc-O2": {
+          "decision": "fail",
+          "notes": "The optimized present body only states that it does not return; modulo-by-zero evidence is not recoverable."
+        }
+      }
+    }
+  }
+}

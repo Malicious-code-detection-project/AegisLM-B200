@@ -1,0 +1,102 @@
+{
+  "schema_version": "aegislm.binary-candidate-inventory-config.v1",
+  "profile": "phase-f-binary-b0-preflight-v1",
+  "selected_b0_sources": [
+    "sard-juliet-c-cpp-1.3"
+  ],
+  "local_sources": [
+    {
+      "id": "sard-juliet-c-cpp-1.3",
+      "path": "data/raw_data/sard-juliet-c-cpp-1.3/2017-10-01-juliet-test-suite-for-c-cplusplus-v1-3.zip",
+      "kind": "file",
+      "license_status": "approved",
+      "license": "CC0-1.0 / US public domain",
+      "role": "target-builder",
+      "contains_raw_executable": false,
+      "source_url": "https://samate.nist.gov/SARD/test-suites/112"
+    },
+    {
+      "id": "bigvul",
+      "path": "data/raw_data/bigvul",
+      "kind": "directory",
+      "license_status": "review_required",
+      "license": "No dataset-level license found in the acquired artifact",
+      "role": "target-builder-candidate",
+      "contains_raw_executable": false,
+      "source_url": "https://huggingface.co/datasets/bstee615/bigvul"
+    }
+  ],
+  "external_candidates": [
+    {
+      "id": "assemblage-linux-elf",
+      "role": "source-binary-alignment-subset",
+      "disposition": "hold_until_b0",
+      "license": "Per-source-repository license; dataset card marks other",
+      "published_size": "61.9 GB snapshot; current metadata database may be larger",
+      "contains_raw_executable": true,
+      "safe_boundary": "Metadata-first review, then approved function subset only",
+      "source_url": "https://huggingface.co/datasets/changliu8541/Assemblage_LinuxELF"
+    },
+    {
+      "id": "decompile-bench",
+      "role": "representation-and-decompiler-quality",
+      "disposition": "hold_until_b0",
+      "license": "CC0-1.0 for text function pairs; binary/raw companion artifacts have separate cards",
+      "published_size": "8.46 GB text pairs; binary companion 140 GB",
+      "contains_raw_executable": false,
+      "safe_boundary": "Text source/assembly shard only; do not download binary companion for B0",
+      "source_url": "https://huggingface.co/datasets/LLM4Binary/decompile-bench"
+    },
+    {
+      "id": "binkit-2.0",
+      "role": "compiler-architecture-robustness",
+      "disposition": "hold_until_b1",
+      "license": "MIT for repository code; compiled package provenance requires per-package review",
+      "published_size": "371,928 binaries",
+      "contains_raw_executable": true,
+      "safe_boundary": "Metadata and build-recipe review only before B1",
+      "source_url": "https://github.com/SoftSec-KAIST/BinKit"
+    },
+    {
+      "id": "ember2024",
+      "role": "independent-malware-static-feature-benchmark",
+      "disposition": "hold_until_source_and_binary_adapters_pass",
+      "license": "Apache-2.0 repository; confirm dataset terms before commercial use",
+      "published_size": "ELF features 100 MB train + 24 MB test; challenge 126 MB",
+      "contains_raw_executable": false,
+      "safe_boundary": "Feature and label subset only; no raw malware payload",
+      "source_url": "https://github.com/FutureComputing4AI/EMBER2024"
+    }
+  ],
+  "toolchain": {
+    "required_compilers": [
+      "gcc",
+      "clang"
+    ],
+    "required_static_tools": [
+      "objdump",
+      "readelf",
+      "nm",
+      "strings",
+      "file"
+    ],
+    "decompiler_any_of": [
+      "analyzeHeadless",
+      "ghidra",
+      "retdec-decompiler",
+      "rizin"
+    ],
+    "optional_build_tools": [
+      "cmake",
+      "make",
+      "ninja"
+    ]
+  },
+  "safety_policy": {
+    "download_external_payloads": false,
+    "execute_compiled_samples": false,
+    "git_raw_binaries": false,
+    "prompt_raw_bytes": false,
+    "prompt_provenance_or_label": false
+  }
+}

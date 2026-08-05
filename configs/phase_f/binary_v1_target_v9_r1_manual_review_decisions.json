@@ -1,0 +1,41 @@
+{
+  "review_artifact_sha256": "0779ea1c80a63be8b934a364d36ed6992ed3e16ece9907995b60c48ac2511c7e",
+  "decisions": [
+    {
+      "id": "binary-b0-c41d20e8bd139ac3-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "The fixed CWE-121 evidence cites source initialization and the copy sink but omits the destination capacity needed to establish the safe bound."
+    },
+    {
+      "id": "binary-b0-cdbecdcca3f90624-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "The fixed CWE-121 evidence cites a shorter source and swprintf but omits the destination capacity required for the scoped not_observed conclusion."
+    },
+    {
+      "id": "binary-b0-ee615bda24a5a636-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "The present CWE-457 evidence omits the five-write versus ten-read loop bounds that make the partially initialized array relation observable."
+    },
+    {
+      "id": "binary-b0-40fd9673ef227486-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "The fixed CWE-457 evidence links writes and reads but omits the equal initialization and read loop bounds needed to justify not_observed."
+    },
+    {
+      "id": "binary-b0-de715dfdbf118900-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "The fixed CWE-690 evidence contains only the allocation and does not cite a null guard plus the constrained dereference or use."
+    },
+    {
+      "id": "binary-b0-0886242790ac15d2-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "The present CWE-124 evidence cites only the indexed copy and omits the negative destination offset that establishes the underwrite relation."
+    }
+  ]
+}

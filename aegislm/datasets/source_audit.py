@@ -24,6 +24,7 @@ _GENERIC_EVIDENCE_MARKERS = (
     "code-visible operation on the vulnerable execution path",
     "exact source operation is the code-visible basis",
 )
+SOURCE_ASSISTANT_TOKEN_LIMIT = 768
 
 
 def audit_source_targets(
@@ -128,6 +129,10 @@ def audit_source_targets(
             prompt,
             result.target,
         )
+        assistant_token_count = count_source_assistant_tokens(
+            tokenizer,
+            result.target,
+        )
         tokenized_sequence_count += 1
         maximum_observed_token_count = max(maximum_observed_token_count, token_count)
         if token_count > cutoff_len:
@@ -145,6 +150,7 @@ def audit_source_targets(
                     "schema_valid": not target_errors,
                     "evidence_linked": result.evidence_linked,
                     "token_count": token_count,
+                    "assistant_token_count": assistant_token_count,
                     "over_cutoff": True,
                     "errors": target_errors,
                 }
@@ -171,6 +177,7 @@ def audit_source_targets(
                     error.endswith("global safety claim") for error in target_errors
                 ),
                 "token_count": token_count,
+                "assistant_token_count": assistant_token_count,
                 "over_cutoff": token_count > cutoff_len,
                 "target_sha256": target_hash,
                 "errors": target_errors,
@@ -217,6 +224,15 @@ def audit_source_targets(
             (int(case["token_count"]) for case in eligible_cases),
             default=0,
         ),
+        "maximum_assistant_token_count": max(
+            (int(case["assistant_token_count"]) for case in eligible_cases),
+            default=0,
+        ),
+        "assistant_token_limit": SOURCE_ASSISTANT_TOKEN_LIMIT,
+        "assistant_token_limit_exceeded_count": sum(
+            int(case["assistant_token_count"]) > SOURCE_ASSISTANT_TOKEN_LIMIT
+            for case in eligible_cases
+        ),
         "tokenizer_loaded": True,
         "tokenizer_name_or_path": str(
             getattr(tokenizer, "name_or_path", type(tokenizer).__name__)
@@ -240,6 +256,9 @@ def audit_source_targets(
         "single_target_fraction": maximum_exact_fraction <= 0.02,
         "negative_global_safety_claims": (metrics["global_safety_claim_count"] == 0),
         "tokenizer_cutoff": metrics["over_cutoff_count"] == 0,
+        "assistant_token_budget": (
+            metrics["assistant_token_limit_exceeded_count"] == 0
+        ),
     }
     supply_pass = all(quota_results.values())
     automated_pass = (
@@ -301,10 +320,49 @@ def count_source_training_tokens(
             tokenize=True,
             add_generation_prompt=False,
         )
+    return _encoded_length(encoded)
+
+
+def count_source_assistant_tokens(
+    tokenizer: Any,
+    target: Mapping[str, Any],
+) -> int:
+    """Count the compact assistant JSON without prompt or generation overhead."""
+    content = json.dumps(
+        target,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    try:
+        encoded = tokenizer(
+            content,
+            add_special_tokens=False,
+            return_attention_mask=False,
+        )
+    except TypeError:
+        messages = [{"role": "assistant", "content": content}]
+        try:
+            encoded = tokenizer.apply_chat_template(
+                messages,
+                tokenize=True,
+                add_generation_prompt=False,
+                enable_thinking=False,
+            )
+        except TypeError:
+            encoded = tokenizer.apply_chat_template(
+                messages,
+                tokenize=True,
+                add_generation_prompt=False,
+            )
+    return _encoded_length(encoded)
+
+
+def _encoded_length(encoded: Any) -> int:
     if isinstance(encoded, Mapping):
         encoded = encoded.get("input_ids")
         if encoded is None:
-            raise TypeError("chat template result does not contain input_ids")
+            raise TypeError("tokenizer result does not contain input_ids")
     if hasattr(encoded, "shape"):
         shape = encoded.shape
         return int(shape[-1])

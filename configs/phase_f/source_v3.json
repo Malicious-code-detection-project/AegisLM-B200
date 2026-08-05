@@ -1,0 +1,50 @@
+{
+  "profile": "phase-f-source-v3",
+  "seed": 20260728,
+  "input_profile": "phase-f-sard-grounded-v2",
+  "input_status": "ready_for_source_v3_integration",
+  "output_path": "data/processed/phase-f-source-v3",
+  "phase_status": {
+    "F3": "complete_approved_for_training",
+    "F4": "ready",
+    "F5": "blocked_by_F4"
+  },
+  "tokenizer": "model/base/qwen3-coder-next",
+  "cutoff_len": 2048,
+  "right_truncation": false,
+  "counts": {
+    "train": 10000,
+    "validation": 1000,
+    "challenge": 500,
+    "challenge_per_class": 250
+  },
+  "llamafactory": {
+    "train_dataset": "phase_f_source_v3_train",
+    "validation_dataset": "phase_f_source_v3_validation",
+    "dataset_info": "dataset_info.json"
+  },
+  "quality_gates": {
+    "input_sha256_inventory": true,
+    "f2_automated_and_manual_pass": true,
+    "group_split_overlap_max": 0,
+    "content_split_overlap_max": 0,
+    "challenge_gold_separated": true,
+    "prompt_leakage_max": 0,
+    "tokenizer_cutoff_exceeded_max": 0,
+    "canonical_materialized_round_trip_errors_max": 0,
+    "deterministic_rebuild_hash_match": true
+  },
+  "approval": {
+    "set_approved_for_training_only_after_all_gates_pass": true,
+    "approved_for_training": true
+  },
+  "frozen_artifact": {
+    "dataset_manifest_sha256": "5b63098478c261e3031ce91848627dc06c6bee3e165724ee3f8ee8c60887cb8b",
+    "sha256s_sha256": "38f62f2d10c456d84439fc3e618430b0f53bb057d66d45419be64a34b93d8b00",
+    "maximum_tokens": 1913,
+    "group_split_overlap_count": 0,
+    "content_split_overlap_count": 0,
+    "round_trip_error_count": 0,
+    "deterministic_rebuild_hash_match": true
+  }
+}

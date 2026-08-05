@@ -1,0 +1,10 @@
+{
+  "schema_version": "aegislm.phase-f-binary-b0-review-decisions.v2",
+  "review_scope": "phase-f-binary-b0-replacement-r8-decompile-v1",
+  "required_target_preservation_rate": 1.0,
+  "pass_notes": "Explicit review confirmed that the use-after-release distinction remains observable in the present and not-observed pseudo-C across GCC/Clang O0/O2.",
+  "pass_pair_ids": [
+    "1de2bd0b4bbd128c"
+  ],
+  "failed_pairs": {}
+}
