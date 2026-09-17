@@ -163,6 +163,7 @@ def _evaluate_case(
 ) -> dict[str, Any]:
     metadata = cast(dict[str, Any], record["metadata"])
     code = cast(dict[str, Any], record["code"])
+    task = record.get("task")
     case = {
         "record_id": record["id"],
         "gold": metadata["label"],
@@ -196,6 +197,14 @@ def _evaluate_case(
         return case
     case["parse_success"] = True
     errors = validate_source_output(output, source_code=str(code["text"]))
+    scope = output.get("scope")
+    expected_target_cwe = task.get("target_cwe") if isinstance(task, dict) else None
+    if (
+        expected_target_cwe is not None
+        and isinstance(scope, dict)
+        and scope.get("target_cwe") != expected_target_cwe
+    ):
+        errors.append("scope.target_cwe does not match the requested target CWE")
     case["errors"].extend(errors)
     case["schema_valid"] = not errors
     unsafe = _unsafe_errors(output)
