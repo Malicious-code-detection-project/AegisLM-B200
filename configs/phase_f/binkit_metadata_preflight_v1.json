@@ -1,0 +1,71 @@
+{
+  "profile": "phase-f-binkit-v2-metadata-preflight-v1",
+  "observed_at": "2026-07-31",
+  "storage": {
+    "minimum_artifact_multiplier": 3.0
+  },
+  "sources": [
+    {
+      "source_id": "binkit-v2-precompiled-dataset",
+      "dataset_role": "compiler_architecture_optimization_robustness",
+      "requested_scope": "metadata_contract_before_binary_acquisition",
+      "revision": "82bc979122843d3f3953bc02cfc3cc359935ceb8",
+      "release_tag": "v2.0.0",
+      "release_published_at": "2023-03-09T06:28:35Z",
+      "public": true,
+      "gated": false,
+      "code_license": "MIT",
+      "dataset_license": "unknown",
+      "training_requested": false,
+      "acquire_now": true,
+      "artifact": {
+        "name": "BinKit 2.0 dataset",
+        "url": "https://drive.google.com/file/d/1TrjFnv6BMpVEXYukVxrhlQ78S0NPKEXa/view?usp=share_link",
+        "bytes": null,
+        "sha256": ""
+      },
+      "required_fields": [
+        "sample_identity",
+        "source_package",
+        "architecture",
+        "compiler",
+        "optimization",
+        "repository_license"
+      ],
+      "field_evidence": {
+        "sample_identity": false,
+        "source_package": false,
+        "architecture": true,
+        "compiler": true,
+        "optimization": true,
+        "repository_license": false,
+        "function_identity": false,
+        "source_code": false,
+        "pseudo_c": false
+      },
+      "selected_components": [
+        "raw_binary_archive"
+      ],
+      "upstream_evidence": {
+        "release_asset_count": 0,
+        "distribution_host": "Google Drive",
+        "documented_binary_count": 371928,
+        "documented_option_combinations": 1904,
+        "documented_architecture_count": 8,
+        "documented_optimization_count": 6,
+        "documented_compiler_count": 23,
+        "documented_missing_binary_count": 8,
+        "pickle_metadata_available": true,
+        "pickle_safe_to_deserialize": false
+      }
+    }
+  ],
+  "safety": {
+    "download_raw_binary": false,
+    "download_executable": false,
+    "deserialize_pickle": false,
+    "execute_source": false,
+    "execute_tests": false,
+    "pull_docker": false
+  }
+}

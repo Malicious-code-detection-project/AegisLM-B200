@@ -1,0 +1,41 @@
+{
+  "schema_version": "aegislm.phase-f-binary-b0-review-decisions.v2",
+  "review_scope": "phase-f-binary-b0-replacement-r3-decompile-merged-v1",
+  "required_target_preservation_rate": 1.0,
+  "pass_notes": "Explicit review confirmed that the target CWE distinction remains observable in the present and not-observed pseudo-C across GCC/Clang O0/O2.",
+  "pass_pair_ids": [
+    "0dda505bbd3f43c8",
+    "1324f5fe699ecdfb",
+    "200a08c148605b0d",
+    "25872e0db44a92b3",
+    "26d0d4a5c1282852",
+    "2f4f94290b5bf051",
+    "308ad8cd9270838d",
+    "33600e0f1f923c7d",
+    "3a9a82c61adbc5e4",
+    "4c46ef4eba5d4bf2",
+    "68f35b4a4a8cc25f",
+    "76389c4302cbc70f",
+    "90fc542a5ab5e3b7",
+    "94fa50b0a8eb0346",
+    "a4ceec7520c631d3",
+    "a514474f572a8c7e",
+    "b7f994b6bfce0138",
+    "b830b781cde3074e",
+    "bcde5ca839ea592b",
+    "c0d7e477500c0672",
+    "cc95d57e2eac5012",
+    "d7360ed6bedd9996",
+    "ddfeb3ae23611450",
+    "ef1ebd94796855ba",
+    "f58823a0ec470a40"
+  ],
+  "failed_pairs": {
+    "038017f61f1c1b46": "GCC and Clang O2 lose the source-minus-eight underread offset, so the vulnerable copy cannot be distinguished from the fixed source pointer.",
+    "698f5b50034a72c5": "O2 reduces the type-confusion path to value-only print calls and no longer exposes the incompatible char-versus-int object interpretation.",
+    "9742f0f8066ca6e4": "The optimized present path becomes an invalid-instruction stub or argument-less print, removing recoverable NULL-dereference evidence.",
+    "a592079bbccda706": "O2 unrolls the array output and removes the negative-index access that defines the buffer-underwrite condition.",
+    "b8b0e0d237018700": "GCC O2 removes the mismatched present allocation/deallocation path while Clang O2 removes the fixed path; the pair is not preserved across both compilers.",
+    "bc32f64ed23f3138": "O2 reduces the invalid-object member access to an opaque print value and does not retain the non-object-versus-class boundary."
+  }
+}

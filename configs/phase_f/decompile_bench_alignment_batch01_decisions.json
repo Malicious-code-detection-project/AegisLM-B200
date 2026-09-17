@@ -1,0 +1,92 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-cd0d040081599af0",
+      "error_kinds": [],
+      "operator_notes": "Conditional comparison, copy call, duration call, and all stored result fields align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-af093dda92497f0e",
+      "error_kinds": [],
+      "operator_notes": "Vector clear, constraint loop, conditional append, and final vector length align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-1b997f567dcf0fd8",
+      "error_kinds": [],
+      "operator_notes": "Filename-path construction, strdup-equivalent allocation, cleanup, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-efcb2638a5d860d2",
+      "error_kinds": [],
+      "operator_notes": "Timer normalization, timeout update, comparison, splay removal, and insertion paths align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-f513630d0040808b",
+      "error_kinds": [],
+      "operator_notes": "Map construction, callback setup, forEachImage call, cleanup, and returned map align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-785d77f907851540",
+      "error_kinds": [
+        "different_function",
+        "semantic_mismatch"
+      ],
+      "operator_notes": "The supplied source is bitset_container_get and returns one bit, while the named/assembled get_index function performs population counts and returns an index.",
+      "operator_same_function": false,
+      "operator_semantic_alignment": "fail",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-45002dbb70a2edd0",
+      "error_kinds": [],
+      "operator_notes": "Three guarded array deallocations over the three static pointers align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-612277e0931d4103",
+      "error_kinds": [
+        "different_function",
+        "semantic_mismatch"
+      ],
+      "operator_notes": "The source is a one-line vector inequality operator, while the named/assembled function is a large BVH occlusion traversal.",
+      "operator_same_function": false,
+      "operator_semantic_alignment": "fail",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-e42387eae20a410d",
+      "error_kinds": [],
+      "operator_notes": "Constructor member stores, branching-factor bound check, and error construction path align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-37e8ffd2528469c9",
+      "error_kinds": [],
+      "operator_notes": "ftell, context initialization, 16-bit probe, fseek restore, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": "aegislm.phase-f-binary-b0-review-decisions.v1",
+  "review_scope": "phase-f-binary-b0-decompile-canary-10-v1",
+  "required_target_preservation_rate": 1.0,
+  "pairs": {
+    "0cfbffe375344ba2": {
+      "default": "pass",
+      "notes": "CWE-476 NULL initialization/dereference and guarded or initialized alternatives remain visible at O0.",
+      "overrides": {
+        "clang-O2": {
+          "decision": "fail",
+          "notes": "The optimized present path is reduced to an argument-less print call; NULL dereference evidence is not recoverable."
+        },
+        "gcc-O2": {
+          "decision": "fail",
+          "notes": "The optimized present function body loses the observable NULL dereference."
+        }
+      }
+    },
+    "1784041fa21d8bd5": {
+      "default": "pass",
+      "notes": "CWE-197 network-derived integer-to-char truncation remains distinct from the fixed constant 0x7a across compilers."
+    },
+    "26940b7330f63c54": {
+      "default": "pass",
+      "notes": "CWE-191 unchecked negative multiplication remains distinct from the lower-bound checks or fixed -2 paths."
+    },
+    "401ce444b08a6d5d": {
+      "default": "pass",
+      "notes": "CWE-404 fclose-on-descriptor remains visibly distinct from close-on-descriptor across variants."
+    },
+    "62ab8793487182b5": {
+      "default": "pass",
+      "notes": "CWE-126 allocation 200 versus 400 bytes and the copy operation remain observable across variants."
+    },
+    "68fe168cbede9854": {
+      "default": "pass",
+      "notes": "CWE-680 input-controlled shifted allocation remains distinct from the fixed 0x50-byte safe allocation or optimized constant path."
+    },
+    "7cb98989f0012a1f": {
+      "default": "pass",
+      "notes": "CWE-195 signed network input and dynamic copy remain visible at O0.",
+      "overrides": {
+        "clang-O2": {
+          "decision": "fail",
+          "notes": "The fixed path contains contradictory unresolved -1 length evidence, so the safe distinction is not high-confidence."
+        },
+        "gcc-O2": {
+          "decision": "fail",
+          "notes": "The optimized fixed path depends on unresolved global-constant expressions and can appear to copy a huge length."
+        }
+      }
+    },
+    "7ee5e99e0438290d": {
+      "default": "fail",
+      "notes": "CWE-789 present pseudo-C reverses the source allocation condition into data < 6, so uncontrolled-allocation semantics are not faithfully represented."
+    },
+    "8031f77d67865681": {
+      "default": "pass",
+      "notes": "CWE-773 first descriptor overwrite without close remains distinct from close-before-reassignment."
+    },
+    "adb14159e131ca4e": {
+      "default": "pass",
+      "notes": "CWE-588 non-object pointer member access remains visible at O0.",
+      "overrides": {
+        "clang-O2": {
+          "decision": "fail",
+          "notes": "The optimized present body contains only unresolved locals and no recoverable invalid-object member access."
+        },
+        "gcc-O2": {
+          "decision": "fail",
+          "notes": "The optimized present body contains no observable invalid-object member access."
+        }
+      }
+    }
+  }
+}

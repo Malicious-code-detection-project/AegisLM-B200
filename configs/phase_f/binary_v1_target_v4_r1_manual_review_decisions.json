@@ -1,0 +1,48 @@
+{
+  "schema_version": "aegislm.phase-f-binary-manual-review-decisions.v1",
+  "review_artifact_sha256": "b9670f75b4d3c16aa472553029d370faee26120a29c4759553343b5c2385fdf8",
+  "review_policy": {
+    "maximum_error_count": 5,
+    "early_stop_on_sixth_error": true,
+    "label_error_meaning": "The scoped present/not_observed assessment is not supported by the supplied pseudo-C.",
+    "evidence_error_meaning": "The target finding does not expose the target-CWE relation needed to teach or justify the assessment."
+  },
+  "decisions": [
+    {
+      "id": "binary-b0-b2fac34d40dce0aa-gcc-o2",
+      "operator_label_error": true,
+      "operator_evidence_error": true,
+      "notes": "CWE-127 present pseudo-C and target expose only a decompiler loop and printWLine(dest); the claimed buffer-underread boundary is not recoverable from the supplied representation."
+    },
+    {
+      "id": "binary-b0-4656d695a136b41b-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-762 not_observed function was optimized to return; only, so no allocator/deallocator matching evidence remains."
+    },
+    {
+      "id": "binary-b0-377b9c18e80babef-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 present target includes the oversized source initialization but omits swprintf(dest,__n,...) into the 50-element destination."
+    },
+    {
+      "id": "binary-b0-6ac8eeeb5cf6c7bc-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-590 not_observed target cites delete and an initialized write but omits the matching operator_new allocation that proves the pointer is heap-backed."
+    },
+    {
+      "id": "binary-b0-90296eb62afab18a-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-457 not_observed target cites null checks and the read but omits the visible *puVar1 = _LCPI*_0 initialization."
+    },
+    {
+      "id": "binary-b0-5597f12450fc44dd-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-124 not_observed target cites writes only and omits the 100-byte allocation boundary that makes those fixed offsets non-underwriting."
+    }
+  ]
+}

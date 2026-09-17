@@ -1,0 +1,16 @@
+{
+  "schema_version": "aegislm.phase-f-binary-b0-review-decisions.v2",
+  "review_scope": "phase-f-binary-b0-replacement-r6-decompile-merged-v1",
+  "required_target_preservation_rate": 1.0,
+  "pass_notes": "Explicit review confirmed that the target CWE distinction remains observable in the present and not-observed pseudo-C across GCC/Clang O0/O2.",
+  "pass_pair_ids": [
+    "57393946a3faef8d",
+    "73ef647acc52572c",
+    "b2d353a8960b7785",
+    "be93a77c008d0a13",
+    "cc471d8195841591"
+  ],
+  "failed_pairs": {
+    "25d926f955bb9f5f": "Clang O2 optimizes the leaking allocation away from the present path, so the missing-deallocation evidence is not preserved across all required variants."
+  }
+}

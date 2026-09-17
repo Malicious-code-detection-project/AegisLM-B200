@@ -1,0 +1,89 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-56cb55cbdb18f004",
+      "error_kinds": [],
+      "operator_notes": "Type-name output, fixed four-element loop, separators, element print calls, and closing delimiter align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-ee2265548ccc6a39",
+      "error_kinds": [
+        "different_function",
+        "semantic_mismatch"
+      ],
+      "operator_notes": "The source is the full Recompact test body, while the symbol and assembly are only the fixture destructor delegating to a base destructor.",
+      "operator_same_function": false,
+      "operator_semantic_alignment": "fail",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-f1520f2d9bedb768",
+      "error_kinds": [],
+      "operator_notes": "N-element label deletion and example deallocation loop followed by both buffer frees align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-758676a27cb6c8bf",
+      "error_kinds": [],
+      "operator_notes": "UTF-8 block loop, decode calls, short tail buffering, pointer advancement, and early returns align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-4811fb5266996191",
+      "error_kinds": [],
+      "operator_notes": "Base construction, state/position branches, state loops, initialization calls, model setup, and exception cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-af792241528ea3d3",
+      "error_kinds": [],
+      "operator_notes": "Copied argument handling, first constraint call, short-circuit branch, second call, boolean return, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-d7a6c68c9604bc3e",
+      "error_kinds": [],
+      "operator_notes": "Anti-alias predicate, transformed point loop, overlap/line draw path, and primitive-render fallback align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-72377a547f8db285",
+      "error_kinds": [],
+      "operator_notes": "File helper default member initialization and event-handler construction/copy align with the constructor source.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-f51fb1b65db46b82",
+      "error_kinds": [],
+      "operator_notes": "Base construction, patch limit query/check, uniform/attribute/texture collection, validation, GL setup calls, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-2a1496eb09a7562f",
+      "error_kinds": [],
+      "operator_notes": "Instruction lookup, mapped ID, detail-gated register/group copies and counts, jump-group append, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

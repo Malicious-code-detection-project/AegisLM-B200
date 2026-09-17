@@ -1,0 +1,12 @@
+### model
+model_name_or_path: model/base/qwen3-coder-next
+adapter_name_or_path: training_artifacts/qwen3-coder-next/lora/phase-f-source-multitask-v1/q1r7-50
+trust_remote_code: true
+low_cpu_mem_usage: true
+
+### method
+finetuning_type: lora
+
+### inference
+template: qwen3_nothink
+infer_backend: huggingface

@@ -1,0 +1,41 @@
+{
+  "review_artifact_sha256": "ffcb005ccf58a0b9f77098f2ff8d3c6fe30cdf07cece2f1fbfdeeb27132ee92d",
+  "decisions": [
+    {
+      "id": "binary-b0-bfa344b1a15f18b8-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 present cites destination capacity and a variable-length copy but omits the 100-byte source content and strlen-derived length that exceed the 50-byte destination."
+    },
+    {
+      "id": "binary-b0-7785d1d61f2053c3-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 not_observed cites the same destination and copy shape as the present target but omits the 50-byte source content that distinguishes the fixed length."
+    },
+    {
+      "id": "binary-b0-a57e4f07d1fd3968-clang-o2",
+      "operator_label_error": true,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 present is pseudo-C identical to its paired not_observed record and shows an 11-element source copied into a 12-element destination; the present label is not preserved and the target omits the source bound."
+    },
+    {
+      "id": "binary-b0-ab69e643446aa1a5-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 not_observed has pseudo-C identical to the paired present record; the target cites only destination capacity and omits the 11-element source bound needed to justify the safe copy."
+    },
+    {
+      "id": "binary-b0-8c9d374a25923026-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 present omits the 99-element source and wcslen assignment that make swprintf exceed the 50-element destination."
+    },
+    {
+      "id": "binary-b0-21cc5ad105804ea4-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 not_observed omits the 49-element source and wcslen assignment that distinguish the bounded swprintf case from the paired present record."
+    }
+  ]
+}

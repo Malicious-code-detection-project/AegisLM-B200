@@ -1,0 +1,48 @@
+{
+  "schema_version": "aegislm.phase-f-binary-manual-review-decisions.v1",
+  "review_artifact_sha256": "28bce9b7d55713a8b42955fe7dd532679d4f8f11d8255ec2a1ed76da12f6c040",
+  "review_policy": {
+    "maximum_error_count": 5,
+    "early_stop_on_sixth_error": true,
+    "label_error_meaning": "The scoped present/not_observed assessment is not supported by the supplied pseudo-C.",
+    "evidence_error_meaning": "The target finding does not expose the target-CWE relation needed to teach or justify the assessment."
+  },
+  "decisions": [
+    {
+      "id": "binary-b0-cdb7f3188499b3f1-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-195 present target cites only inputBuffer NUL initialization; it exposes no signed-to-unsigned conversion or size use."
+    },
+    {
+      "id": "binary-b0-5088b0f46cc1c6a0-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-124 present target cites memmove(pwVar2,source,400) without the destination underwrite offset or boundary relation."
+    },
+    {
+      "id": "binary-b0-0944251c9ef31aa9-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-127 present target cites only printWLine(dest); it does not expose a buffer-underread offset or invalid read boundary."
+    },
+    {
+      "id": "binary-b0-8fa11aecaa31d876-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 present target cites allocation and writes to the source array, not the heap destination overflow operation."
+    },
+    {
+      "id": "binary-b0-c618522e528289b4-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-127 present target again cites only printWLine(dest); the required underread relation is absent from the finding."
+    },
+    {
+      "id": "binary-b0-d3c815808e948e84-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-36 present target cites CR/LF stripping only; it does not expose path traversal, path resolution, or the file-open relation."
+    }
+  ]
+}

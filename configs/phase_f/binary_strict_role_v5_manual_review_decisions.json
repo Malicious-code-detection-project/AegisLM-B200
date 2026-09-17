@@ -1,0 +1,41 @@
+{
+  "review_artifact_sha256": "0cc1cd6dd66e687343b98e8a9373acd9db2a31229ef2172bf1e2c76fa6b5e944",
+  "decisions": [
+    {
+      "id": "binary-b0-f169bcf8fe6d9ab4-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 present cites an out-of-bounds destination write and wcsncpy but omits the 200-byte allocation that establishes capacity for only 50 wchar_t elements."
+    },
+    {
+      "id": "binary-b0-4a67b6de04019112-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 not_observed cites the terminator write and wcsncpy but omits the 400-byte allocation that distinguishes the fixed 100-wchar_t destination."
+    },
+    {
+      "id": "binary-b0-9bff4cd9c485cba8-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 present omits the 0x32-byte allocation; the cited index-99 write is itself beyond that capacity and does not establish the allocation-to-copy relation."
+    },
+    {
+      "id": "binary-b0-d8531a09344e9b9a-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 not_observed omits the 100-byte allocation that makes the index-99 terminator and 99-byte copy safe in the paired fixed representation."
+    },
+    {
+      "id": "binary-b0-f2bcff714aeda316-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 present omits the erroneous strlen-on-wide-string assignment that underestimates the source length and makes the derived allocation too small."
+    },
+    {
+      "id": "binary-b0-d2ad420733605772-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 not_observed omits the wcslen assignment that correctly derives the allocation size from the wide-string source and distinguishes the fixed relation."
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-ea159fa689181ac5",
+      "error_kinds": [],
+      "operator_notes": "Segmentation predicate, worker setup and calls, merge, result assignment, and reset branch align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-90e083afa1b9fbae",
+      "error_kinds": [],
+      "operator_notes": "GIL check, argument collection, derived pointer call, cleanup, and failure path align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-449bc02069b2ed90",
+      "error_kinds": [],
+      "operator_notes": "Base and parser construction, variadic modifier application, and done call align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-15d2b619ed3a61f8",
+      "error_kinds": [],
+      "operator_notes": "Section-kind branches and returned COFF flag constants align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-d34e29700791ebb4",
+      "error_kinds": [],
+      "operator_notes": "Next-power-of-two bucket sizing, allocation, empty initialization, migration, and deallocation behavior align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-137e1f21f69e73ea",
+      "error_kinds": [],
+      "operator_notes": "Left/right parse sequence, match tests, concatenation, and no-match return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-4af9fcb7cb5b74db",
+      "error_kinds": [],
+      "operator_notes": "Empty handling, capacity accumulation, reserve, separator append loop, and returned string align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-a0bc31c81d121010",
+      "error_kinds": [],
+      "operator_notes": "Format scanning, bool string path, integer/string branches, formatting calls, recursion, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-eb812f084e3016a8",
+      "error_kinds": [],
+      "operator_notes": "Initial assignment parse, comma loop, token advance, right parse, error path, and addComma call align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-251f3d23616ee374",
+      "error_kinds": [],
+      "operator_notes": "Row and column loops, accumulated costs, reduced-cost stores, sign normalization, counters, and packed return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

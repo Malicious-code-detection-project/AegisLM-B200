@@ -1,0 +1,48 @@
+{
+  "schema_version": "aegislm.phase-f-binary-manual-review-decisions.v1",
+  "review_artifact_sha256": "924c487d67df5a5e4596b0e99f206622948b1b467fd9039ba49f543bb6cd1ec4",
+  "review_policy": {
+    "maximum_error_count": 5,
+    "early_stop_on_sixth_error": true,
+    "label_error_meaning": "The scoped present/not_observed assessment is not supported by the supplied pseudo-C.",
+    "evidence_error_meaning": "The target finding does not expose the target-CWE relation needed to teach or justify the assessment."
+  },
+  "decisions": [
+    {
+      "id": "binary-b0-da4b47c7f843c29a-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-126 not_observed target cites only a benign message and omits the dataGoodBuffer selection that bounds the subsequent indexed read."
+    },
+    {
+      "id": "binary-b0-a9282c59a8dbd87b-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-122 not_observed target cites only source initialization and omits the 0x2c allocation-to-copy-size relation."
+    },
+    {
+      "id": "binary-b0-09e8a385ab47ac79-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-789 not_observed target cites socket error checks instead of the visible 100-element upper bound applied before allocation."
+    },
+    {
+      "id": "binary-b0-f5d9863f886983a6-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 present target cites only constant-index NUL initialization and omits the 99-element source initialization followed by concatenation into a 50-element destination."
+    },
+    {
+      "id": "binary-b0-68ff92a87bdfca22-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-121 not_observed target cites only one terminator write and omits the 49-element source bound and concatenation operation."
+    },
+    {
+      "id": "binary-b0-a45b4cdb28ae6c9e-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-78 not_observed target cites loop initialization and popen but omits the pair-unique constant command-buffer assignments that distinguish it from externally influenced input."
+    }
+  ]
+}

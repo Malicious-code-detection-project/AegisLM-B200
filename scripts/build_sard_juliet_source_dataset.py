@@ -31,11 +31,34 @@ def main() -> None:
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--tokenizer", required=True)
+    parser.add_argument(
+        "--profile",
+        default="phase-f-sard-grounded-v2",
+        help="Immutable profile identifier written to the dataset manifest.",
+    )
     parser.add_argument("--seed", type=int, default=SARD_JULIET_SEED)
     parser.add_argument("--cutoff-len", type=int, default=2048)
     parser.add_argument("--train-pairs", type=int, default=5000)
     parser.add_argument("--validation-pairs", type=int, default=500)
     parser.add_argument("--test-pairs", type=int, default=250)
+    parser.add_argument(
+        "--exclude-manifest",
+        type=Path,
+        action="append",
+        default=[],
+        help=(
+            "Parquet manifest whose group_id and code_sha256 values must be "
+            "excluded. May be repeated."
+        ),
+    )
+    parser.add_argument(
+        "--evaluation-only",
+        action="store_true",
+        help=(
+            "Build a frozen test-only artifact. Requires zero train and "
+            "validation pairs and does not emit a manual review answer sheet."
+        ),
+    )
     parser.add_argument(
         "--expected-archive-sha256",
         default=OFFICIAL_ARCHIVE_SHA256,
@@ -54,14 +77,45 @@ def main() -> None:
         trust_remote_code=True,
     )
     functions, catalog = extract_juliet_functions(args.archive)
+    from aegislm.datasets.phase_f import read_parquet
+
+    excluded_group_ids: set[str] = set()
+    excluded_code_hashes: set[str] = set()
+    exclusion_inputs = []
+    for path in args.exclude_manifest:
+        resolved = path.resolve()
+        rows = read_parquet(resolved)
+        group_ids = {
+            str(row["group_id"]) for row in rows if isinstance(row.get("group_id"), str)
+        }
+        code_hashes = {
+            str(row["code_sha256"])
+            for row in rows
+            if isinstance(row.get("code_sha256"), str)
+        }
+        excluded_group_ids.update(group_ids)
+        excluded_code_hashes.update(code_hashes)
+        exclusion_inputs.append(
+            {
+                "path": str(resolved),
+                "sha256": _sha256_file(resolved),
+                "row_count": len(rows),
+                "group_count": len(group_ids),
+                "code_hash_count": len(code_hashes),
+            }
+        )
     profile = materialize_juliet_profile(
         functions,
         tokenizer=tokenizer,
+        profile=args.profile,
         seed=args.seed,
         cutoff_len=args.cutoff_len,
         train_pairs=args.train_pairs,
         validation_pairs=args.validation_pairs,
         test_pairs=args.test_pairs,
+        excluded_group_ids=frozenset(excluded_group_ids),
+        excluded_code_hashes=frozenset(excluded_code_hashes),
+        evaluation_only=args.evaluation_only,
     )
     output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -92,44 +146,47 @@ def main() -> None:
         for split_rows in profile["records"].values()
         for row in split_rows
     }
-    sampled_manifest = []
-    for label in ("present", "not_observed"):
-        label_rows = [row for row in profile["manifest"] if row["label"] == label]
-        sampled_manifest.extend(
-            sorted(
-                label_rows,
-                key=lambda row: hashlib.sha256(
-                    f"{args.seed}:manual:{row['record_id']}".encode()
-                ).hexdigest(),
-            )[:50]
-        )
-    manual_rows = []
-    for row in sampled_manifest:
-        record_id = row["record_id"]
-        canonical = canonical_by_id[record_id]
-        materialized = materialized_by_id[record_id]
-        manual_rows.append(
-            {
-                "id": record_id,
-                "target_cwe": canonical["task"]["target_cwe"],
-                "code": canonical["code"]["text"],
-                "private_label": canonical["metadata"]["label"],
-                "expected_output": json.loads(materialized["messages"][2]["content"]),
-                "operator_label_error": None,
-                "operator_evidence_error": None,
-                "review_status": None,
-                "checks": {
-                    "label_matches_target_cwe": None,
-                    "vulnerable_or_fixed_path_is_feasible": None,
-                    "code_spans_are_exact": None,
-                    "causal_relationship_is_complete": None,
-                    "cwe_explanation_is_specific": None,
-                    "irrelevant_spans_are_absent": None,
-                },
-                "notes": "",
-            }
-        )
-    write_jsonl(manual_rows, output_dir / "manual_review_100.jsonl")
+    if not args.evaluation_only:
+        sampled_manifest = []
+        for label in ("present", "not_observed"):
+            label_rows = [row for row in profile["manifest"] if row["label"] == label]
+            sampled_manifest.extend(
+                sorted(
+                    label_rows,
+                    key=lambda row: hashlib.sha256(
+                        f"{args.seed}:manual:{row['record_id']}".encode()
+                    ).hexdigest(),
+                )[:50]
+            )
+        manual_rows = []
+        for row in sampled_manifest:
+            record_id = row["record_id"]
+            canonical = canonical_by_id[record_id]
+            materialized = materialized_by_id[record_id]
+            manual_rows.append(
+                {
+                    "id": record_id,
+                    "target_cwe": canonical["task"]["target_cwe"],
+                    "code": canonical["code"]["text"],
+                    "private_label": canonical["metadata"]["label"],
+                    "expected_output": json.loads(
+                        materialized["messages"][2]["content"]
+                    ),
+                    "operator_label_error": None,
+                    "operator_evidence_error": None,
+                    "review_status": None,
+                    "checks": {
+                        "label_matches_target_cwe": None,
+                        "vulnerable_or_fixed_path_is_feasible": None,
+                        "code_spans_are_exact": None,
+                        "causal_relationship_is_complete": None,
+                        "cwe_explanation_is_specific": None,
+                        "irrelevant_spans_are_absent": None,
+                    },
+                    "notes": "",
+                }
+            )
+        write_jsonl(manual_rows, output_dir / "manual_review_100.jsonl")
 
     summary = {
         key: value
@@ -141,6 +198,7 @@ def main() -> None:
         "sha256": archive_hash,
         "payload_stored_in_dataset": False,
     }
+    summary["exclusion_inputs"] = exclusion_inputs
     summary_path = output_dir / "dataset_manifest.json"
     summary_path.write_text(
         json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

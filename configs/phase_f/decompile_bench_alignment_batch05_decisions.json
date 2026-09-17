@@ -1,0 +1,86 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-f45ccd7651844a0b",
+      "error_kinds": [],
+      "operator_notes": "Prim type strings, callback object construction, parser registration, lifetime management, and true return align; the lambda body is compiled separately.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-238352dc8bc4e715",
+      "error_kinds": [],
+      "operator_notes": "Capacity bound check, exception construction, entry field calculations, vector append, and returned tag align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-fc938d3859d7d3d5",
+      "error_kinds": [],
+      "operator_notes": "Null guard, termination signal and broadcast, joins, tree removal/free loop, resets, and synchronization destruction align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-928a53a4394cd678",
+      "error_kinds": [],
+      "operator_notes": "Pretty-function and key views, find/substr, front/back trimming, assertions, and returned StringRef align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-c19ba26c7dd32b48",
+      "error_kinds": [],
+      "operator_notes": "Unique reaching-def fast path, insertion, predecessor iteration, live-out calls, and iterator cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-c85adf6438204cf7",
+      "error_kinds": [],
+      "operator_notes": "Both unified conversions, flat result setup, generic loop arguments, validity access, and temporary cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-f1694f34abebdde6",
+      "error_kinds": [],
+      "operator_notes": "Context/graph creation, sentinels, backend support loops, allocation, graph comparison callback, cleanup, and result paths align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-28b1ee57d4f698cd",
+      "error_kinds": [],
+      "operator_notes": "Two-element loop, integer-to-float conversion, component subtraction and stores, and vector return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-311537d2369f4017",
+      "error_kinds": [],
+      "operator_notes": "Initialization/locking, segment and chunk accounting loops, unlock, and three stderr statistics writes align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-6ac6d0c9709e046b",
+      "error_kinds": [],
+      "operator_notes": "Bit-length construction, padding calculation, two update calls, and five little-endian state-word stores align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

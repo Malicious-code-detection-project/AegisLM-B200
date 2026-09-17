@@ -18,6 +18,7 @@ def main() -> None:
         make_openai_compatible_response_generator,
         make_unsloth_response_generator,
         run_baseline_inference,
+        run_chat_dataset_inference,
     )
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -87,7 +88,25 @@ def main() -> None:
         default=0.0,
         help="Sampling temperature for the inference backend. 0 disables sampling.",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Concurrent HTTP requests. Values above 1 require openai-compatible.",
+    )
+    parser.add_argument(
+        "--response-schema",
+        choices=("source-evidence-lines-v1",),
+        help=(
+            "Constrain OpenAI-compatible decoding to a built-in JSON Schema. "
+            "The backend must support response_format=json_schema."
+        ),
+    )
     args = parser.parse_args()
+    if args.workers > 1 and args.backend != "openai-compatible":
+        parser.error("--workers above 1 requires --backend openai-compatible")
+    if args.response_schema and args.backend != "openai-compatible":
+        parser.error("--response-schema requires --backend openai-compatible")
 
     if args.backend == "mock":
         if args.mock_raw_output is None:
@@ -100,6 +119,13 @@ def main() -> None:
             temperature=args.temperature,
         )
     else:
+        response_json_schema = None
+        response_schema_name = "aegislm_response"
+        if args.response_schema == "source-evidence-lines-v1":
+            from aegislm.schemas import SOURCE_EVIDENCE_LINES_OUTPUT_SCHEMA
+
+            response_json_schema = SOURCE_EVIDENCE_LINES_OUTPUT_SCHEMA
+            response_schema_name = "source_evidence_lines"
         generate_response = make_openai_compatible_response_generator(
             base_url=args.base_url,
             model_id=args.model_id,
@@ -107,25 +133,40 @@ def main() -> None:
             temperature=args.temperature,
             timeout_seconds=args.request_timeout,
             api_key=os.environ.get(args.api_key_env),
+            response_json_schema=response_json_schema,
+            response_schema_name=response_schema_name,
         )
 
     generation_metadata = {
         "backend": args.backend,
         "max_new_tokens": args.max_new_tokens,
         "temperature": args.temperature,
+        "workers": args.workers,
     }
     if args.backend != "openai-compatible":
         generation_metadata["adapter_path"] = args.adapter_path.as_posix()
     if args.backend == "openai-compatible":
         generation_metadata["base_url"] = args.base_url
-    count = run_baseline_inference(
-        dataset_path=args.dataset,
-        predictions_path=args.predictions,
-        model_id=args.model_id,
-        run_id=args.run_id,
-        generate_response=generate_response,
-        generation_metadata=generation_metadata,
-    )
+        generation_metadata["response_schema"] = args.response_schema
+    if args.backend == "openai-compatible":
+        count = run_chat_dataset_inference(
+            dataset_path=args.dataset,
+            predictions_path=args.predictions,
+            model_id=args.model_id,
+            run_id=args.run_id,
+            generate_response=generate_response,
+            generation_metadata=generation_metadata,
+            workers=args.workers,
+        )
+    else:
+        count = run_baseline_inference(
+            dataset_path=args.dataset,
+            predictions_path=args.predictions,
+            model_id=args.model_id,
+            run_id=args.run_id,
+            generate_response=generate_response,
+            generation_metadata=generation_metadata,
+        )
     print(
         "AegisLM adapter inference complete: "
         f"records={count}, predictions={args.predictions}"

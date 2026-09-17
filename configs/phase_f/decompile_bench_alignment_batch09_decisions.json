@@ -1,0 +1,86 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-f5b206b69e00351c",
+      "error_kinds": [],
+      "operator_notes": "Context initialization/start are inlined, update and finish calls are preserved, and the zeroized free is optimized away consistently.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-5ddec1e1300bf7b8",
+      "error_kinds": [],
+      "operator_notes": "Two 64-bit loads, byte-to-word expansion, both weighted multiplies, addition, rounded shift call, and vector return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-68ce0564f7637254",
+      "error_kinds": [],
+      "operator_notes": "Capacity/free-space calculations, the two growth-position predicates, offset computation, relocation, and boolean return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-af04d3cf21cfcf38",
+      "error_kinds": [],
+      "operator_notes": "Insertion-point calculation, end-growth memmove, beginning-growth pointer shift, size increment, and returned pointer align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-d6547eb6b057c0fa",
+      "error_kinds": [],
+      "operator_notes": "Top-level map lookup, end comparison, stored value extraction, and zero/default fallback align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-80c18123bce22a51",
+      "error_kinds": [],
+      "operator_notes": "Opening delimiter, qualifier lookup/conditional print, mapper identifier output, and closing delimiter align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-0b2128aff2546dc8",
+      "error_kinds": [],
+      "operator_notes": "Packed dimension exponent subtractions and per-unit/equation OR plus flag XOR fields feed the returned unit_data construction.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-060fb1f9197c3c4f",
+      "error_kinds": [],
+      "operator_notes": "Model allocation/construction, interface ID retrieval, and tail call to map insertion align; no initializer is required for this specialization.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-a32a97a3b8b53065",
+      "error_kinds": [],
+      "operator_notes": "Dimension-size check, per-coordinate bounds and exception construction, coordinate stores, loop, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-55373f586202e100",
+      "error_kinds": [],
+      "operator_notes": "Pointee and expression transforms, constant-expression context, rebuild conditions, dependent/nondependent type-location branches, and result align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

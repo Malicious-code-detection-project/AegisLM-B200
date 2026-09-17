@@ -6,7 +6,7 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from aegislm.datasets.binary import validate_binary_output
+from aegislm.datasets.binary import validate_binary_output_for_record
 from aegislm.evaluation.harness import Prediction
 
 
@@ -136,7 +136,7 @@ def _evaluate_case(
         case["errors"].append("output must be a JSON object")
         return case
     case["parse_success"] = True
-    errors = validate_binary_output(output)
+    errors = validate_binary_output_for_record(output, record)
     case["errors"].extend(errors)
     case["schema_valid"] = not errors
     if not errors:

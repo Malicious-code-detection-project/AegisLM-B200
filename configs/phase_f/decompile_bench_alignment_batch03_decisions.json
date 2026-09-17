@@ -1,0 +1,89 @@
+{
+  "queue_sha256": "01f6b95e545d23765abdc99a20fbb1877ba06a71006606a495eb505ec2a36c39",
+  "records": [
+    {
+      "candidate_id": "decompile-bench-605df221e4d686be",
+      "error_kinds": [],
+      "operator_notes": "Level bounds, node updates, child creation, subvector operations, solution checks, and pruning align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-0db3f33a452abda1",
+      "error_kinds": [
+        "different_function",
+        "semantic_mismatch"
+      ],
+      "operator_notes": "The source is the one-line IsObject predicate, while the named/assembled FindMember function performs member lookup and comparisons.",
+      "operator_same_function": false,
+      "operator_semantic_alignment": "fail",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-56375404423238f5",
+      "error_kinds": [],
+      "operator_notes": "The named non-virtual thunk adjusts this and delegates to the complete ToString implementation represented by the source.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-b2d7d37eba33fc82",
+      "error_kinds": [],
+      "operator_notes": "Allocation, null return, pathname/mode setters, virtual-directory flags, and return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-4d328e6de2d10d95",
+      "error_kinds": [],
+      "operator_notes": "Inlined field squaring and multiplication followed by field equality align with the compact source.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-254221a27d646a65",
+      "error_kinds": [],
+      "operator_notes": "Export retrieval, validity branch, stream construction, include/link/framework loops, cleanup, and string return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-fe8856847e710832",
+      "error_kinds": [],
+      "operator_notes": "Zero-size return, calloc with the active element size, allocation-failure message/throw path, and pointer return align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-1d74d7773c2917df",
+      "error_kinds": [],
+      "operator_notes": "Active-id assertion, all-bits mask stores, and tail call to navigation cancellation align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-eef9cc2b627faf14",
+      "error_kinds": [],
+      "operator_notes": "Significand sizing and exponential/fixed-format branches, grouping, padding, fill, and cleanup paths align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    },
+    {
+      "candidate_id": "decompile-bench-2ede12b2a564b2e0",
+      "error_kinds": [],
+      "operator_notes": "State query, validity/minimum checks, alternative getters, shader construction, program check, result reporting, and cleanup align.",
+      "operator_same_function": true,
+      "operator_semantic_alignment": "pass",
+      "operator_source_complete": true
+    }
+  ],
+  "schema_version": "aegislm.phase-f-decompile-bench-alignment-review-updates.v1"
+}

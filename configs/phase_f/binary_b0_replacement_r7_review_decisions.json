@@ -1,0 +1,9 @@
+{
+  "schema_version": "aegislm.phase-f-binary-b0-review-decisions.v2",
+  "review_scope": "phase-f-binary-b0-replacement-r7-decompile-v1",
+  "required_target_preservation_rate": 1.0,
+  "pass_pair_ids": [],
+  "failed_pairs": {
+    "770810381efbb91a": "Clang O2 removes the overflowing-versus-fixed source-length distinction, while GCC O2 retains the same checked-copy shape for both paths."
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "schema_version": "aegislm.phase-f-cvefixes-manual-review-updates.v1",
+  "queue_sha256": "8e73ac22f02127a14279d383d4ff529fa750f947355844240776486854429b2a",
+  "records": [
+    {
+      "candidate_id": "cvefixes-022f4ea5e65b12db",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["cwe_too_broad", "insufficient_context"],
+      "operator_notes": "The function refactors message encoding and dispatch, but exposes no code-local resource-management operation supporting broad CWE-399."
+    },
+    {
+      "candidate_id": "cvefixes-025d87c552d84dac",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The array lookup is delayed until after the preceding validation/error path, directly addressing an invalid layout-type index."
+    },
+    {
+      "candidate_id": "cvefixes-0273c0b92f57264b",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The new stored-length equality check prevents memcmp from reading beyond the cached byte-string allocation."
+    },
+    {
+      "candidate_id": "cvefixes-02b48501136bd88f",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "Descriptor length and descriptor-count bounds are enforced before indexed reads."
+    },
+    {
+      "candidate_id": "cvefixes-02f21f840f32b52a",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["cwe_mismatch", "insufficient_context"],
+      "operator_notes": "The function adds a numeric range check, but the supplied function contains no heap-buffer access demonstrating CWE-122."
+    },
+    {
+      "candidate_id": "cvefixes-04a41e40a51d378a",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The spinlock is released before queuing work that can complete asynchronously, directly correcting the locking boundary."
+    },
+    {
+      "candidate_id": "cvefixes-07ed7bcb3a8209e5",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["cwe_too_broad", "cwe_mismatch"],
+      "operator_notes": "The visible fix is a zero-denominator guard, which supports CWE-369 rather than broad CWE-755."
+    },
+    {
+      "candidate_id": "cvefixes-0811740885595bdc",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "uncertain",
+      "error_kinds": ["insufficient_context"],
+      "operator_notes": "The call now propagates a helper error, but no division or zero denominator is visible in the supplied function."
+    },
+    {
+      "candidate_id": "cvefixes-0814802204ce85b0",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "A tensor nesting-depth limit is enforced before recursive protobuf parsing."
+    },
+    {
+      "candidate_id": "cvefixes-08ae06f081473c5e",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["cwe_too_broad", "cwe_mismatch"],
+      "operator_notes": "Widening time fields addresses an integer-range/overflow issue, not a code-local generic input-validation weakness."
+    },
+    {
+      "candidate_id": "cvefixes-0bf81a0c3d22f777",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "uncertain",
+      "error_kinds": ["cwe_mismatch", "insufficient_context"],
+      "operator_notes": "The patch removes signed truncation in a size comparison, but the supplied function does not establish an out-of-bounds write."
+    },
+    {
+      "candidate_id": "cvefixes-108b986b1aa8c52e",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The containment check is corrected to validate the constructed resolved path rather than the original directory."
+    },
+    {
+      "candidate_id": "cvefixes-121b4f521b493d9c",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The scalar-shape check is added before scalar extraction that could trigger a process-terminating assertion."
+    },
+    {
+      "candidate_id": "cvefixes-14a0697229804ef0",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The inode mmap semaphore now covers the page-fault operation on both read and write paths."
+    },
+    {
+      "candidate_id": "cvefixes-14d1b6bfa011e0c4",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The bpp value is validated before it is used to select a bitmap-format table entry."
+    },
+    {
+      "candidate_id": "cvefixes-15bf39266d03122f",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["cwe_too_broad", "cwe_mismatch"],
+      "operator_notes": "The visible operation is a size_t-to-int overflow guard, which needs a specific integer-conversion/overflow label rather than broad CWE-119."
+    },
+    {
+      "candidate_id": "cvefixes-17f21fbf7cbe7779",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "A packet-length check is added before the first three payload bytes are accessed."
+    },
+    {
+      "candidate_id": "cvefixes-1ab57464b9958691",
+      "operator_patch_related": false,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["patch_unrelated_to_cwe"],
+      "operator_notes": "This pair changes only command-line usage text and contains no uncontrolled-search-path operation."
+    },
+    {
+      "candidate_id": "cvefixes-1bf8cdf6d292c4b6",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["cwe_too_broad", "cwe_mismatch"],
+      "operator_notes": "The new station-id array bound supports CWE-129 more directly than broad CWE-119."
+    },
+    {
+      "candidate_id": "cvefixes-1ee045e49cd77230",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The constructor now initializes the previously uninitialized value."
+    },
+    {
+      "candidate_id": "cvefixes-1ef24e9c01069389",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "copy_to_user is restricted to the successful wait path, preventing disclosure of uninitialized rusage data."
+    },
+    {
+      "candidate_id": "cvefixes-1f00bf86609b2129",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "Ad-hoc Common Name comparison is replaced with hostname validation that handles SAN and embedded-NUL cases."
+    },
+    {
+      "candidate_id": "cvefixes-2172653d8efb1f3f",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The socket-aware timer stop handles lifetime synchronization instead of deleting the timer without the socket ownership boundary."
+    },
+    {
+      "candidate_id": "cvefixes-2294a80f28d61396",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "fail",
+      "error_kinds": ["cwe_too_broad", "cwe_mismatch"],
+      "operator_notes": "Replacing a variable-length stack buffer with checked heap allocation is visible, but broad CWE-119 is not a precise function-level target."
+    },
+    {
+      "candidate_id": "cvefixes-23f379819b953193",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The point-array write now occurs only when the split/allocation operation succeeds."
+    },
+    {
+      "candidate_id": "cvefixes-252813c7da29f448",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "The string pointer is checked before strlen dereferences it."
+    },
+    {
+      "candidate_id": "cvefixes-258806c279a1009a",
+      "operator_patch_related": true,
+      "operator_cwe_supported": true,
+      "operator_pair_quality": "pass",
+      "error_kinds": [],
+      "operator_notes": "A zero-size realloc result is accepted and stored, preventing a stale freed pointer from being retained and freed again."
+    },
+    {
+      "candidate_id": "cvefixes-26efdb10d61c5300",
+      "operator_patch_related": true,
+      "operator_cwe_supported": false,
+      "operator_pair_quality": "uncertain",
+      "error_kinds": ["insufficient_context"],
+      "operator_notes": "The visible change corrects a version predicate controlling socket behavior, but no buffer copy or bound supporting CWE-120 appears in the supplied function."
+    }
+  ]
+}

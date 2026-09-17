@@ -1,0 +1,41 @@
+{
+  "review_artifact_sha256": "8f7844aa5bae111a111cf8749ae495b4188fd24cf7b48f0d9407bf8ee24a1990",
+  "decisions": [
+    {
+      "id": "binary-b0-12f233caed745341-clang-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-23 present links filebuf::close to filebuf::open and omits the externally influenced path construction that establishes traversal exposure."
+    },
+    {
+      "id": "binary-b0-36dbfa36e5fbe2d5-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-400 present links acceptSocket = -1 to recv and does not expose the unbounded count or repeated resource-consuming operation."
+    },
+    {
+      "id": "binary-b0-374bce2314211a3a-gcc-o2",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-401 present links a non-null guard to malloc but omits the allocation path without a corresponding release that is required for the leak relation."
+    },
+    {
+      "id": "binary-b0-3c73040adce8521d-gcc-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-457 present links one printed struct member to another and supplies no initialization/write evidence for the member read at the sink."
+    },
+    {
+      "id": "binary-b0-0bbc120b5c7a01cc-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-590 present links a non-null guard to delete but omits the pointer origin proving that the deallocated address is not a valid heap base."
+    },
+    {
+      "id": "binary-b0-7787cb081d14c545-clang-o0",
+      "operator_label_error": false,
+      "operator_evidence_error": true,
+      "notes": "CWE-606 present links strlen(dataBuffer) to fgets and omits the externally controlled loop bound and repeated operation that establish unchecked iteration."
+    }
+  ]
+}

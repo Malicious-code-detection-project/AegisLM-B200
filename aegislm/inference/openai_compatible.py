@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import cast
+from collections.abc import Mapping
+from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -19,18 +20,34 @@ def make_openai_compatible_response_generator(
     temperature: float,
     timeout_seconds: float,
     api_key: str | None = None,
+    response_json_schema: Mapping[str, Any] | None = None,
+    response_schema_name: str = "aegislm_response",
 ) -> GenerateResponse:
     """Build a response generator for a vLLM-style chat completions API."""
     endpoint = _chat_completions_endpoint(base_url)
+    guided_schema = (
+        _make_vllm_guided_schema(response_json_schema)
+        if response_json_schema is not None
+        else None
+    )
 
     def generate_response(messages: list[PromptMessage]) -> str:
-        payload = {
+        payload: dict[str, Any] = {
             "model": model_id,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_new_tokens,
             "stream": False,
         }
+        if guided_schema is not None:
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": response_schema_name,
+                    "schema": guided_schema,
+                    "strict": True,
+                },
+            }
         headers = {"Content-Type": "application/json"}
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
@@ -66,6 +83,28 @@ def make_openai_compatible_response_generator(
         return cast(str, content)
 
     return generate_response
+
+
+def _make_vllm_guided_schema(value: Mapping[str, Any]) -> dict[str, Any]:
+    """Copy a schema while removing keywords unsupported by vLLM's grammar.
+
+    ``uniqueItems`` remains enforced by AegisLM's semantic validators. vLLM
+    0.26 rejects the keyword before generation, so it is omitted only from the
+    constrained-decoding copy sent to the serving backend.
+    """
+
+    def copy_value(item: Any) -> Any:
+        if isinstance(item, Mapping):
+            return {
+                str(key): copy_value(child)
+                for key, child in item.items()
+                if key != "uniqueItems"
+            }
+        if isinstance(item, list):
+            return [copy_value(child) for child in item]
+        return item
+
+    return cast(dict[str, Any], copy_value(value))
 
 
 def _chat_completions_endpoint(base_url: str) -> str:

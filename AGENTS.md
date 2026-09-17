@@ -14,22 +14,28 @@ Project NuriLab과 협업 방식과 보안 철학은 공유하지만, 이 저장
 | --- | --- |
 | 프로젝트 정체성, 현재 단계, 전체 로드맵 | `README.md` |
 | 세부 문서 인덱스와 문서 관리 규칙 | `docs/README.md` |
-| fine-tuning adapter, checkpoint, model card, evaluation artifact 저장 정책 | `docs/ARTIFACT_STORAGE_POLICY.md` |
-| 공개 데이터셋 후보 registry와 안전성/용도 분류 | `docs/DATASET_CANDIDATES.md` |
-| Phase E 이슈 처리와 팀 교육 주제 인포그래픽 | `docs/PHASE_E_TEAM_ONBOARDING.html` |
-| Phase C 데이터 활용 전략 | `docs/DATA_STRATEGY.md` |
-| Phase D/E 평가 계획과 리포트 기준 | `docs/EVALUATION_PLAN.md` |
-| label-blind 코드 challenge와 절대평가 gate | `docs/ABSOLUTE_EVALUATION.md` |
-| B200 수동 파인튜닝 검증 실행·기록 워크북 | `docs/FINETUNING_TEST_WORKBOOK.md` |
-| Phase F 데이터 재설계·binary-derived 실험 정본 | `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` |
-| source label·근거 수동 검토 기준 | `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md` |
-| baseline/adapter 평가 결과 기록 템플릿 | `docs/EXPERIMENT_LOG_TEMPLATE.md` |
-| Phase D 완료 조건과 Phase E 착수 gate | `docs/PHASE_D_EXIT_CRITERIA.md` |
-| 파인튜닝 학습 로드맵과 실험 전략 | `docs/FINETUNING_EXPERIMENT_PLAN.md` |
-| Phase C 테스트 기준과 평가 레퍼런스 | `docs/TEST_CRITERIA.md` |
-| 팀 기여 절차, 브랜치, 커밋, 검증 규칙 | `docs/CONTRIBUTING.md` |
-| PR 본문 작성 템플릿 | `docs/PR_DESCRIPTION_TEMPLATE.md` |
-| 코드 변경 PR 검사 기준 | `docs/QUALITY_GATES.md` |
+| fine-tuning adapter, checkpoint, model card, evaluation artifact 저장 정책 | `docs/operations/policies/ARTIFACT_STORAGE_POLICY.md` |
+| 공개 데이터셋 후보 registry와 안전성/용도 분류 | `docs/design/datasets/DATASET_CANDIDATES.md` |
+| Phase E 이슈 처리와 팀 교육 주제 인포그래픽 | `docs/onboarding/PHASE_E_TEAM_ONBOARDING.html` |
+| Phase C 데이터 활용 전략 | `docs/design/datasets/DATA_STRATEGY.md` |
+| Phase D/E 평가 계획과 리포트 기준 | `docs/evaluation/EVALUATION_PLAN.md` |
+| label-blind 코드 challenge와 절대평가 gate | `docs/evaluation/ABSOLUTE_EVALUATION.md` |
+| B200 수동 파인튜닝 검증 실행·기록 워크북 | `docs/operations/b200/FINETUNING_TEST_WORKBOOK.md` |
+| Phase F 데이터 재설계·binary-derived 실험 정본 | `docs/experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md` |
+| 역할 기반 custom agent와 orchestration 규칙 | `docs/governance/AGENT_WORKFLOW.md` |
+| 현재 Phase F 브랜치 20개 커밋의 한국어 리뷰 지도 | `review/guides/COMMIT_REVIEW_GUIDE_KO.md` |
+| 커밋·영역·파일별 상세 코드 리뷰와 발견 사항 | `review/README.md` |
+| 로컬 LLM과 analyzer MCP의 미확정 책임 경계 아이디어 | `docs/design/architecture/LOCAL_LLM_MCP_BOUNDARY_IDEA.md` |
+| ARVO patch↔buffer-family 수동 gate 결정 | `docs/experiments/decisions/phase-f/PHASE_F_ARVO_PATCH_GATE_DECISION_20260731.md` |
+| Patch-localized label 공급·archive gate 결정 | `docs/experiments/decisions/phase-f/PHASE_F_PATCH_LABEL_SUPPLY_DECISION_20260731.md` |
+| source label·근거 수동 검토 기준 | `docs/evaluation/SOURCE_MANUAL_REVIEW_RUBRIC.md` |
+| baseline/adapter 평가 결과 기록 템플릿 | `docs/templates/EXPERIMENT_LOG_TEMPLATE.md` |
+| Phase D 완료 조건과 Phase E 착수 gate | `docs/evaluation/PHASE_D_EXIT_CRITERIA.md` |
+| 파인튜닝 학습 로드맵과 실험 전략 | `docs/experiments/plans/FINETUNING_EXPERIMENT_PLAN.md` |
+| Phase C 테스트 기준과 평가 레퍼런스 | `docs/evaluation/TEST_CRITERIA.md` |
+| 팀 기여 절차, 브랜치, 커밋, 검증 규칙 | `docs/governance/CONTRIBUTING.md` |
+| PR 본문 작성 템플릿 | `docs/templates/PR_DESCRIPTION_TEMPLATE.md` |
+| 코드 변경 PR 검사 기준 | `docs/governance/QUALITY_GATES.md` |
 | 에이전트/개발자 공통 운영 규칙 | `AGENTS.md` |
 | Python 패키지 설정 | `pyproject.toml` |
 | 테스트 | `tests/` |
@@ -69,8 +75,69 @@ Phase F의 우선순위는 다음과 같다.
 - 기존 33만 건과 80B adapter를 실패 기준선으로 동결
 - source/metadata/label/target을 model-visible prompt에서 제거
 - catalog→eligible manifest→materialized JSONL 세 계층을 유지
-- 10,000건 source profile과 독립 500건 challenge를 먼저 구성
-- 20B 100-step canary가 진단 gate를 통과한 뒤에만 80B로 진행
+- F3 `phase-f-source-v3` 10,000건과 독립 500건 challenge 동결 완료
+- F4 base·legacy source-v2 smoke는 schema `0/20`으로 종료
+- oracle `20/20` PASS로 evaluator 정상 확인
+- F5의 최종 source 후보는 Q1R10 decision과 Q1R11 evidence를 순차
+  실행하는 two-stage pipeline
+- 신규 blind 500건에서 decision P/R/FPR
+  `0.9881/1.0000/0.0120`, evidence P/R/F1
+  `0.9001/0.9229/0.9114`, schema/renderer `1.00`으로 PASS
+- 두 adapter의 개별 BF16 merge와 vLLM TP2 lifecycle 완료
+- evidence serving은 guided JSON Schema constrained decoding과
+  AegisLM semantic validator를 필수조건으로 사용
+- F6-A binary candidate/toolchain inventory는 PASS
+- F6-B B0 최초 판정은 145 pair 중 100 pair 승인으로 종료했지만, F7의
+  엄격 target-evidence 정책을 소급 적용해 CWE-563 1 pair를 추가 격리
+- 엄격 재감사 기준 B0는 99/145이며 부족분은 F7 공급에서 대체
+- 승인 pair의 normalized binary record 800건은 schema·pseudo-C·assembly·
+  static-feature linkage 1.00, prompt provenance/label/source-symbol 누출 0
+- F7 구조 적격 공급 4,643 pair를 동결하고 엄격 정책으로 과거
+  250-pair pilot을 198/250, B0를 99/145로 정정
+- 다섯 차례 500-pair 확대의 target preservation은 r1 `420/500`,
+  r2 `394/500`, r3 `410/500`, r4 `419/500`, r5 `394/500`
+- r5까지 누적 승인/검토는 `2,334/2,895`; Wilson gate에 따라 tail을
+  500이 아닌 160 pair로 제한
+- tail은 compile·decompile·function link `640/640`, 엄격 승인
+  `121/160`; 1차 target-preservation qualified `2,455`
+- 실제 pseudo-C relation recovery r1·r2 뒤 qualified `2,536`; target v1
+  + Qwen tokenizer gate는 `2,488`, 선택 `2,450`, reserve `38`
+- target v1 model-ready data는 자동 gate를 통과했지만 수동 100건에서
+  명백한 evidence error 6건으로 `FAIL EARLY`; 학습 승인 false
+- target v2·v3·v4도 고정 수동 검토에서 각각 여섯 번째 오류에 도달해
+  `FAIL EARLY`; 실패 artifact와 hash-bound 결정을 보존
+- `strict-pair-grounded-evidence-v5`는 recovery r4·r5 뒤 공급
+  `2,450/2,477`과 자동 gate를 통과했지만 수동 100건에서 evidence
+  error 6건으로 다시 `FAIL EARLY`
+- `complete-fixed-role-evidence-v6`는 remediation과 constrained sink를
+  모두 요구하며 공급 `2,123/2,450`으로 FAIL
+- Ghidra 표현 정규화를 추가한
+  `decompiler-normalized-role-evidence-v7`은 recovery r6 뒤 공급
+  `2,450/2,468`과 자동 gate를 통과했지만 수동 연결 오류 발견
+- `linked-role-evidence-v8`은 동일 변수 연결을 강제해 공급
+  `2,326/2,450`으로 FAIL
+- `memory-write-read-linked-evidence-v9`은 공급 `2,450/2,498`과 자동
+  gate를 통과했지만 수동 100건에서 capacity·loop bound·null guard·
+  negative offset 누락 6건으로 `FAIL EARLY`
+- frozen queue는 모두 소진됐으며 flat evidence target으로 binary
+  adapter를 학습하지 않음
+- `aegislm.binary-role-assessment-output.v2` schema와 semantic validator를
+  추가해 exact span, role, sink-directed relation을 강제
+- 다음은 v2 role-structured target builder → tokenizer gate → 고정
+  100건 수동 review 순서
+- v2 r1은 자동 공급 `2,450/2,479`, r2는 `2,450/2,485`를 확보했지만
+  두 고정 review 모두 evidence 오류 `6/100`에서 `FAIL EARLY`
+- generic identifier-overlap fallback으로 2,450 pair를 채우지 않음;
+  다음은 CWE별 완전한 role extractor가 있는 범주만 eligible로 재산정
+- strict v3 공급은 `1,301/2,924` pair, review-eligible PASS였지만
+  CWE-124/127/457/690 오류 6건으로 수동 gate `FAIL EARLY`
+- CWE-124/127/457/690은 quarantine; 남은 extractor도 새 수동 gate 전
+  학습 금지
+- 초기 19,600 전량 학습 가정은 폐기; pair당 한 compiler variant를
+  균형 선택한 4,900건과 별도 800건 compiler-consistency set으로 구성
+- 수동 target review가 `≤5/100`을 통과하기 전 binary 학습 금지
+- Q2 250-step과 313-step 연장은 개선 근거가 없어 미실행
+- GPT-OSS 20B는 Qwen 결론 이후 보조 이식성 실험으로만 진행
 - source와 binary-derived adapter를 서로 분리해 절대평가
 - binary는 raw byte가 아니라 pseudo-C, 정적 특징, 제한된 assembly를 사용
 - 두 adapter가 독립 gate를 통과하기 전에는 NuriLab/RAG/MCP 연결을 보류
@@ -110,6 +177,26 @@ Phase F의 우선순위는 다음과 같다.
 - adapter 학습 전: baseline inference와 evaluation 확인
 - dataset 확장 전: 안전/저장 정책 확인
 - 모델 구조 연구 전: LoRA / QLoRA 한계와 평가 목표 확인
+
+---
+
+## 3.1 역할 기반 custom-agent 운영
+
+사용자는 목적·불변 조건·allowlist와 설치·다운로드·GPU·Git 권한을 승인한다.
+`sol_main`만 동결된 Work Order에서 worker를 배정하고 최종 `PASS` 또는 `BLOCK`을
+판정한다. 요구사항·gate 설계 권한은 worker에게 넘기지 않는다.
+
+- `sol_main`의 배정은 depth 1, 최대 2명으로 제한한다.
+- planner, implementer, mechanical-worker, security-reviewer는 재위임·자동 handoff·하위 worker 생성을 하지 않는다.
+- 같은 파일을 병렬 수정하지 않는다. 동일 `head_sha`와 동일 `worktree_diff_sha256`에 완전한 evidence가 있으면 같은 gate를 반복하지 않으며, 재검증은 `head_changed`, `worktree_changed`, `evidence_missing`, `evidence_conflict`일 때만 한다.
+- worker evidence에는 항상 `delegation_used: false`, `delegated_to: []`를 기록한다. `sol_main`은 worker를 배정했을 때만 실제 대상과 함께 `delegation_used: true`를 기록한다.
+- 설치, dependency 변경, 모델·데이터 다운로드, GPU·외부 서비스 실행, Git stage/commit/push는 별도 사용자 승인 없이는 금지한다.
+- TOML의 sandbox는 기본값이며 live permission·approval override 또는 `--yolo`보다 우선하지 않는다. `sol_main`은 dispatch 전에 effective permission과 sandbox를 확인한다.
+- planner 또는 security-reviewer가 write-capable override나 `--yolo` 환경이면 read-only로 바꾼 뒤 dispatch하거나 `BLOCK`한다.
+- workspace-write allowlist는 filesystem enforcement가 아닌 운영 계약이다. `sol_main`은 최종 changed path를 allowlist와 대조하고, 기존 dirty 변경은 baseline 기록으로 보존한다.
+
+실행 가능한 역할 설정은 [`.codex/agents/`](.codex/agents/)에, Work Order·증거·판정의 정본은
+[`docs/governance/AGENT_WORKFLOW.md`](docs/governance/AGENT_WORKFLOW.md)에 둔다. 특정 모델·데이터·실험 gate는 이 정책이 아니라 개별 Work Order에 기록한다.
 
 ---
 
@@ -236,7 +323,7 @@ PR 생성 전:
 - [ ] raw dataset, checkpoint, adapter artifact, secrets, 민감 데이터가 포함되지 않았는가?
 - [ ] 실험 결과를 주장한다면 command, package version, GPU, dataset path를 기록했는가?
 
-PR 본문은 `docs/PR_DESCRIPTION_TEMPLATE.md`를 기준으로 작성한다. 최소한 다음을 포함한다.
+PR 본문은 `docs/templates/PR_DESCRIPTION_TEMPLATE.md`를 기준으로 작성한다. 최소한 다음을 포함한다.
 
 - 변경 목적
 - 주요 변경 내용
@@ -250,17 +337,18 @@ PR 본문은 `docs/PR_DESCRIPTION_TEMPLATE.md`를 기준으로 작성한다. 최
 
 - `README.md`는 프로젝트 정체성, 현재 단계, 전체 로드맵의 정본이다.
 - `docs/README.md`는 세부 문서 인덱스와 문서 관리 규칙의 정본이다.
-- `docs/DATA_STRATEGY.md`는 Phase C 데이터 활용, 전처리, tokenization/chunking, split, RAG/vector 분리 기준의 정본이다.
-- `docs/EVALUATION_PLAN.md`는 Phase D/E 평가 계획, 점수화 기준, 결과 리포트 형식의 정본이다.
-- `docs/FINETUNING_TEST_WORKBOOK.md`는 B200 수동 검증의 진행 상태, 실행 명령, 증거 기록, 최종 연구 결정의 정본이다.
-- `docs/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md`는 Phase F catalog, source/binary adapter, 중단 gate와 NuriLab handoff의 정본이다.
-- `docs/SOURCE_MANUAL_REVIEW_RUBRIC.md`는 source target의 label·경로·exact span·인과관계 수동 판정 기준의 정본이다.
-- `docs/PHASE_D_EXIT_CRITERIA.md`는 Phase D 완료 조건과 Phase E 착수 gate의 정본이다.
-- `docs/FINETUNING_EXPERIMENT_PLAN.md`는 학습 로드맵, 실험 전략, dataset/evaluation 기준의 정본이다.
-- `docs/PR_DESCRIPTION_TEMPLATE.md`는 PR 본문 작성 형식과 체크리스트의 정본이다.
-- `docs/TEST_CRITERIA.md`는 Phase C 테스트 기준과 평가 레퍼런스의 정본이다.
+- `docs/design/datasets/DATA_STRATEGY.md`는 Phase C 데이터 활용, 전처리, tokenization/chunking, split, RAG/vector 분리 기준의 정본이다.
+- `docs/evaluation/EVALUATION_PLAN.md`는 Phase D/E 평가 계획, 점수화 기준, 결과 리포트 형식의 정본이다.
+- `docs/operations/b200/FINETUNING_TEST_WORKBOOK.md`는 B200 수동 검증의 진행 상태, 실행 명령, 증거 기록, 최종 연구 결정의 정본이다.
+- `docs/experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md`는 Phase F catalog, source/binary adapter, 중단 gate와 NuriLab handoff의 정본이다.
+- `docs/evaluation/SOURCE_MANUAL_REVIEW_RUBRIC.md`는 source target의 label·경로·exact span·인과관계 수동 판정 기준의 정본이다.
+- `docs/evaluation/PHASE_D_EXIT_CRITERIA.md`는 Phase D 완료 조건과 Phase E 착수 gate의 정본이다.
+- `docs/experiments/plans/FINETUNING_EXPERIMENT_PLAN.md`는 학습 로드맵, 실험 전략, dataset/evaluation 기준의 정본이다.
+- `docs/governance/AGENT_WORKFLOW.md`는 역할 기반 custom agent의 권한, orchestration, Work Order와 증거 형식의 정본이다.
+- `docs/templates/PR_DESCRIPTION_TEMPLATE.md`는 PR 본문 작성 형식과 체크리스트의 정본이다.
+- `docs/evaluation/TEST_CRITERIA.md`는 Phase C 테스트 기준과 평가 레퍼런스의 정본이다.
 - `AGENTS.md`는 작업 규칙과 에이전트 행동 기준의 정본이다.
-- `docs/CONTRIBUTING.md`는 팀원이 PR을 올리기 위한 절차 문서다.
+- `docs/governance/CONTRIBUTING.md`는 팀원이 PR을 올리기 위한 절차 문서다.
 - `CONTRIBUTING.md`는 GitHub 관례를 위한 안내 링크 문서다.
 - GitHub Issue는 작업 단위와 상태 추적의 정본이다.
 - PR은 코드 리뷰와 변경 이력의 정본이다.
@@ -286,3 +374,63 @@ schema, dataset format, prompt contract, evaluation metric, artifact storage pol
 - GitHub Actions 기반 문서/테스트 CI 검토
 - CODEOWNERS 도입 여부 검토
 - branch protection 설정 검토
+
+## 11. Phase F Binary Strict Gate 현황
+
+- strict v7 지원 범위는 CWE-134/190/191/194/195이다.
+- 고정 seed 100건 수동 검토는 오류 `1/100`으로 품질 gate를 통과했다.
+- 적격 공급은 `644/2,450` pair이므로 binary adapter 학습은 승인하지 않는다.
+- 격리된 CWE를 수량 확보 목적으로 다시 포함하지 않는다.
+- 644 pair는 `quality-approved / supply-blocked` seed와 회귀
+  benchmark로만 보존한다.
+- 상세 근거는
+  `docs/experiments/decisions/phase-f/PHASE_F_BINARY_ROLE_TARGET_DECISION_20260731.md`를 따른다.
+- ARVO 공개 개발자 패치 200건 수동 gate는 오류 `11/200`으로
+  `FAIL EARLY`했다. crash type을 gold CWE로 자동 변환하지 않는다.
+- ARVO는 binary adapter 학습 supply로 승인하지 않는다.
+- 다음 공급 감사는 MegaVul/CVEfixes의 patch-localized CWE와
+  Assemblage/Decompile-Bench의 alignment 역할을 분리한다.
+- 해당 metadata 감사에서 MegaVul은 immutable artifact와 dataset
+  license가 없어 hold했다.
+- CVEfixes v1.0.8은 exact size/MD5/SHA-256, 비추출 ZIP inventory,
+  선택적 SQL gzip CRC, 정적 SQL 감사, 방어적 SQLite import를 통과했다.
+- read-only 공급량은 C/C++ exact before/after `6,248`쌍이며 숫자형 CWE만
+  허용한 200쌍 review queue의 구조 오류는 0건이다.
+- CVEfixes patch↔CWE 수동 gate는 고정 순서 28건에서 오류·불확실
+  `11/28`로 예산 10건을 초과해 `FAIL EARLY`했다.
+- 남은 172건은 미검토이며 PASS가 아니다. CVEfixes commit-level CWE를
+  direct training label로 사용하지 않고 repository license gate도
+  착수하지 않는다.
+- Decompile-Bench 고정 Arrow shard의 source–assembly 수동 정렬은
+  `96/100`으로 통과했다. 오류 4건은 모두 다른 함수가 짝지어진
+  `different_function + semantic_mismatch`다.
+- 전체 `131,359`행 중 명시 repository 복원은
+  `111,206`행(`84.6581%`)이고 repository별 license,
+  compiler·optimization metadata가 없다.
+- Decompile-Bench disposition은 `alignment_reference_only`이며
+  `approved_for_training=false`다.
+- Assemblage LinuxELF compressed DuckDB의 artifact·zstd·schema gate는
+  통과했지만 license 상한 70.91%, architecture 68.84%,
+  format·commit·build mode 약 31.15%로 field gate는 실패했다.
+- build trace가 있는 63,031행과 architecture가 있는 113,329행의 strict
+  교집합은 0건이다. `metadata_reference_only`로 보존하며 raw ELF
+  다운로드와 training은 false다.
+- BinKit 2.0 compile matrix는 확인했지만 GitHub release asset 0개,
+  외부 Drive artifact의 size·SHA-256·dataset license·row schema 부재로
+  `metadata_hold`다.
+- BinKit binary와 pickle은 받지 않으며 pickle을 역직렬화하지 않는다.
+- EMBER2024 ELF test는 archive·schema·static-feature gate를 통과했지만
+  원본 12,000행의 동일 `(week_id, sha256)` 중복을 제거한 6,000관측치만
+  독립 malware benchmark로 허용한다.
+- EMBER2024의 primary label과 static feature 충돌은 0건이다. 서로 다른
+  CAPS/MBC/TTP annotation은 별도 merge 계약 전까지 사용하지 않는다.
+- EMBER2024는 SFT에 혼합하지 않고 raw executable도 받지 않는다.
+- train 26,000건·test 6,000건 materialization은 label-blind
+  feature/gold 분리와 재현 hash gate를 통과했다.
+- 자체 temporal LightGBM은 test FPR `0.0197`, 주별 최대 FPR `0.056`으로
+  절대 gate에 실패했다. 공식 모델도 calibration threshold에서 test FPR
+  `0.1097`, 주별 최대 FPR `0.208`로 실패했다.
+- 두 classifier 모두 NuriLab static-signal 연결과 Qwen SFT 혼합 승인은
+  false다. 다음 작업은 FP 집중 주차의 feature drift 감사다.
+- PoC, crash output, reproducer command를 읽거나 Docker image·object를
+  실행하지 않는다.

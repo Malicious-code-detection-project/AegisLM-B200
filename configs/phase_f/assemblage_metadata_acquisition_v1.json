@@ -1,0 +1,80 @@
+{
+  "profile": "phase-f-assemblage-linuxelf-metadata-acquisition-v1",
+  "observed_at": "2026-07-31",
+  "storage": {
+    "minimum_artifact_multiplier": 3.0
+  },
+  "sources": [
+    {
+      "source_id": "assemblage-linuxelf-metadata",
+      "dataset_role": "source_binary_build_alignment_metadata",
+      "requested_scope": "metadata_schema_and_coverage_audit",
+      "revision": "5d58b08b500ea279a9880f80fd4b217e1897035a",
+      "public": true,
+      "gated": false,
+      "dataset_license": "other-original-repository-licenses-apply",
+      "training_requested": false,
+      "acquire_now": true,
+      "artifact": {
+        "name": "linux_licensed.duckdb.zst",
+        "url": "https://huggingface.co/datasets/changliu8541/Assemblage_LinuxELF/resolve/5d58b08b500ea279a9880f80fd4b217e1897035a/linux_licensed.duckdb.zst",
+        "bytes": 21971861569,
+        "sha256": "a5b12c3353cd0f653c9543e78343b45dca4207f072a7d5d17b2ab07a4540eb5e"
+      },
+      "required_fields": [
+        "function_identity",
+        "source_code",
+        "binary_pointer",
+        "repository",
+        "build_configuration",
+        "repository_license"
+      ],
+      "field_evidence": {
+        "function_identity": true,
+        "source_code": true,
+        "binary_pointer": true,
+        "repository": true,
+        "build_configuration": true,
+        "repository_license": true,
+        "pseudo_c": false
+      },
+      "selected_components": [
+        "compressed_duckdb_metadata",
+        "schema_catalog",
+        "aggregate_field_coverage"
+      ],
+      "excluded_components": [
+        "binaries.tar.xz",
+        "raw_elf",
+        "executable_payload",
+        "source_archive"
+      ],
+      "upstream_evidence": {
+        "dataset_card_license": "other",
+        "original_repository_licenses_apply": true,
+        "documented_database_format": "DuckDB compressed with zstd",
+        "documented_decompressed_size": "127 GiB",
+        "documented_tables": [
+          "binaries",
+          "functions",
+          "rvas",
+          "lines",
+          "pdbs"
+        ],
+        "documented_row_counts": {
+          "binaries": 249121,
+          "functions": 613573055,
+          "rvas": 685044264,
+          "lines": 4028246246
+        }
+      }
+    }
+  ],
+  "safety": {
+    "download_raw_binary": false,
+    "download_executable": false,
+    "execute_source": false,
+    "execute_tests": false,
+    "pull_docker": false
+  }
+}

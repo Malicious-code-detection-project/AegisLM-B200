@@ -87,6 +87,8 @@ Return exactly one JSON object and no Markdown. The object must contain:
 Use only the supplied function. Every item in code_spans must be copied exactly
 from it. Explain the security relationship between the spans; naming one API or
 repeating a generic statement is not sufficient evidence.
+Use the smallest sufficient evidence set and never include more than 8 code_spans
+in one assessment_basis or finding item.
 The assessment is scoped to the requested CWE and supplied function; it is not a
 claim that the whole program is safe. Do not infer from provenance, dataset
 identity, labels, record IDs, file paths, or split metadata. Do not emit ATT&CK
@@ -211,7 +213,6 @@ def build_source_target(
     if label == "uncertain":
         return SourceTargetResult(None, False, "uncertain_not_supervised", False)
 
-    scope_anchor = _scope_anchor(str(code["text"]))
     target = {
         "schema_version": "aegislm.source-vulnerability-assessment.v2",
         "scope": {
@@ -223,15 +224,9 @@ def build_source_target(
         "findings": grounded_findings if label == "present" else [],
         "limitations": [
             "This assessment is limited to the requested CWE and supplied function.",
-            (
-                "The reviewed boundary includes these supplied code excerpts: "
-                f"{scope_anchor}"
-            ),
             "This result does not establish whole-program safety or exploitability.",
         ],
-        "recommendations": [
-            "Confirm the scoped result with deterministic analysis and human review."
-        ],
+        "recommendations": ["Confirm with deterministic analysis and human review."],
     }
     target_errors = validate_source_output(target, source_code=str(code["text"]))
     if target_errors:
@@ -462,19 +457,3 @@ def _iter_strings(value: Any) -> list[str]:
             result.extend(_iter_strings(item))
         return result
     return []
-
-
-def _scope_anchor(code: str) -> str:
-    lines = [
-        line.strip()
-        for line in code.splitlines()
-        if line.strip()
-        and line.strip() not in {"{", "}"}
-        and not line.strip().endswith("{")
-    ]
-    if lines and "(" in lines[0] and ")" in lines[0]:
-        lines = lines[1:]
-    body = "\n".join(lines) or code.strip()
-    if len(body) <= 320:
-        return body
-    return f"{body[:160]} ... {body[-160:]}"

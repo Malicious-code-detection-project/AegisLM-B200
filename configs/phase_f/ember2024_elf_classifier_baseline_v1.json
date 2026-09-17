@@ -1,0 +1,60 @@
+{
+  "profile": "phase-f-ember2024-elf-classifier-baseline-v1",
+  "seed": 20260731,
+  "source": {
+    "dataset_revision": "3d23efef7c0f0b702c5024400cfff4c3744a3832",
+    "thrember_revision": "0ef753e81d98bf209f71b03cd331dfc190b5b54d",
+    "official_model_revision": "e5b945dd90e1a1a1ec0cc07b3a17b52e9ba2d0c2"
+  },
+  "temporal_split": {
+    "fit_week_min": 0,
+    "fit_week_max": 43,
+    "calibration_week_min": 44,
+    "calibration_week_max": 51,
+    "test_week_min": 52,
+    "test_week_max": 63
+  },
+  "threshold_selection": {
+    "source": "calibration",
+    "fpr_max": 0.01,
+    "objective": "maximum_recall_under_fpr_cap"
+  },
+  "absolute_gates": {
+    "precision_min": 0.95,
+    "recall_min": 0.90,
+    "fpr_max": 0.01,
+    "roc_auc_min": 0.95,
+    "average_precision_min": 0.95,
+    "weekly_recall_min": 0.80,
+    "weekly_fpr_max": 0.02
+  },
+  "lightgbm": {
+    "objective": "binary",
+    "boosting": "gbdt",
+    "num_iterations": 500,
+    "learning_rate": 0.1,
+    "max_depth": -1,
+    "num_leaves": 64,
+    "device_type": "cpu",
+    "seed": 20260731,
+    "feature_fraction_seed": 20260731,
+    "bagging_seed": 20260731,
+    "data_random_seed": 20260731,
+    "deterministic": true,
+    "force_col_wise": true,
+    "min_data_in_leaf": 100,
+    "min_sum_hessian_in_leaf": 0.001,
+    "bagging_fraction": 0.9,
+    "bagging_freq": 1,
+    "feature_fraction": 0.9,
+    "feature_fraction_bynode": 0.9,
+    "lambda_l1": 0.0,
+    "lambda_l2": 1.0,
+    "metric": [
+      "auc",
+      "binary_logloss",
+      "binary_error"
+    ],
+    "verbosity": 1
+  }
+}

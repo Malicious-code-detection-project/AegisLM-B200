@@ -1,0 +1,17 @@
+{
+  "profile": "phase-f-cvefixes-archive-inventory-v1",
+  "source_id": "cvefixes-v1.0.8",
+  "archive_name": "CVEfixes_v1.0.8.zip",
+  "expected_bytes": 12708711268,
+  "expected_md5": "4586a358977acfa4c60b1a2cdd096221",
+  "max_uncompressed_bytes": 200000000000,
+  "max_compression_ratio": 100.0,
+  "source_record": "https://zenodo.org/records/13118970",
+  "policy": {
+    "inventory_before_extraction": true,
+    "member_payload_reads": false,
+    "extraction": false,
+    "execution": false,
+    "training_approval": false
+  }
+}
