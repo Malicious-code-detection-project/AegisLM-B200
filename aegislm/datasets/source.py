@@ -1,4 +1,27 @@
-"""Source-vulnerability contracts, prompts, and conservative target building."""
+"""Define the model-independent contract for source vulnerability assessment.
+
+Pipeline position:
+    normalized source record
+    -> record validation
+    -> label-blind model prompt
+    -> evidence-grounded supervised target
+    -> output schema and exact-span validation
+
+This module owns the boundary between private dataset metadata and the content a
+model is allowed to see. Labels, split assignments, dataset names, record IDs,
+and provenance remain private. The prompt contains only the requested CWE and
+the supplied function.
+
+The validators in this module establish structural grounding: cited spans must
+exist verbatim in the supplied source. They do not prove that those spans form a
+causal vulnerability path. CWE-specific semantic validation and human review
+remain separate gates.
+
+This module does not parse arbitrary programming languages, execute source code,
+or perform static analysis. ``derive_patch_findings`` only proposes evidence
+candidates from an already verified before/fixed pair; its output is not
+independent vulnerability gold.
+"""
 
 from __future__ import annotations
 
@@ -53,19 +76,27 @@ SOURCE_TASK_VARIANTS = (
 
 
 class SourcePromptMessage(TypedDict):
-    """Chat message accepted by source-vulnerability inference helpers."""
+    """One model-visible system or user message in the source prompt."""
 
     role: Literal["system", "user"]
     content: str
 
 
 class SourceContractError(ValueError):
-    """Raised when a source record or output violates its contract."""
+    """Report a fail-closed source record, prompt, or target violation."""
 
 
 @dataclass(frozen=True)
 class SourceTargetResult:
-    """Conservative source target build result."""
+    """Describe whether a record can become supervised training data.
+
+    Attributes:
+        target: Validated assistant JSON, or ``None`` when supervision is unsafe.
+        eligible: Whether this record may continue through the data pipeline.
+        reason: Stable machine-readable decision reason.
+        evidence_linked: Whether required structural evidence fields survived
+            normalization. This flag does not assert semantic causality.
+    """
 
     target: dict[str, Any] | None
     eligible: bool
@@ -97,7 +128,12 @@ credential theft, or other actionable offensive instructions."""
 
 
 def validate_source_record(record: Mapping[str, Any]) -> list[str]:
-    """Return schema and integrity errors for a normalized source record."""
+    """Return schema and integrity errors for a normalized private record.
+
+    The record may contain private labels and provenance under ``metadata``.
+    This function validates their storage contract; model visibility is enforced
+    separately by :func:`format_source_prompt`.
+    """
     errors = _schema_errors(_RECORD_VALIDATOR, record)
     if errors:
         return errors
@@ -114,8 +150,17 @@ def validate_source_output(
     output: Mapping[str, Any],
     *,
     source_code: str | None = None,
+    expected_target_cwe: str | None = None,
 ) -> list[str]:
-    """Return source output schema and semantic errors."""
+    """Return structural output errors and exact-span grounding failures.
+
+    When ``source_code`` is supplied, every cited code span must be a verbatim
+    substring of that function. Passing this check does not prove that the spans
+    causally establish the requested CWE.
+
+    ``expected_target_cwe`` binds the model output back to the requested task.
+    A structurally valid answer for a different CWE is not a valid assessment.
+    """
     validator = (
         _OUTPUT_VALIDATOR
         if output.get("schema_version") == "aegislm.source-vulnerability-assessment.v2"
@@ -124,6 +169,13 @@ def validate_source_output(
     errors = _schema_errors(validator, output)
     if errors:
         return errors
+    if expected_target_cwe is not None:
+        scope = output.get("scope")
+        actual_target_cwe = (
+            scope.get("target_cwe") if isinstance(scope, Mapping) else None
+        )
+        if actual_target_cwe != expected_target_cwe:
+            errors.append("scope.target_cwe does not match the requested target CWE")
     assessment = str(output["assessment"])
     findings = cast(list[Mapping[str, Any]], output["findings"])
     if source_code is not None:
@@ -146,12 +198,22 @@ def validate_source_output(
 def format_source_prompt(
     record: Mapping[str, Any],
 ) -> list[SourcePromptMessage]:
-    """Format only target CWE and supplied source code for the model."""
+    """Build a label-blind prompt from an allowlist of model-visible fields.
+
+    Only ``task.target_cwe`` and ``code.text`` cross the model boundary. Do not
+    replace this allowlist with serialization of the complete canonical record.
+
+    Raises:
+        SourceContractError: If the private record is invalid.
+    """
     errors = validate_source_record(record)
     if errors:
         raise SourceContractError("; ".join(errors))
     task = cast(Mapping[str, Any], record["task"])
     code = cast(Mapping[str, Any], record["code"])
+    # Security boundary: construct a new object instead of deleting private keys
+    # from the original record. New metadata fields therefore remain private by
+    # default.
     visible = {
         "scope": {
             "target_cwe": task["target_cwe"],
@@ -181,7 +243,17 @@ def build_source_target(
     findings: Sequence[Mapping[str, Any]] = (),
     assessment_basis: Sequence[Mapping[str, Any]] = (),
 ) -> SourceTargetResult:
-    """Build a target only when the private label has trustworthy evidence."""
+    """Build supervised assistant JSON only from structurally grounded evidence.
+
+    The private label controls the target but never enters the user prompt.
+    Unsupported evidence levels, positive records without findings, and
+    ``uncertain`` labels are returned as ineligible rather than being filled with
+    synthetic evidence.
+
+    Raises:
+        SourceContractError: If the source record or constructed target violates
+            its schema or exact-span contract.
+    """
     record_errors = validate_source_record(record)
     if record_errors:
         raise SourceContractError("; ".join(record_errors))
@@ -194,6 +266,8 @@ def build_source_target(
         return SourceTargetResult(None, False, "evidence_level_not_grounded", False)
 
     source_code = str(code["text"])
+    # Normalization drops incomplete or invented spans. It establishes literal
+    # grounding only; a later CWE-specific gate must judge semantic relevance.
     grounded_findings = _normalize_findings(findings, source_code)
     grounded_basis = _normalize_basis(assessment_basis, source_code)
     if not grounded_basis:
@@ -228,7 +302,11 @@ def build_source_target(
         ],
         "recommendations": ["Confirm with deterministic analysis and human review."],
     }
-    target_errors = validate_source_output(target, source_code=str(code["text"]))
+    target_errors = validate_source_output(
+        target,
+        source_code=str(code["text"]),
+        expected_target_cwe=str(task["target_cwe"]),
+    )
     if target_errors:
         raise SourceContractError("; ".join(target_errors))
     return SourceTargetResult(
@@ -240,7 +318,11 @@ def build_source_target(
 
 
 def source_prompt_variant_id(record: Mapping[str, Any]) -> int:
-    """Return one of four deterministic, label-independent prompt variants."""
+    """Select a deterministic prompt variant without reading the private label.
+
+    The code digest keeps repeated builds reproducible and prevents the prompt
+    wording itself from directly encoding ``present`` or ``not_observed``.
+    """
     code = record.get("code")
     code = code if isinstance(code, Mapping) else {}
     digest = str(code.get("sha256") or "")
@@ -253,13 +335,20 @@ def derive_patch_findings(
     *,
     maximum_findings: int = 3,
 ) -> list[dict[str, str]]:
-    """Derive bounded exact spans changed by a verified before/fixed pair."""
+    """Propose bounded evidence spans from a verified before/fixed pair.
+
+    Removed or replaced text is evidence *candidate* material. A patch may also
+    contain formatting or refactoring changes, so callers must not treat this
+    helper as proof that a span causes ``target_cwe``. See ``SRC-CONTRACT-06``.
+    """
     if not vulnerable_code or not fixed_code or vulnerable_code == fixed_code:
         return []
     before_lines = vulnerable_code.splitlines(keepends=True)
     after_lines = fixed_code.splitlines(keepends=True)
     matcher = difflib.SequenceMatcher(a=before_lines, b=after_lines, autojunk=False)
     findings: list[dict[str, str]] = []
+    # Prefer complete changed lines because they remain readable to reviewers and
+    # can be checked as exact substrings of the vulnerable function.
     for tag, before_start, before_end, _, _ in matcher.get_opcodes():
         if tag not in {"replace", "delete"}:
             continue
@@ -282,6 +371,8 @@ def derive_patch_findings(
     if findings:
         return findings
 
+    # Character-level fallback recovers a candidate from single-line edits. It is
+    # deliberately a last resort because it carries even less semantic context.
     character_matcher = difflib.SequenceMatcher(
         a=vulnerable_code,
         b=fixed_code,
@@ -308,7 +399,12 @@ def phase_f_record_to_source_record(
     record: Mapping[str, Any],
     manifest_row: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Convert an F1 materialized row into the F2 private normalized record."""
+    """Bridge a legacy Phase F materialized row into the canonical contract.
+
+    ``manifest_row`` supplies private label, split, provenance, and evidence
+    level. The returned record is still private and must pass through
+    :func:`format_source_prompt` before it is sent to a model.
+    """
     input_section = cast(Mapping[str, Any], record.get("input") or {})
     context = str(input_section.get("context") or "")
     marker = "Source-code excerpt:\n"
@@ -340,6 +436,7 @@ def _schema_errors(
     validator: Draft202012Validator,
     value: Mapping[str, Any],
 ) -> list[str]:
+    """Return deterministic, path-qualified JSON Schema errors."""
     return [
         _format_schema_error(error)
         for error in sorted(
@@ -350,11 +447,13 @@ def _schema_errors(
 
 
 def _format_schema_error(error: Any) -> str:
+    """Render one jsonschema error with its nested field path."""
     path = ".".join(str(item) for item in error.absolute_path)
     return f"{path}: {error.message}" if path else error.message
 
 
 def _find_forbidden_keys(value: Any) -> list[str]:
+    """Find private control-key names at the current mapping level."""
     if not isinstance(value, Mapping):
         return []
     return sorted(
@@ -363,6 +462,7 @@ def _find_forbidden_keys(value: Any) -> list[str]:
 
 
 def _contains_global_safety_claim(value: Mapping[str, Any]) -> bool:
+    """Detect known English phrases that overstate a scoped negative result."""
     text = "\n".join(_iter_strings(value))
     return any(pattern.search(text) for pattern in _GLOBAL_SAFETY_CLAIMS)
 
@@ -372,6 +472,7 @@ def _exact_span_errors(
     items: Sequence[Mapping[str, Any]],
     source_code: str,
 ) -> list[str]:
+    """Return an error for every cited span absent from the supplied source."""
     errors: list[str] = []
     for item_index, item in enumerate(items):
         for span_index, span in enumerate(cast(Sequence[Any], item["code_spans"])):
@@ -387,6 +488,7 @@ def _normalize_findings(
     findings: Sequence[Mapping[str, Any]],
     source_code: str,
 ) -> list[dict[str, Any]]:
+    """Normalize complete findings whose spans occur in the source."""
     normalized: list[dict[str, Any]] = []
     for item in findings:
         spans = _normalize_code_spans(item, source_code)
@@ -409,6 +511,7 @@ def _normalize_basis(
     basis: Sequence[Mapping[str, Any]],
     source_code: str,
 ) -> list[dict[str, Any]]:
+    """Normalize complete assessment-basis items with exact source spans."""
     normalized: list[dict[str, Any]] = []
     for item in basis:
         spans = _normalize_code_spans(item, source_code)
@@ -431,6 +534,7 @@ def _normalize_code_spans(
     item: Mapping[str, Any],
     source_code: str,
 ) -> list[str]:
+    """Deduplicate and bound exact source spans from v1 or v2 input shapes."""
     raw_spans = item.get("code_spans")
     if isinstance(raw_spans, Sequence) and not isinstance(raw_spans, str):
         candidates = [str(span).strip() for span in raw_spans]
@@ -444,6 +548,7 @@ def _normalize_code_spans(
 
 
 def _iter_strings(value: Any) -> list[str]:
+    """Flatten nested output strings for conservative phrase checks."""
     if isinstance(value, str):
         return [value]
     if isinstance(value, Mapping):

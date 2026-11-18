@@ -25,13 +25,33 @@ from aegislm.datasets.source_audit import (
     count_source_training_tokens,
 )
 
-SARD_JULIET_PROFILE = "phase-f-sard-grounded-v2"
+SARD_JULIET_PROFILE = "phase-f-sard-grounded-v3"
 SARD_JULIET_SOURCE = "NIST SARD Juliet C/C++ 1.3"
 SARD_JULIET_REVISION = "2017-10-01-juliet-test-suite-for-c-cplusplus-v1-3"
 SARD_JULIET_URL = "https://samate.nist.gov/SARD/test-suites/112"
 SARD_JULIET_LICENSE = "NIST SARD public-domain/CC0-1.0 dataset declaration"
 SARD_JULIET_SEED = 20260728
 MAX_EVIDENCE_SPANS = 8
+SUPPORTED_JULIET_CWES = frozenset(
+    {
+        "CWE-121",
+        "CWE-122",
+        "CWE-124",
+        "CWE-126",
+        "CWE-176",
+        "CWE-190",
+        "CWE-191",
+        "CWE-194",
+        "CWE-195",
+        "CWE-321",
+        "CWE-426",
+        "CWE-457",
+        "CWE-590",
+        "CWE-606",
+        "CWE-690",
+        "CWE-761",
+    }
+)
 _SINGLE_FILE = re.compile(
     r"^C/testcases/(?P<cwe_dir>CWE(?P<cwe>\d+)_.*?)/"
     r"(?:s\d+/)?(?P<stem>.+)_(?P<variant>0[1-9]|10)\.(?P<extension>c|cpp)$"
@@ -54,6 +74,9 @@ _PROMPT_LEAKAGE = re.compile(
     r"OMITGOOD|OMITBAD)\b|POTENTIAL\s+FLAW|\bFIX\s*:|"
     r'"(?:label|gold|split|source_dataset|dataset_name|expected_output)"\s*:',
     re.I,
+)
+_CONDITIONAL_PREPROCESSOR = re.compile(
+    r"(?m)^\s*#\s*(?:if|ifdef|ifndef|elif|else|endif)\b"
 )
 
 
@@ -102,6 +125,27 @@ def extract_juliet_functions(
         cwe = f"CWE-{path_match.group('cwe')}"
         reason = "eligible"
         extracted: list[JulietFunction] = []
+        if cwe not in SUPPORTED_JULIET_CWES:
+            catalog.append(
+                {
+                    "schema_version": "aegislm.raw-catalog.v2",
+                    "source_dataset": SARD_JULIET_SOURCE,
+                    "source_revision": SARD_JULIET_REVISION,
+                    "source_url": SARD_JULIET_URL,
+                    "license_or_terms": SARD_JULIET_LICENSE,
+                    "archive_path": archive_path,
+                    "source_sha256": source_sha256,
+                    "group_id": group_id,
+                    "cwe": cwe,
+                    "variant": path_match.group("variant"),
+                    "representation": "source_function",
+                    "contains_executable_payload": False,
+                    "extracted_function_count": 0,
+                    "disposition": "quarantine",
+                    "disposition_reason": "unsupported_cwe",
+                }
+            )
+            continue
         try:
             source = payload.decode("utf-8")
             parsed = _extract_functions(source)
@@ -138,9 +182,17 @@ def extract_juliet_functions(
                 if candidate is not None:
                     good_candidates.append(candidate)
             if not bad_candidates:
-                reason = "grounded_bad_function_missing"
+                reason = (
+                    "conditional_preprocessor"
+                    if any(_contains_conditional_preprocessor(text) for _, text in bad)
+                    else "grounded_bad_function_missing"
+                )
             elif not good_candidates:
-                reason = "verified_good_function_missing"
+                reason = (
+                    "conditional_preprocessor"
+                    if any(_contains_conditional_preprocessor(text) for _, text in good)
+                    else "verified_good_function_missing"
+                )
             else:
                 extracted = [
                     sorted(bad_candidates, key=lambda item: item.original_name)[0],
@@ -243,6 +295,7 @@ def materialize_juliet_profile(
         "test": [],
     }
     manifest: list[dict[str, Any]] = []
+    quarantine_manifest: list[dict[str, Any]] = []
     canonical_records: list[dict[str, Any]] = []
     exclusions: Counter[str] = Counter()
     target_hashes: Counter[str] = Counter()
@@ -251,11 +304,17 @@ def materialize_juliet_profile(
     maximum_tokens = 0
     maximum_assistant_tokens = 0
     semantic_basis_failure_count = 0
+    eligible_semantic_basis_failure_count = 0
     for group in selected:
         staged: list[tuple[dict[str, Any], dict[str, Any], int, JulietFunction]] = []
         group_reason = ""
+        group_semantic_errors: list[str] = []
         split = assignments[group[0].group_id]
+        if any(function.cwe not in SUPPORTED_JULIET_CWES for function in group):
+            group_reason = "unsupported_cwe"
         for function in group:
+            if group_reason:
+                break
             record = juliet_function_to_source_record(function, split=split)
             errors = validate_source_record(record)
             result = build_source_target(
@@ -266,9 +325,14 @@ def materialize_juliet_profile(
             if errors or not result.eligible or result.target is None:
                 group_reason = "source_contract_failed"
                 break
-            semantic_basis_failure_count += len(
-                _target_semantic_basis_errors(result.target)
-            )
+            semantic_errors = _target_semantic_basis_errors(result.target)
+            semantic_basis_failure_count += len(semantic_errors)
+            if semantic_errors:
+                group_reason = "semantic_basis_failed"
+                group_semantic_errors.extend(
+                    f"{record['id']}:{error}" for error in semantic_errors
+                )
+                break
             prompt = format_source_prompt(record)
             token_count = count_source_training_tokens(tokenizer, prompt, result.target)
             assistant_token_count = count_source_assistant_tokens(
@@ -289,8 +353,25 @@ def materialize_juliet_profile(
             staged.append((record, result.target, token_count, function))
         if group_reason:
             exclusions[group_reason] += 1
+            quarantine_manifest.append(
+                {
+                    "group_id": group[0].group_id,
+                    "record_ids": [
+                        f"sard-{function.group_id[:16]}-{function.label}"
+                        for function in group
+                    ],
+                    "cwes": sorted({function.cwe for function in group}),
+                    "split_candidate": split,
+                    "disposition": "quarantine",
+                    "disposition_reason": group_reason,
+                    "semantic_errors": group_semantic_errors,
+                }
+            )
             continue
         for record, target, token_count, function in staged:
+            eligible_semantic_basis_failure_count += len(
+                _target_semantic_basis_errors(target)
+            )
             row = {
                 "record_id": record["id"],
                 "group_id": function.group_id,
@@ -408,7 +489,7 @@ def materialize_juliet_profile(
             not exclusions["assistant_token_limit_exceeded"]
             and maximum_assistant_tokens <= SOURCE_ASSISTANT_TOKEN_LIMIT
         ),
-        "semantic_basis": semantic_basis_failure_count == 0,
+        "semantic_basis": eligible_semantic_basis_failure_count == 0,
     }
     automated_pass = quota_pass and all(quality_gates.values())
     return {
@@ -456,15 +537,27 @@ def materialize_juliet_profile(
         "maximum_exact_target_count": maximum_exact_target_count,
         "quality_gates": quality_gates,
         "semantic_basis_failure_count": semantic_basis_failure_count,
+        "eligible_semantic_basis_failure_count": (
+            eligible_semantic_basis_failure_count
+        ),
         "automated_pass": automated_pass,
         "quota_pass": quota_pass,
         "manual_review": {
             "required_count": 100,
             "status": "not_started",
             "maximum_label_or_evidence_error_rate": 0.05,
+            "generated_gold_is_independent_expert_gold": False,
+            "causal_evidence_review_required": True,
+        },
+        "gold_provenance": {
+            "decision_label": "juliet_bad_good_pair",
+            "evidence_spans": "deterministic_cwe_specific_builder",
+            "independent_expert_gold": False,
+            "generated_gold_metrics_are_security_quality_metrics": False,
         },
         "records": accepted,
         "manifest": manifest,
+        "quarantine_manifest": quarantine_manifest,
         "canonical_records": canonical_records,
     }
 
@@ -608,9 +701,11 @@ def _build_function(
     original_name: str,
     original_code: str,
 ) -> JulietFunction | None:
-    if cwe == "CWE-675":
-        # The current exact-substring contract cannot distinguish two identical
-        # CloseHandle(data) occurrences without adding source locations.
+    if cwe not in SUPPORTED_JULIET_CWES:
+        return None
+    if _contains_conditional_preprocessor(original_code):
+        # Removing conditional directives would merge mutually exclusive paths.
+        # Until a compiler profile is pinned, quarantine the entire function.
         return None
     identifier_mapping = _label_identifier_mapping(original_code, original_name)
     sanitized = _sanitize_function(original_code, identifier_mapping)
@@ -662,6 +757,14 @@ def _build_function(
     spans = _ordered_unique_spans(sanitized, [*annotated_spans, *supporting_spans])
     required_spans = _required_cwe_spans(cwe, label, sanitized, spans)
     spans = _merge_required_spans(sanitized, spans, required_spans)
+    if cwe == "CWE-761":
+        # Printing a match happens on the path, but it does not establish the
+        # invalid-free relation. Keep the allocation/mutation/free chain.
+        spans = [
+            span
+            for span in spans
+            if not re.search(r"\b(?:print\w*|printf|fprintf|puts|fputs)\s*\(", span)
+        ]
     if not spans:
         return None
     if any(sanitized.count(span) != 1 for span in spans):
@@ -673,15 +776,15 @@ def _build_function(
     flaw_description = _join_descriptions(flaw_annotations)
     fix_description = _join_descriptions(fix_annotations)
     if label == "present":
-        relationship = flaw_description
+        relationship = _present_cwe_relationship(cwe, flaw_description)
         conclusion = (
             f"The selected setup and operation spans establish {cwe} within "
-            f"the supplied function: {flaw_description}"
+            f"the supplied function: {relationship}"
         )
         findings: tuple[dict[str, Any], ...] = (
             {
                 "code_spans": spans,
-                "operation": flaw_description,
+                "operation": relationship,
                 "evidence": conclusion,
                 "confidence": "high",
             },
@@ -1095,6 +1198,19 @@ def _required_cwe_spans(
                         )
                         if allocation:
                             required.append(allocation)
+            pointer_relation_pattern = (
+                r"\b[A-Za-z_]\w*\s*(?:=\s*[A-Za-z_]\w*\s*[-+]\s*\d+|"
+                r"-=\s*\d+|--)\s*;"
+                if label == "present"
+                else r"\b[A-Za-z_]\w*\s*=\s*[A-Za-z_]\w*\s*;"
+            )
+            pointer_relation = _last_statement_before(
+                code,
+                sink,
+                pointer_relation_pattern,
+            )
+            if pointer_relation:
+                required.append(pointer_relation)
     elif cwe == "CWE-457":
         required.extend(
             _matching_statements(
@@ -1210,14 +1326,47 @@ def _required_cwe_spans(
                 limit=1,
             )
         required.extend(effects)
+        if effects:
+            source = _source_identifier(effects[0])
+            if source:
+                source_storage = _last_statement_before(
+                    code,
+                    effects[0],
+                    _array_declaration_pattern(source),
+                )
+                if not source_storage:
+                    source_storage = _last_statement_before(
+                        code,
+                        effects[0],
+                        rf"\b{re.escape(source)}\s*=\s*"
+                        r"(?:\([^;]+\)\s*)?(?:malloc|calloc|realloc)\s*\(",
+                    )
+                if source_storage:
+                    required.append(source_storage)
         required.extend(
             _matching_statements(
                 code,
-                r"\bdestLen\s*(?<![=!<>])=(?!=)",
+                r"\b(?:destLen|sourceLen)\s*(?<![=!<>])=(?!=)",
+                limit=2,
+            )
+        )
+        if label == "not_observed":
+            required.extend(
+                _matching_statements(
+                    code,
+                    r"^if\s*\([^)]*\b(?:destLen|sourceLen)\b[^)]*"
+                    r"(?:<|<=|>|>=)[^)]*\)",
+                    limit=1,
+                )
+            )
+    elif cwe == "CWE-176":
+        required.extend(
+            _matching_statements(
+                code,
+                r"\b(?:char|wchar_t)\s+convertedText\s*\[[^\]]+\]",
                 limit=1,
             )
         )
-    elif cwe == "CWE-176":
         required.extend(
             _matching_statements(
                 code,
@@ -1226,6 +1375,14 @@ def _required_cwe_spans(
             )
         )
         if label == "not_observed":
+            required.extend(
+                _matching_statements(
+                    code,
+                    r"\brequiredSize\s*(?<![=!<>])=(?!=)[^;]*"
+                    r"WideCharToMultiByte\s*\(",
+                    limit=1,
+                )
+            )
             required.extend(
                 _matching_statements(
                     code,
@@ -1273,14 +1430,84 @@ def _required_cwe_spans(
                     limit=1,
                 )
             )
-    elif cwe == "CWE-321":
+    elif cwe in {"CWE-190", "CWE-191"}:
+        arithmetic_pattern = (
+            r"\b[A-Za-z_]\w*\s*(?:--|-=\s*[^;]+|"
+            r"(?<![=!<>])=(?!=)[^;]*(?:-|\*)[^;]*)"
+            if cwe == "CWE-191"
+            else r"\b[A-Za-z_]\w*\s*(?:\+\+|\+=\s*[^;]+|"
+            r"(?<![=!<>])=(?!=)[^;]*(?:\+|\*)[^;]*)"
+        )
         required.extend(
             _matching_statements(
                 code,
-                r"\b(?:fgets|fgetws|scanf|fscanf)\s*\(",
+                arithmetic_pattern,
                 limit=1,
             )
         )
+        if label == "not_observed":
+            required.extend(
+                _matching_statements(
+                    code,
+                    r"^if\s*\([^)]*(?:<|<=|>|>=)[^)]*\)",
+                    limit=1,
+                )
+            )
+        required.extend(
+            _matching_statements(
+                code,
+                r"\b(?:fgets|fscanf|scanf|recv|read)\s*\(|"
+                r"\bdata\s*=\s*(?:-\s*\d+|[A-Z_]*MIN\b)",
+                limit=1,
+            )
+        )
+    elif cwe in {"CWE-194", "CWE-195"}:
+        required.extend(
+            _matching_statements(
+                code,
+                r"\b(?:short|int|long|int\d+_t)\s+data\s*(?:=|;)",
+                limit=1,
+            )
+        )
+        required.extend(
+            _matching_statements(
+                code,
+                r"\b(?:memcpy|memmove)\s*\([^,]+,[^,]+,\s*data\s*\)",
+                limit=1,
+            )
+        )
+        required.extend(
+            _matching_statements(
+                code,
+                r"^if\s*\([^)]*\bdata\b[^)]*(?:<|<=|>|>=)[^)]*\)",
+                limit=1,
+            )
+        )
+        source_pattern = (
+            r"\b(?:fgets|fscanf|scanf|recv|read)\s*\(|"
+            r"\bdata\s*=\s*(?:\([^;]+\)\s*)?RAND32\s*\("
+            if label == "present"
+            else r"\bdata\s*=\s*(?:\d+\s*-\s*\d+|[1-9]\d*)\s*;|"
+            r"^if\s*\([^)]*\bdata\b[^)]*(?:>=|>)\s*0[^)]*\)"
+        )
+        required.extend(_matching_statements(code, source_pattern, limit=1))
+    elif cwe == "CWE-321":
+        if label == "present":
+            required.extend(
+                _matching_statements(
+                    code,
+                    r"\bcryptoKey\b[^;]*(?:L)?\"[^\"\n]+\"",
+                    limit=1,
+                )
+            )
+        else:
+            required.extend(
+                _matching_statements(
+                    code,
+                    r"\b(?:fgets|fgetws|scanf|fscanf)\s*\(",
+                    limit=1,
+                )
+            )
         required.extend(
             _matching_statements(
                 code,
@@ -1425,6 +1652,8 @@ def _cwe_evidence_errors(
     label: Literal["present", "not_observed"],
     spans: Sequence[str],
 ) -> list[str]:
+    if cwe not in SUPPORTED_JULIET_CWES:
+        return ["unsupported_cwe"]
     joined = "\n".join(spans)
     errors: list[str] = []
     if cwe in {"CWE-121", "CWE-122"}:
@@ -1439,6 +1668,125 @@ def _cwe_evidence_errors(
             joined,
         ):
             errors.append("destination_capacity_missing")
+    elif cwe == "CWE-124":
+        if not re.search(
+            r"\b(?:memcpy|memmove|strcpy|strncpy|wcscpy|wcsncpy)\s*\(|"
+            r"\b[A-Za-z_]\w*\s*\[[^\]]+\]\s*=",
+            joined,
+        ):
+            errors.append("buffer_underwrite_effect_missing")
+        if not re.search(r"\b(?:malloc|calloc|realloc)\s*\(", joined):
+            errors.append("backing_allocation_missing")
+        relation = (
+            r"\b[A-Za-z_]\w*\s*(?:=\s*[A-Za-z_]\w*\s*[-+]\s*\d+|"
+            r"-=\s*\d+|--)\s*;"
+            if label == "present"
+            else r"\b[A-Za-z_]\w*\s*=\s*[A-Za-z_]\w*\s*;"
+        )
+        if not re.search(relation, joined):
+            errors.append("underwrite_pointer_relation_missing")
+    elif cwe == "CWE-126":
+        if not re.search(
+            r"\b(?:memcpy|memmove)\s*\(|"
+            r"\b[A-Za-z_]\w*\s*\[[^\]]+\]\s*=\s*"
+            r"[A-Za-z_]\w*\s*\[[^\]]+\]|"
+            r"\bprint\w*\s*\(\s*[A-Za-z_]\w*\s*\[",
+            joined,
+        ):
+            errors.append("buffer_read_effect_missing")
+        if not re.search(
+            r"\b[A-Za-z_]\w*\s*\[[^\]]+\]\s*(?:=|;)|"
+            r"\b(?:malloc|calloc|realloc)\s*\(",
+            joined,
+        ):
+            errors.append("source_capacity_missing")
+        if not re.search(r"\b(?:destLen|sourceLen)\b", joined):
+            errors.append("read_length_relation_missing")
+        if label == "not_observed" and not re.search(
+            r"(?:\bdestLen\s*=\s*sourceLen\b|"
+            r"^if\s*\([^)]*\b(?:destLen|sourceLen)\b[^)]*"
+            r"(?:<|<=|>|>=)[^)]*\))",
+            joined,
+            re.MULTILINE,
+        ):
+            errors.append("read_bound_guard_missing")
+    elif cwe == "CWE-176":
+        conversion_count = len(re.findall(r"\bWideCharToMultiByte\s*\(", joined))
+        if conversion_count == 0:
+            errors.append("unicode_conversion_missing")
+        if not re.search(
+            r"\b(?:char|wchar_t)\s+convertedText\s*\[[^\]]+\]",
+            joined,
+        ):
+            errors.append("destination_capacity_missing")
+        if label == "not_observed":
+            if conversion_count < 2 or not re.search(
+                r"\brequiredSize\s*(?<![=!<>])=(?!=)", joined
+            ):
+                errors.append("required_size_query_missing")
+            if not re.search(
+                r"^if\s*\([^)]*\brequiredSize\b[^)]*\)",
+                joined,
+                re.MULTILINE,
+            ):
+                errors.append("required_size_guard_missing")
+    elif cwe in {"CWE-190", "CWE-191"}:
+        arithmetic_pattern = (
+            r"\b[A-Za-z_]\w*\s*(?:--|-=\s*[^;]+|"
+            r"(?<![=!<>])=(?!=)[^;]*(?:-|\*)[^;]*)"
+            if cwe == "CWE-191"
+            else r"\b[A-Za-z_]\w*\s*(?:\+\+|\+=\s*[^;]+|"
+            r"(?<![=!<>])=(?!=)[^;]*(?:\+|\*)[^;]*)"
+        )
+        if not re.search(arithmetic_pattern, joined):
+            errors.append("integer_arithmetic_effect_missing")
+        if label == "not_observed" and not re.search(
+            r"^if\s*\([^)]*(?:<|<=|>|>=)[^)]*\)|"
+            r"\bdata\s*=\s*-\s*[12]\s*;",
+            joined,
+            re.MULTILINE,
+        ):
+            errors.append("integer_bound_check_missing")
+        if (
+            cwe == "CWE-191"
+            and label == "present"
+            and not re.search(
+                r"\b(?:fgets|fscanf|scanf|recv|read)\s*\(|"
+                r"\bdata\s*=\s*(?:-\s*\d+|[A-Z_]*MIN\b)",
+                joined,
+            )
+        ):
+            errors.append("negative_value_source_missing")
+    elif cwe in {"CWE-194", "CWE-195"}:
+        if not re.search(
+            r"\b(?:short|int|long|int\d+_t)\s+data\s*(?:=|;)",
+            joined,
+        ):
+            errors.append("signed_data_declaration_missing")
+        if not re.search(
+            r"\b(?:memcpy|memmove)\s*\([^,]+,[^,]+,\s*data\s*\)",
+            joined,
+        ):
+            errors.append("signed_length_copy_missing")
+        if not re.search(
+            r"^if\s*\([^)]*\bdata\b[^)]*(?:<|<=|>|>=)[^)]*\)",
+            joined,
+            re.MULTILINE,
+        ):
+            errors.append("length_bound_context_missing")
+        if label == "present" and not re.search(
+            r"\b(?:fgets|fscanf|scanf|recv|read)\s*\(|"
+            r"\bdata\s*=\s*(?:\([^;]+\)\s*)?RAND32\s*\(",
+            joined,
+        ):
+            errors.append("signed_input_source_missing")
+        if label == "not_observed" and not re.search(
+            r"\bdata\s*=\s*(?:\d+\s*-\s*\d+|[1-9]\d*)\s*;|"
+            r"^if\s*\([^)]*\bdata\b[^)]*(?:>=|>)\s*0[^)]*\)",
+            joined,
+            re.MULTILINE,
+        ):
+            errors.append("nonnegative_length_basis_missing")
     elif cwe == "CWE-457":
         if not re.search(r"\bdata\b", joined):
             errors.append("data_object_missing")
@@ -1511,7 +1859,13 @@ def _cwe_evidence_errors(
         ):
             errors.append("allocation_check_missing")
     elif cwe == "CWE-321":
-        if not re.search(r"\b(?:fgets|fgetws|scanf|fscanf)\s*\(", joined):
+        if label == "present":
+            if not any(
+                re.search(r"\bcryptoKey\b[^;]*(?:L)?\"[^\"\n]+\"", span)
+                for span in spans
+            ):
+                errors.append("hardcoded_key_material_missing")
+        elif not re.search(r"\b(?:fgets|fgetws|scanf|fscanf)\s*\(", joined):
             errors.append("runtime_key_input_missing")
         if not re.search(r"\bCryptHashData\s*\([^;\n]*\bcryptoKey\b", joined):
             errors.append("key_derivation_input_missing")
@@ -1617,6 +1971,22 @@ def _join_descriptions(annotations: Sequence[_AnnotatedOperation]) -> str:
         dict.fromkeys(item.description for item in annotations if item.description)
     )
     return " ".join(descriptions)
+
+
+def _present_cwe_relationship(cwe: str, fallback: str) -> str:
+    """Return a causal statement when Juliet's comment only names the source."""
+
+    if cwe == "CWE-176":
+        return (
+            "The required conversion size is used to write into the fixed-size "
+            "convertedText buffer without a capacity guard."
+        )
+    if cwe == "CWE-761":
+        return (
+            "The data pointer is advanced away from the allocation start and the "
+            "modified pointer is then passed to the deallocation operation."
+        )
+    return fallback
 
 
 def _looks_like_effect(line: str) -> bool:
@@ -1763,22 +2133,77 @@ def _label_identifier_mapping(code: str, original_name: str) -> dict[str, str]:
 
 def _sanitize_function(code: str, identifier_mapping: Mapping[str, str]) -> str:
     sanitized = _sanitize_fragment(code, identifier_mapping)
-    lines = [
-        line.rstrip()
-        for line in sanitized.splitlines()
-        if not line.lstrip().startswith("#")
-    ]
-    return "\n".join(lines).strip()
+    return "\n".join(line.rstrip() for line in sanitized.splitlines()).strip()
 
 
 def _sanitize_fragment(
     value: str,
     identifier_mapping: Mapping[str, str],
 ) -> str:
-    value = _COMMENT.sub(lambda match: "\n" * match.group(0).count("\n"), value)
-    for original, replacement in identifier_mapping.items():
-        value = re.sub(rf"\b{re.escape(original)}\b", replacement, value)
-    return value
+    output: list[str] = []
+    index = 0
+    state = "code"
+    while index < len(value):
+        char = value[index]
+        following = value[index + 1] if index + 1 < len(value) else ""
+        if state == "line_comment":
+            if char == "\n":
+                output.append(char)
+                state = "code"
+            index += 1
+            continue
+        if state == "block_comment":
+            if char == "*" and following == "/":
+                state = "code"
+                index += 2
+                continue
+            if char == "\n":
+                output.append(char)
+            index += 1
+            continue
+        if state in {"string", "char"}:
+            output.append(char)
+            if char == "\\" and following:
+                output.append(following)
+                index += 2
+                continue
+            if (state == "string" and char == '"') or (state == "char" and char == "'"):
+                state = "code"
+            index += 1
+            continue
+        if char == "/" and following == "/":
+            state = "line_comment"
+            index += 2
+            continue
+        if char == "/" and following == "*":
+            state = "block_comment"
+            index += 2
+            continue
+        if char == '"':
+            output.append(char)
+            state = "string"
+            index += 1
+            continue
+        if char == "'":
+            output.append(char)
+            state = "char"
+            index += 1
+            continue
+        if char == "_" or char.isalpha():
+            end = index + 1
+            while end < len(value) and (value[end] == "_" or value[end].isalnum()):
+                end += 1
+            token = value[index:end]
+            output.append(identifier_mapping.get(token, token))
+            index = end
+            continue
+        output.append(char)
+        index += 1
+    return "".join(output)
+
+
+def _contains_conditional_preprocessor(code: str) -> bool:
+    return _CONDITIONAL_PREPROCESSOR.search(code) is not None
 
 
 def _is_bad_name(name: str) -> bool:

@@ -1,0 +1,50 @@
+{
+  "schema_version": "aegislm.mistral-f5x-runtime.v1",
+  "python_version": "3.12",
+  "torch_backend": "cu130",
+  "cuda_version": "13.0",
+  "gpu_count": 2,
+  "gpu_name_contains": "B200",
+  "environment_directory": ".venv-axolotl",
+  "telemetry_environment": {
+    "AXOLOTL_DO_NOT_TRACK": "1"
+  },
+  "packages": {
+    "torch": {
+      "distribution": "torch",
+      "version": "2.12.1",
+      "import": "torch"
+    },
+    "axolotl": {
+      "distribution": "axolotl",
+      "version": "0.17.0",
+      "import": "axolotl"
+    },
+    "transformers": {
+      "distribution": "transformers",
+      "version": "5.9.0",
+      "import": "transformers"
+    },
+    "cut_cross_entropy": {
+      "distribution": "cut-cross-entropy",
+      "repository": "https://github.com/axolotl-ai-cloud/ml-cross-entropy.git",
+      "revision": "5f0c7a7778b5b17d37738fae10065ed3034373af",
+      "import": "cut_cross_entropy"
+    },
+    "flash_attn": {
+      "distribution": "flash-attn",
+      "version": "2.8.3",
+      "import": "flash_attn"
+    },
+    "bitsandbytes": {
+      "distribution": "bitsandbytes",
+      "version": "0.49.1",
+      "import": "bitsandbytes"
+    },
+    "torchao": {
+      "distribution": "torchao",
+      "version": "0.17.0",
+      "import": "torchao"
+    }
+  }
+}

@@ -163,6 +163,7 @@ def _evaluate_case(
 ) -> dict[str, Any]:
     metadata = cast(dict[str, Any], record["metadata"])
     code = cast(dict[str, Any], record["code"])
+    task = record.get("task")
     case = {
         "record_id": record["id"],
         "gold": metadata["label"],
@@ -195,7 +196,15 @@ def _evaluate_case(
         case["errors"].append("output must be a JSON object")
         return case
     case["parse_success"] = True
-    errors = validate_source_output(output, source_code=str(code["text"]))
+    errors = validate_source_output(
+        output,
+        source_code=str(code["text"]),
+        expected_target_cwe=(
+            str(task["target_cwe"])
+            if isinstance(task, dict) and "target_cwe" in task
+            else None
+        ),
+    )
     case["errors"].extend(errors)
     case["schema_valid"] = not errors
     unsafe = _unsafe_errors(output)

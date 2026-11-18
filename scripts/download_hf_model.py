@@ -19,6 +19,10 @@ from aegislm.runtime.memory_budget import bytes_to_gib, inspect_model_dir  # noq
 
 
 MODEL_VARIANTS = {
+    "mistral-small-4-119b-bf16": {
+        "model_id": "axolotl-ai-co/Mistral-Small-4-119B-2603-BF16",
+        "local_dir": "model/mistral-small-4-119b-2603-bf16",
+    },
     "deepseek-v4-flash": {
         "model_id": "deepseek-ai/DeepSeek-V4-Flash",
         "local_dir": "model/base/deepseek-v4-flash",
@@ -233,7 +237,9 @@ def _resolve_model_revision(
 def _write_model_manifest(local_dir: Path, *, model_id: str, revision: str) -> None:
     total, shard_count, missing = inspect_model_dir(local_dir)
     index_path = local_dir / "model.safetensors.index.json"
+    files = _snapshot_inventory(local_dir)
     manifest = {
+        "schema_version": "aegislm.model-snapshot.v2",
         "model_id": model_id,
         "revision": revision,
         "generated_at": datetime.now(UTC).isoformat(),
@@ -241,6 +247,8 @@ def _write_model_manifest(local_dir: Path, *, model_id: str, revision: str) -> N
         "safetensors_shards": shard_count,
         "missing_shards": missing,
         "index_sha256": _sha256(index_path) if index_path.is_file() else None,
+        "files": files,
+        "inventory_sha256": _inventory_sha256(files),
     }
     (local_dir / "aegislm_model_manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n",
@@ -248,6 +256,39 @@ def _write_model_manifest(local_dir: Path, *, model_id: str, revision: str) -> N
     )
     if missing:
         raise RuntimeError(f"Downloaded model is missing shards: {', '.join(missing)}")
+
+
+def _snapshot_inventory(local_dir: Path) -> list[dict[str, int | str]]:
+    inventory: list[dict[str, int | str]] = []
+    for path in sorted(local_dir.rglob("*")):
+        relative = path.relative_to(local_dir)
+        if (
+            not path.is_file()
+            or path.name == "aegislm_model_manifest.json"
+            or relative.parts[:1] == (".cache",)
+        ):
+            continue
+        if path.is_symlink():
+            raise RuntimeError(f"model snapshot file must not be a symlink: {relative}")
+        inventory.append(
+            {
+                "path": relative.as_posix(),
+                "bytes": path.stat().st_size,
+                "sha256": _sha256(path),
+            }
+        )
+    if not inventory:
+        raise RuntimeError("model snapshot inventory is empty")
+    return inventory
+
+
+def _inventory_sha256(files: list[dict[str, int | str]]) -> str:
+    digest = hashlib.sha256()
+    for item in files:
+        digest.update(
+            f"{item['path']}\t{item['bytes']}\t{item['sha256']}\n".encode("utf-8")
+        )
+    return digest.hexdigest()
 
 
 def _sha256(path: Path) -> str:

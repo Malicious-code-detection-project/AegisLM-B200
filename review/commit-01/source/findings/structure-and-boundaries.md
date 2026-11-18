@@ -16,6 +16,17 @@
 이 구조는 동작 흐름을 한 파일에서 볼 수 있다는 장점이 있지만, Juliet 전용
 규칙과 재사용 가능한 dataset contract의 경계를 흐립니다.
 
+`source.py`에도 다음 책임이 함께 있습니다.
+
+- canonical record와 output validation
+- model-visible prompt formatting
+- supervised target 생성
+- generic patch diff evidence 후보 생성
+- Phase F r2 record를 canonical record로 바꾸는 legacy bridge
+
+공통 계약은 모델 교체에도 재사용해야 하지만 patch heuristic과 legacy bridge는
+dataset version에 종속되므로 같은 모듈에 둘 이유가 약합니다.
+
 ## AegisLM 안에서 분리할 책임
 
 ```text
@@ -29,6 +40,17 @@ aegislm/datasets/
 │   ├── cwe_evidence.py       # 지원 CWE별 target builder와 validator
 │   └── materialize.py        # Juliet profile 구성
 └── evidence.py               # 위치 기반 span과 공통 evidence contract
+```
+
+최소 분리안은 기존 frozen import를 즉시 깨지 않고 새 dataset version부터 다음
+책임을 분리하는 것입니다.
+
+```text
+source.py              # 기존 호환 facade와 canonical validation
+source_prompt.py       # model-visible allowlist와 system prompt
+source_targets.py      # supervised target policy
+source_patch.py        # patch diff candidate와 CWE별 검증 연결
+source_legacy.py       # 과거 Phase F record 변환
 ```
 
 실제 분리 위치는 `source.py`와 `source_audit.py` 리뷰 후 확정합니다. 이미 있는

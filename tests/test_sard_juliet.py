@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import zipfile
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -12,11 +13,14 @@ from aegislm.datasets.sard_juliet import (
     _clean_annotation,
     _cwe_evidence_errors,
     _following_operation_spans,
+    _present_cwe_relationship,
     _required_cwe_spans,
+    _sanitize_fragment,
     extract_juliet_functions,
     materialize_juliet_profile,
     summarize_juliet_manual_review,
 )
+from scripts.build_sard_juliet_source_dataset import _select_manual_review_manifest
 from scripts.render_sard_manual_review import _render
 from scripts.apply_sard_manual_review_decisions import _apply_decisions
 from scripts.prepare_sard_remediation_decisions import prepare_decisions
@@ -444,6 +448,27 @@ def test_pointer_deallocation_evidence_requires_change_and_free() -> None:
     ]
 
 
+def test_pointer_deallocation_relationship_names_the_invalid_free_chain() -> None:
+    relationship = _present_cwe_relationship("CWE-761", "Read data from a file.")
+
+    assert "advanced away from the allocation start" in relationship
+    assert "deallocation" in relationship
+
+
+def test_unicode_conversion_evidence_requires_destination_capacity() -> None:
+    code = """void sample_function()
+{
+    char convertedText[10] = "";
+    int requiredSize = WideCharToMultiByte(0, 0, data, -1, convertedText, 0, 0, 0);
+    WideCharToMultiByte(0, 0, data, -1, convertedText, requiredSize, 0, 0);
+}"""
+
+    spans = _required_cwe_spans("CWE-176", "present", code, [])
+
+    assert 'char convertedText[10] = "";' in spans
+    assert _cwe_evidence_errors("CWE-176", "present", spans) == []
+
+
 def test_uninitialized_fix_evidence_does_not_treat_comparison_as_assignment() -> None:
     code = """static void sample_function()
 {
@@ -591,6 +616,183 @@ def test_runtime_crypto_key_requires_input_and_hash_use() -> None:
     assert _cwe_evidence_errors("CWE-321", "not_observed", complete[:1]) == [
         "key_derivation_input_missing"
     ]
+
+
+def test_hardcoded_crypto_key_requires_literal_and_hash_use() -> None:
+    complete = [
+        'char cryptoKey[] = "fixed-secret";',
+        "CryptHashData(hHash, (BYTE *) cryptoKey, keyLen, 0);",
+    ]
+
+    assert _cwe_evidence_errors("CWE-321", "present", complete) == []
+    assert _cwe_evidence_errors("CWE-321", "present", complete[1:]) == [
+        "hardcoded_key_material_missing"
+    ]
+
+
+def test_unrelated_literal_cannot_satisfy_hardcoded_key_evidence() -> None:
+    misleading = [
+        "if(!CryptHashData(hHash, (BYTE *) cryptoKey, keyLen, 0))",
+        'printLine("Error in CryptEncrypt");',
+    ]
+
+    assert _cwe_evidence_errors("CWE-321", "present", misleading) == [
+        "hardcoded_key_material_missing"
+    ]
+
+
+def test_newly_supported_cwes_fail_closed_on_missing_causal_evidence() -> None:
+    assert _cwe_evidence_errors("CWE-124", "present", ["memmove(dst, src, 8);"]) == [
+        "backing_allocation_missing",
+        "underwrite_pointer_relation_missing",
+    ]
+    assert _cwe_evidence_errors("CWE-126", "present", ["memmove(dst, src, 8);"]) == [
+        "source_capacity_missing",
+        "read_length_relation_missing",
+    ]
+    assert _cwe_evidence_errors(
+        "CWE-176", "not_observed", ["WideCharToMultiByte(0, 0, src, -1, dst, 8, 0, 0);"]
+    ) == [
+        "destination_capacity_missing",
+        "required_size_query_missing",
+        "required_size_guard_missing",
+    ]
+    assert _cwe_evidence_errors("CWE-999", "present", ["operation();"]) == [
+        "unsupported_cwe"
+    ]
+
+
+def test_integer_underflow_requires_negative_source_and_arithmetic() -> None:
+    present = [
+        'fscanf(stdin, "%hd", &data);',
+        "short result = data * 2;",
+    ]
+    fixed = ["data = -2;", "short result = data * 2;"]
+
+    assert _cwe_evidence_errors("CWE-191", "present", present) == []
+    assert _cwe_evidence_errors("CWE-191", "not_observed", fixed) == []
+    assert _cwe_evidence_errors("CWE-191", "present", present[1:]) == [
+        "negative_value_source_missing"
+    ]
+
+
+def test_signed_length_conversion_requires_provenance_bound_and_copy() -> None:
+    present = [
+        "int data;",
+        "if (fgets(inputBuffer, sizeof(inputBuffer), stdin) != NULL)",
+        "if (data < 100)",
+        "memcpy(dest, source, data);",
+    ]
+    fixed = [
+        "short data;",
+        "data = 100-1;",
+        "if (data < 100)",
+        "memmove(dest, source, data);",
+    ]
+
+    for cwe in ("CWE-194", "CWE-195"):
+        assert _cwe_evidence_errors(cwe, "present", present) == []
+        assert _cwe_evidence_errors(cwe, "not_observed", fixed) == []
+        assert _cwe_evidence_errors(cwe, "present", present[1:]) == [
+            "signed_data_declaration_missing"
+        ]
+
+
+def test_identifier_sanitizer_preserves_string_and_character_literals() -> None:
+    value = (
+        'const char *message = "example_bad goodSink";\n'
+        "char marker = 'b';\n"
+        "example_bad();\n"
+    )
+
+    sanitized = _sanitize_fragment(
+        value,
+        {"example_bad": "sample_function", "goodSink": "candidate_symbol_1"},
+    )
+
+    assert '"example_bad goodSink"' in sanitized
+    assert "sample_function();" in sanitized
+    assert "candidate_symbol_1" not in sanitized
+
+
+def test_conditional_preprocessor_function_is_quarantined() -> None:
+    code = """void example_bad()
+{
+#ifdef SELECT_RISK_PATH
+    /* POTENTIAL FLAW: copy into the smaller buffer */
+    memcpy(data, source, 100);
+#endif
+}"""
+
+    assert (
+        _build_function(
+            "archive.cpp",
+            "group",
+            "hash",
+            "CWE-121",
+            "present",
+            "example_bad",
+            code,
+        )
+        is None
+    )
+
+
+def test_manual_review_sample_covers_each_cwe_for_each_label() -> None:
+    manifest = [
+        {
+            "record_id": f"{cwe}-{label}-{index}",
+            "cwe": cwe,
+            "label": label,
+        }
+        for label in ("present", "not_observed")
+        for cwe in ("CWE-121", "CWE-190", "CWE-761")
+        for index in range(3)
+    ]
+
+    selected = _select_manual_review_manifest(manifest, seed=7, per_label=4)
+
+    assert len(selected) == 8
+    for label in ("present", "not_observed"):
+        covered = {row["cwe"] for row in selected if row["label"] == label}
+        assert covered == {"CWE-121", "CWE-190", "CWE-761"}
+
+
+def test_semantic_error_quarantines_entire_pair(tmp_path: Path) -> None:
+    functions, _ = extract_juliet_functions(_archive(tmp_path, count=1))
+    corrupted = []
+    for function in functions:
+        if function.label == "present":
+            corrupted.append(
+                replace(
+                    function,
+                    assessment_basis=(
+                        {
+                            "code_spans": ("printIntLine(data);",),
+                            "relationship": "The printed value is observable here.",
+                            "conclusion": "This span alone does not establish integer overflow.",
+                            "confidence": "medium",
+                        },
+                    ),
+                )
+            )
+        else:
+            corrupted.append(function)
+
+    profile = materialize_juliet_profile(
+        corrupted,
+        tokenizer=_Tokenizer(),
+        train_pairs=1,
+        validation_pairs=0,
+        test_pairs=0,
+    )
+
+    assert profile["eligible_record_count"] == 0
+    assert profile["excluded_group_counts"] == {"semantic_basis_failed": 1}
+    assert profile["quarantine_manifest"][0]["disposition_reason"] == (
+        "semantic_basis_failed"
+    )
+    assert profile["quality_gates"]["semantic_basis"] is True
 
 
 def test_juliet_good_bad_terms_are_removed_from_supervision() -> None:

@@ -12,6 +12,8 @@ wheels/
 # Virtual environments
 .venv/
 .venv-fast/
+.venv-axolotl/
+.runtime-probes/
 
 # Local environment and secrets
 .env

@@ -1,6 +1,17 @@
 import json
 
-from scripts.download_hf_model import _matches_patterns, _write_model_manifest
+from scripts.download_hf_model import (
+    MODEL_VARIANTS,
+    _matches_patterns,
+    _write_model_manifest,
+)
+
+
+def test_mistral_training_snapshot_variant_is_exact():
+    assert MODEL_VARIANTS["mistral-small-4-119b-bf16"] == {
+        "model_id": "axolotl-ai-co/Mistral-Small-4-119B-2603-BF16",
+        "local_dir": "model/mistral-small-4-119b-2603-bf16",
+    }
 
 
 def test_matches_patterns_defaults():
@@ -27,5 +38,11 @@ def test_write_model_manifest_records_revision_and_shards(tmp_path):
     )
     assert manifest["model_id"] == "org/model"
     assert manifest["revision"] == "abc123"
+    assert manifest["schema_version"] == "aegislm.model-snapshot.v2"
     assert manifest["safetensors_shards"] == 1
     assert manifest["missing_shards"] == []
+    assert [item["path"] for item in manifest["files"]] == [
+        "model-00001-of-00001.safetensors",
+        "model.safetensors.index.json",
+    ]
+    assert len(manifest["inventory_sha256"]) == 64

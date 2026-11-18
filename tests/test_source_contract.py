@@ -128,6 +128,11 @@ def test_source_record_output_and_exact_span_validation() -> None:
 
     assert validate_source_record(record) == []
     assert validate_source_output(target, source_code=record["code"]["text"]) == []
+    assert validate_source_output(
+        target,
+        source_code=record["code"]["text"],
+        expected_target_cwe="CWE-787",
+    ) == ["scope.target_cwe does not match the requested target CWE"]
 
     missing = copy.deepcopy(target)
     missing["findings"] = []
@@ -285,6 +290,29 @@ def test_source_evaluator_computes_absolute_metrics() -> None:
     assert result["metrics"]["false_positive_rate"] == 0.0
     assert result["metrics"]["schema_pass_rate"] == 1.0
     assert result["metrics"]["evidence_rate"] == 1.0
+
+
+def test_source_evaluator_rejects_wrong_target_cwe() -> None:
+    record = _record(record_id="wrong-cwe")
+    output = _target(record)
+    output["scope"]["target_cwe"] = "CWE-787"
+    prediction = Prediction(
+        record_id="wrong-cwe",
+        model_id="model",
+        run_id="run",
+        raw_output=json.dumps(output),
+    )
+
+    result = evaluate_source_predictions(
+        [record],
+        [prediction],
+        thresholds=SourceThresholds(minimum_sample_count=1),
+    )
+
+    case = result["cases"][0]
+    assert case["schema_valid"] is False
+    assert case["assessment"] is None
+    assert "scope.target_cwe does not match" in case["errors"][0]
 
 
 def test_r2_audit_stops_when_evidence_supply_is_missing() -> None:
