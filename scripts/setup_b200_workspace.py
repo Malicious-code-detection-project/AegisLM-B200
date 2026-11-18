@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 
-DEFAULT_PERSISTENT_ROOT = Path("<WORKSPACE>/LLM")
+DEFAULT_PERSISTENT_ROOT = Path("/NHNHOME/WORKSPACE/26moel002_ex07/LLM")
 MISTRAL_ARTIFACT_NAMESPACE = "mistral-small-4-119b"
 
 

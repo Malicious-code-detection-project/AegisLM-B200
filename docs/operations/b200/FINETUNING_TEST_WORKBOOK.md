@@ -91,7 +91,7 @@ Ninja job은 `4`, NVCC thread는 `1`로 제한한다. 이는 설치 중 host RAM
 
 아래 값은 실시간 상태가 아니라 **2026-07-27 13:23:32 KST**에 다시 조회한 초기값입니다.
 
-- 서버: `<B200_HOST>`
+- 서버: `DAEGU-AIENGR-LLM`
 - 저장소: `<REDACTED_SERVER_PATH>/AegisLM-B200` (historical server path)
 - GPU: NVIDIA B200 2장, GPU당 183,359 MiB
 - 학습: `10,335 / 10,401 step`, 99.37%, 실행 중
