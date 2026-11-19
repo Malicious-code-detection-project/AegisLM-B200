@@ -40,11 +40,13 @@ llamafactory = { path = "vendor/LlamaFactory", editable = true }
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+testpaths = ["tests"]
 
 [tool.ruff]
 exclude = [
     ".venv",
     ".venv-fast",
+    ".venv-axolotl",
     "vendor",
     "data",
     "model",

@@ -128,6 +128,11 @@ def test_source_record_output_and_exact_span_validation() -> None:
 
     assert validate_source_record(record) == []
     assert validate_source_output(target, source_code=record["code"]["text"]) == []
+    assert validate_source_output(
+        target,
+        source_code=record["code"]["text"],
+        expected_target_cwe="CWE-787",
+    ) == ["scope.target_cwe does not match the requested target CWE"]
 
     missing = copy.deepcopy(target)
     missing["findings"] = []

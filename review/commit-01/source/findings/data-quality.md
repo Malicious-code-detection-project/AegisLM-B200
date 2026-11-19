@@ -2,6 +2,41 @@
 
 ## P1 — 새 학습 전 처리 필요
 
+### SRC-CONTRACT-01: 입력·출력 target CWE 동일성 검사 누락
+
+output schema는 `scope.target_cwe`의 형식만 검사합니다. validator와 source
+evaluator가 입력 record의 `task.target_cwe`를 expected value로 전달하지 않으므로,
+모델이 다른 CWE를 출력해도 assessment가 맞으면 정답으로 집계될 수 있습니다.
+
+제안:
+
+- output semantic validator에 `expected_target_cwe`를 전달합니다.
+- 불일치 출력은 schema 이후 semantic FAIL과 abstention으로 처리합니다.
+- 다른 CWE를 출력한 positive/negative fixture를 추가합니다.
+
+### SRC-CONTRACT-02: exact span과 semantic evidence의 혼동
+
+현재 exact substring 검사는 입력에 없는 코드를 근거로 만드는 환각을 막지만,
+해당 span이 target CWE를 인과적으로 설명하는지는 검증하지 않습니다.
+`evidence_linked`라는 이름도 semantic linkage로 오해될 수 있습니다.
+
+제안:
+
+- `structurally_grounded`와 `semantically_validated`를 분리합니다.
+- semantic validation을 통과하지 않은 evidence는 최종 evidence gate의 PASS로
+  계산하지 않습니다.
+
+### SRC-CONTRACT-06: generic patch diff의 causal evidence 승격
+
+`derive_patch_findings()`는 before/fixed diff의 변경 줄을 반환하지만 target CWE와
+변경 줄의 관계를 검증하지 않습니다. refactoring-only 변경도 보안 evidence로
+승격될 수 있습니다.
+
+제안:
+
+- diff 결과는 candidate evidence로만 취급합니다.
+- target CWE별 validator 또는 독립 수동 검토를 통과한 span만 gold로 승인합니다.
+
 ### SARD-DQ-01: semantic 오류 레코드의 disposition 불일치
 
 semantic basis 오류는 전체 gate를 실패시키지만 해당 레코드는 materialized
@@ -65,6 +100,23 @@ builder가 생성합니다. 같은 builder가 train과 blind-test gold를 만들
 3. 별도 독립 gold를 확보한 뒤 실제 보안 근거 성능
 
 ## P2 — 정확도와 공급량 개선
+
+### SRC-CONTRACT-03: code span 최대 개수 불일치
+
+schema와 system prompt는 item당 최대 8개를 허용하지만 `_normalize_code_spans()`는
+최대 10개를 반환합니다. 9~10개 span은 정규화 뒤 schema error를 일으킵니다.
+
+### SRC-CONTRACT-04: uncertain supervision 정책 부재
+
+output contract와 평가기는 `uncertain`을 허용하지만 target builder는 uncertain
+label을 전부 제외합니다. 기권 능력을 zero-shot으로 기대할지, 검토된 uncertain
+표본을 학습할지 명시적인 결정이 필요합니다.
+
+### SRC-CONTRACT-05: 전역 안전 주장 탐지 범위 제한
+
+현재 검사는 일부 영어 표현의 정규식에 의존합니다. 동의어, 우회 표현, 다른 언어
+출력에는 완전하지 않습니다. 출력 언어를 고정하거나 별도 semantic safety 평가가
+필요합니다.
 
 ### SARD-DQ-08: 요소 존재 검사와 causal relation의 차이
 

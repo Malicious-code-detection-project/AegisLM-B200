@@ -204,8 +204,8 @@ blind 500건의 고정 절대 gate를 통과했습니다. 당시 겹침 검사�
 2026-09-28 [AegisLM](https://github.com/Malicious-code-detection-project/AegisLM)에서 다음 학습을 준비하며 이 평가 세트를 실제 학습·검증 데이터와 대조하자,
 500건 중 **498건**(train 206 · validation 292)이 같은 코드였습니다. 학습 때 보지 않은 blind 세트라는 전제가 깨졌으므로
 **이 세트로 얻은 결과(Q1R10 → Q1R11 PASS, Mistral G3 PASS)는 모두 무효로 처리하고 수치를 싣지 않습니다.**
-감사 기록은 AegisLM의 [`docs/FINETUNING_EXPERIMENT_PLAN.md`](https://github.com/Malicious-code-detection-project/AegisLM/blob/main/docs/FINETUNING_EXPERIMENT_PLAN.md)와
-[`docs/DATASET_ARTIFACT_INVENTORY.md`](https://github.com/Malicious-code-detection-project/AegisLM/blob/main/docs/DATASET_ARTIFACT_INVENTORY.md)에 있습니다.
+감사 기록은 [AegisLM 저장소의 `docs/` 폴더](https://github.com/Malicious-code-detection-project/AegisLM/tree/main/docs)에 있는
+`FINETUNING_EXPERIMENT_PLAN.md`와 `DATASET_ARTIFACT_INVENTORY.md`에 있습니다.
 
 - **방법은 유지합니다:** 판단(decision)과 근거 line 선택(evidence)을 두 adapter로 나누고, evidence 출력에는 `response_format=json_schema` constrained decoding과 AegisLM semantic validator를 붙입니다.
 - **재평가 전까지 미검증:** source 2단계 pipeline의 일반화 성능, calibration, 구체적인 remediation, 실제 프로젝트·다른 언어·binary 분석 성능.

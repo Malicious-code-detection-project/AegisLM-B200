@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 DEFAULT_PERSISTENT_ROOT = Path("/NHNHOME/WORKSPACE/26moel002_ex07/LLM")
+MISTRAL_ARTIFACT_NAMESPACE = "mistral-small-4-119b"
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,6 +45,7 @@ def configure_workspace(project_root: Path, persistent_root: Path) -> None:
         persistent_root / "TrainingArtifacts" / "checkpoints",
         persistent_root / "TrainingArtifacts" / "runs",
         persistent_root / "TrainingArtifacts" / "wandb",
+        persistent_root / "TrainingArtifacts" / MISTRAL_ARTIFACT_NAMESPACE,
         persistent_root / "Cache" / "huggingface",
         project_root / "training_artifacts",
     ]
@@ -51,6 +53,10 @@ def configure_workspace(project_root: Path, persistent_root: Path) -> None:
         ensure_directory(directory)
     ensure_directory_symlink(project_root / "model", persistent_root / "Model")
     ensure_directory_symlink(project_root / "data", persistent_root / "Data")
+    ensure_directory_symlink(
+        project_root / "training_artifacts" / MISTRAL_ARTIFACT_NAMESPACE,
+        persistent_root / "TrainingArtifacts" / MISTRAL_ARTIFACT_NAMESPACE,
+    )
 
 
 def main() -> None:

@@ -1,5 +1,38 @@
 # Phase F 데이터 재설계·Qwen 재학습·바이너리 실험 계획
 
+## F5-X Mistral 통합 설정 v2
+
+`configs/experiment.yaml`은 Mistral F5-X의 유일한 사용자 편집 설정이다.
+`scripts/run_experiment.py`는 `validate`, `render`, `run`만 제공하며 model,
+revision, profile, step, run ID, artifact 경로를 CLI에서 덮어쓰지 않는다.
+G1 프로필은 `g1-qlora-ddp` 후 `g1-bf16-lora-fsdp2` 순서로 각각 새 승인
+SHA-256과 새 run ID를 사용한다. 두 프로필 모두 expert LoRA,
+`lora_dropout: 0.0`, seed `20260728`, sequence length `2048`, assistant-only,
+`reasoning_effort=none`을 유지한다.
+
+CPU `validate` 통과는 학습 성공이 아니다. `render`와 `run`은 raw YAML의
+SHA-256을 `AEGISLM_APPROVED_CONFIG_SHA256`과 대조한다. `run` 전수 preflight는
+pinned local tokenizer로 train 10,000건과 validation 1,000건의 file hash,
+count, role, system prompt, target JSON, THINK marker, token limit를 검사한다.
+문자 수 추정은 tokenizer 검사를 대체하지 않는다.
+
+Runtime은 `configs/runtime/mistral_f5x_environment.json`과 별도
+`.venv-axolotl`로 동결한다. 실행 직전 Python, CUDA, 두 B200, Axolotl CLI의
+environment 경계, Axolotl·Transformers·Cut Cross Entropy source commit,
+Flash Attention·bitsandbytes·torchao version을 검증한다. 모델 snapshot은
+manifest identity뿐 아니라 모든 config/tokenizer/index/weight shard의 크기와
+SHA-256 inventory를 전수 재검증한다. 기존 Qwen `.venv`에는 Mistral dependency를
+설치하지 않는다.
+
+G1은 양 GPU 참여, GPU당 peak VRAM 165 GiB 이하, finite loss, adapter 저장과
+SHA-256 inventory가 필요하다. LoRA가 전부 통과하면 LoRA를 선택하고, LoRA가
+OOM·VRAM·save gate에서 실패하며 QLoRA만 통과하면 QLoRA를 선택한다. 둘 다
+실패하면 G2로 진행하지 않는다. 선택 뒤 G2 10-step save/reload/inference,
+그 뒤 G3 100-step과 기존 blind 500건 절대평가를 각각 새 Work Order로
+수행한다. G3 PASS 전 merge, evidence adapter, full epoch는 금지한다.
+
+---
+
 이 문서는 Phase F의 단일 기준 문서(SSOT)입니다. 단계별 실제 명령,
 운영자 기록과 판정은
 [FINETUNING_TEST_WORKBOOK.md](../../operations/b200/FINETUNING_TEST_WORKBOOK.md)에 남깁니다.

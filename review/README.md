@@ -33,7 +33,7 @@ binary, serving 등 여러 책임을 포함하면 area를 나누어 기록합니
 
 | 커밋 | 영역 | 상태 | 다음 파일 |
 | --- | --- | --- | --- |
-| Commit 1 `618db23` | 1-A SARD/Juliet source | 진행 중 | `aegislm/datasets/source.py` |
+| Commit 1 `618db23` | 1-A SARD/Juliet source | 진행 중 | `tests/test_sard_juliet.py` |
 | Commit 1 `618db23` | 1-B Q1R10/Q1R11 | 미시작 | 1-A 완료 후 시작 |
 | Commit 1 `618db23` | 1-C Binary compile/Ghidra | 미시작 | 1-B 완료 후 시작 |
 | Commit 2–20 | 각 커밋 | 미시작 | Commit 1 완료 후 시작 |
@@ -42,6 +42,12 @@ binary, serving 등 여러 책임을 포함하면 area를 나누어 기록합니
 
 1. [`scripts/build_sard_juliet_source_dataset.py`](commit-01/source/01-build-script.md)
 2. [`aegislm/datasets/sard_juliet.py`](commit-01/source/02-sard-juliet.md)
+3. [`aegislm/datasets/source.py`](commit-01/source/03-source-contract.md)
+4. [`aegislm/datasets/source_audit.py`](commit-01/source/04-source-audit.md)
+
+모델과 무관한 문제의 수정 순서와 완료 조건은
+[`remediation-backlog.md`](commit-01/source/findings/remediation-backlog.md)를
+정본으로 사용합니다.
 
 ## 판정과 상태
 

@@ -1,0 +1,106 @@
+experiment:
+  id: mistral-f5x-unified-config-v2
+  phase: F5-X
+  stage: G1
+  active_profile: g1-qlora-ddp
+  run_id: g1-qlora-ddp-20260806-001
+approvals:
+  g0_static_configuration: true
+  dependency_install: true
+  model_download: false
+  workspace_symlinks: false
+  g1_gpu_execution: true
+  g2_10_step: false
+  g3_100_step: false
+  merge: false
+  evidence_adapter: false
+  full_epoch: false
+model:
+  source_repo: mistralai/Mistral-Small-4-119B-2603
+  source_revision: a11f36bebf709121056b1dbcc943d1c6afbe494d
+  training_repo: axolotl-ai-co/Mistral-Small-4-119B-2603-BF16
+  training_revision: 7918b06c0799750ce522f949bcc97dff2dca632a
+  tokenizer_repo: axolotl-ai-co/Mistral-Small-4-119B-2603-BF16
+  tokenizer_revision: 7918b06c0799750ce522f949bcc97dff2dca632a
+  local_path: model/mistral-small-4-119b-2603-bf16
+  text_only: true
+  reasoning_effort: none
+framework:
+  name: Axolotl
+  version: 0.17.0
+  transformers_version: 5.9.0
+  cut_cross_entropy_repository: axolotl-ai-cloud/ml-cross-entropy
+  cut_cross_entropy_revision: 5f0c7a7778b5b17d37738fae10065ed3034373af
+dataset:
+  profile: phase-f-source-decision-v1
+  format: openai_messages_jsonl
+  root: data/processed/phase-f-source-decision-v1
+  train_file: train.jsonl
+  validation_file: validation.jsonl
+  manifest_file: dataset_manifest.json
+  train_count: 10000
+  validation_count: 1000
+  train_sha256: 2d46c7d8161cbf97cc4efeb1a8c223311f4260ccf7a333dbe3cd71b73715f322
+  validation_sha256: ab576d0332282244b68711f5fb7129c171cd0b95784f914cf5a7255e880d5481
+  manifest_sha256: b987d174657061b0d0cdf263f738025514abbd9e3bb054251ca7d9d1777daa4e
+prompt_contract:
+  chat_template: tokenizer_default
+  roles_to_train:
+    - assistant
+  train_on_eos: turn
+  assistant_only: true
+  reasoning_effort: none
+  system_prompt_sha256: 9a72abf082ce57817ed0186719aeede75e51579c8131c95afd62b736485352ef
+  forbidden_markers:
+    - "[THINK]"
+    - "[/THINK]"
+training:
+  common:
+    sequence_len: 2048
+    seed: 20260728
+    micro_batch_size: 1
+    gradient_accumulation_steps: 1
+    max_steps: 1
+    lora_rank: 8
+    lora_alpha: 16
+    lora_dropout: 0.0
+    expert_lora: true
+    lora_target_modules: 'model.language_model.layers.[\d]+.(mlp|cross_attn|self_attn).(up|down|gate|q|k|v|o)_proj'
+    lora_target_parameters:
+      - mlp.experts.gate_up_proj
+      - mlp.experts.down_proj
+    learning_rate: 1.0e-4
+    optimizer: adamw_torch_fused
+    lr_scheduler: cosine
+    warmup_steps: 0
+    weight_decay: 0.0
+    gradient_checkpointing: true
+    attn_implementation: flash_attention_2
+  profiles:
+    g1-qlora-ddp:
+      adapter: qlora
+      distributed: ddp
+      load_in_4bit: true
+      quantize_moe_experts: true
+      bf16: true
+    g1-bf16-lora-fsdp2:
+      adapter: lora
+      distributed: fsdp2
+      bf16: true
+      fsdp_version: 2
+      fsdp_config:
+        auto_wrap_policy: TRANSFORMER_BASED_WRAP
+        transformer_layer_cls_to_wrap: Mistral4DecoderLayer
+        state_dict_type: SHARDED_STATE_DICT
+        reshard_after_forward: true
+artifacts:
+  root: training_artifacts
+  model_namespace: mistral-small-4-119b
+  run_directory: training_artifacts/mistral-small-4-119b/g1-qlora-ddp-20260806-001
+gates:
+  g1: true
+  g2: false
+  g3: false
+  merge: false
+  evidence_adapter: false
+  full_epoch: false

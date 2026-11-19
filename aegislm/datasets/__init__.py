@@ -93,6 +93,7 @@ from aegislm.datasets.source_audit import (
 from aegislm.datasets.sard_juliet import (
     SARD_JULIET_PROFILE,
     SARD_JULIET_SEED,
+    SUPPORTED_JULIET_CWES,
     JulietFunction,
     extract_juliet_functions,
     juliet_function_to_source_record,
@@ -239,6 +240,7 @@ __all__ = [
     "count_source_training_tokens",
     "SARD_JULIET_PROFILE",
     "SARD_JULIET_SEED",
+    "SUPPORTED_JULIET_CWES",
     "JulietFunction",
     "extract_juliet_functions",
     "juliet_function_to_source_record",
