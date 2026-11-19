@@ -28,7 +28,7 @@
 
 ## 하이라이트
 
-- **현재 단계는 Phase F: 데이터 재설계 + adapter 복구 실험입니다.** source 경로는 decision·evidence 2단계 pipeline이 신규 blind 500건의 고정 절대 gate를 통과했습니다. 이 PASS는 NIST SARD/Juliet 기반 C/C++ 함수에 한정됩니다. binary 경로는 수동 근거 gate와 공급량 부족으로 학습을 승인하지 않았습니다.
+- **현재 단계는 Phase F: 데이터 재설계 + adapter 복구 실험입니다.** source 경로의 decision·evidence 2단계 pipeline은 2026-07-30 blind 500건 gate를 통과했지만, 2026-09-28 감사에서 이 평가 세트 500건 중 498건이 학습·검증 데이터와 같은 코드로 확인되어 **그 결과를 무효로 처리했습니다**(재평가 대상, [평가 세트 중복 감사](#평가-세트-중복-감사-2026-09-28)). binary 경로는 수동 근거 gate와 공급량 부족으로 학습을 승인하지 않았습니다.
 - **loss가 아니라 절대 gate로 채택합니다.** 추론에는 label-blind `challenge.jsonl`만 넘기고 `gold.jsonl`은 평가 시점에만 씁니다. 모델 간 상대순위도 성공 기준이 아닙니다.
 - **실패도 결과로 남깁니다.** Phase E 500건 품질 FAIL, binary target v1~v9 수동 검토 FAIL, EMBER2024 classifier FAIL을 결정문과 artifact hash로 보존합니다.
 - **B200 2장 재현 프로파일.** LlamaFactory v0.9.5 + LoRA + DeepSpeed ZeRO-3, `uv` lock, Git 밖 모델·데이터·checkpoint 저장, latest-only checkpoint mirror를 씁니다.
@@ -196,23 +196,19 @@ adapter, raw dataset, 생성된 prediction과 report는 모두 Git 밖에 둡니
 모든 수치의 정본은 [Phase F 실험 계획](docs/experiments/plans/PHASE_F_DATASET_AND_BINARY_EXPERIMENT_PLAN.md),
 [평가 계획](docs/evaluation/EVALUATION_PLAN.md), `docs/experiments/decisions/phase-f/`의 결정문입니다.
 
-### Source 2단계 pipeline: Q1R10 → Q1R11 신규 blind 500건 (2026-07-30, PASS)
+### 평가 세트 중복 감사 (2026-09-28)
 
-Q1R10 decision 100-step과 Q1R11 evidence 100-step adapter를 순차 실행했습니다. 둘 다 base에서 시작한 100-step
-학습이며, 기존 학습·검증·평가의 5,750 pair와 group/code hash가 겹치지 않는 신규 blind 500건에서 한 번 평가했습니다.
+2026-07-30에 Q1R10 decision 100-step과 Q1R11 evidence 100-step adapter를 순차 실행하는 source 2단계 pipeline이
+blind 500건의 고정 절대 gate를 통과했습니다. 당시 겹침 검사는 예전 데이터 목록(`phase-f-sard-grounded-v2`)을 기준으로 해서 0건이었습니다.
 
-| 단계 | 지표 | 결과 | gate |
-| --- | --- | ---: | --- |
-| decision | precision | `0.9881` | ≥ 0.90 |
-| decision | recall | `1.0000` | ≥ 0.95 |
-| decision | FPR | `0.0120` | ≤ 0.05 |
-| evidence | precision / recall | `0.9001 / 0.9229` | line precision·recall 각각 ≥ 0.50 |
-| evidence | F1 | `0.9114` | 해당 없음 |
-| 공통 | parse / schema / renderer | `1.0000` | parse/schema ≥ 0.99, renderer 1.00 |
+2026-09-28 [AegisLM](https://github.com/Malicious-code-detection-project/AegisLM)에서 다음 학습을 준비하며 이 평가 세트를 실제 학습·검증 데이터와 대조하자,
+500건 중 **498건**(train 206 · validation 292)이 같은 코드였습니다. 학습 때 보지 않은 blind 세트라는 전제가 깨졌으므로
+**이 세트로 얻은 결과(Q1R10 → Q1R11 PASS, Mistral G3 PASS)는 모두 무효로 처리하고 수치를 싣지 않습니다.**
+감사 기록은 AegisLM의 [`docs/FINETUNING_EXPERIMENT_PLAN.md`](https://github.com/Malicious-code-detection-project/AegisLM/blob/main/docs/FINETUNING_EXPERIMENT_PLAN.md)와
+[`docs/DATASET_ARTIFACT_INVENTORY.md`](https://github.com/Malicious-code-detection-project/AegisLM/blob/main/docs/DATASET_ARTIFACT_INVENTORY.md)에 있습니다.
 
-- **범위:** NIST SARD/Juliet 기반 C/C++ 함수에서 지정된 CWE의 `present / not_observed` 판단과 근거 line 선택에 한정합니다.
-- **배포 조건:** 자유 JSON 생성에서는 500건 중 1건이 evidence 8-range 상한을 넘었습니다. 그래서 `response_format=json_schema` constrained decoding과 AegisLM semantic validator를 필수조건으로 고정했고, 이 조건에서 전체 gate가 통과했습니다.
-- **미검증:** 고정 seed TP 10/TN 10 검토에서 confidence가 20건 모두 `high`였고 recommendation은 일반적인 재확인 문구였습니다. calibration, 구체적인 remediation, 실제 프로젝트·다른 언어·binary 분석 성능은 아직 검증하지 않았습니다.
+- **방법은 유지합니다:** 판단(decision)과 근거 line 선택(evidence)을 두 adapter로 나누고, evidence 출력에는 `response_format=json_schema` constrained decoding과 AegisLM semantic validator를 붙입니다.
+- **재평가 전까지 미검증:** source 2단계 pipeline의 일반화 성능, calibration, 구체적인 remediation, 실제 프로젝트·다른 언어·binary 분석 성능.
 - 앞선 Q1R10 → Q1R9 미노출 480건은 decision은 통과했지만 evidence renderer `477/480`으로 source 전체 FAIL이었습니다.
 
 ### Phase E: Qwen3-Coder-Next 80B LoRA 500건 절대평가 (FAIL)
@@ -251,28 +247,15 @@ LLM 모델 개발은 분석 파이프라인 구현과 다른 속도로 움직입
 현재 저장소 단계는 **Phase F: 데이터 재설계 + adapter 복구 실험**입니다. 아래 기록은 주제별로 접어 두었습니다.
 
 <details>
-<summary><b>Source 최종 후보: Q1R10 → Q1R11 2단계 pipeline (2026-07-30)</b></summary>
+<summary><b>Source 2단계 pipeline 기록 (2026-07-30, 이후 무효)</b></summary>
 
-2026-07-30 현재 source model-only 최종 후보는 Q1R10 decision 100-step과
-Q1R11 evidence 100-step을 순차 실행하는 two-stage pipeline입니다. 기존
-학습·검증·평가의 5,750 pair와 group/code hash가 겹치지 않는 신규 blind
-500건에서 decision precision/recall/FPR
-`0.9881/1.0000/0.0120`, evidence precision/recall/F1
-`0.9001/0.9229/0.9114`, parse/schema/renderer `1.0000`으로 고정 절대
-gate를 모두 통과했습니다. Q1R10과 Q1R11은 각각 base-start 100-step이며
-추가 250/313-step 학습은 수행하지 않습니다.
+2026-07-30 당시 source model-only 최종 후보는 Q1R10 decision 100-step과 Q1R11 evidence 100-step을
+순차 실행하는 two-stage pipeline이었습니다. Q1R10과 Q1R11은 각각 base-start 100-step이고, 두 adapter의
+개별 BF16 merge와 vLLM TP2 lifecycle은 완료했습니다. Evidence endpoint는 자유 JSON 생성 시 500건 중 1건이
+8-range 상한을 넘어 `response_format=json_schema` constrained decoding과 AegisLM semantic validator를
+배포 필수조건으로 정했습니다.
 
-이 PASS는 NIST SARD/Juliet 기반 C/C++ 함수에서 지정된 CWE의
-`present / not_observed` 판단과 근거 line 선택에 한정됩니다. 고정 seed
-TP 10/TN 10 검토에서는 판단 20/20과 evidence overlap 20/20을
-확인했지만, 20건 모두 confidence가 `high`였고 deterministic report의
-recommendation은 일반적인 재확인 문구입니다. 따라서 calibration,
-구체적인 remediation, 실제 프로젝트·다른 언어·binary 분석 성능은 아직
-검증되지 않았습니다. 두 adapter의 개별 BF16 merge와 vLLM TP2 lifecycle은
-완료했습니다. Evidence endpoint는 자유 JSON 생성 시 500건 중 1건이
-8-range 상한을 넘었으므로 `response_format=json_schema` constrained
-decoding과 AegisLM semantic validator를 배포 필수조건으로 고정합니다.
-이 조건에서 decision과 evidence의 전체 절대 gate가 통과했습니다.
+이 후보의 blind 500건 평가 결과는 [평가 세트 중복 감사](#평가-세트-중복-감사-2026-09-28)에 따라 무효이며, 재평가 전까지 성능 근거로 쓰지 않습니다.
 
 </details>
 
@@ -283,9 +266,11 @@ Qwen 결과의 교차 모델 이식성 검증에는
 `mistralai/Mistral-Small-4-119B-2603`을 차기 모델로 선택했습니다. 이
 모델은 119B total·6.5B active MoE, Apache 2.0이며 2026년 3월 공개된
 Instruct·Reasoning·Devstral 계열 coding/agentic 통합 모델입니다. 기존
-Qwen adapter를 연장하지 않고 별도 Axolotl QLoRA 환경에서 decision-only
-1/10/100-step preflight를 수행하며, 현재 코드 리뷰의 P1 항목을 반영하기
-전에는 evidence adapter와 full run으로 확장하지 않습니다.
+Qwen adapter를 연장하지 않고 별도 Axolotl 환경에서 decision-only
+1/10/100-step을 진행했습니다. bitsandbytes QLoRA는 fused expert tensor의
+`INT_MAX + 1` 크기 제한으로 BLOCK되어 BF16 LoRA + FSDP2로 바꿨습니다.
+결과는 [AegisLM-Mistral-Small-4-119B](https://github.com/Malicious-code-detection-project/AegisLM-Mistral-Small-4-119B)에 있고,
+그 저장소의 blind 500건 평가도 같은 중복 세트를 써서 무효입니다.
 
 </details>
 
@@ -508,9 +493,11 @@ Phase F source 주 실험 모델은 `Qwen/Qwen3-Coder-Next` 80B였습니다.
 먼저 정제 데이터에서 base와 기존 Phase E adapter를 각각 절대평가하고,
 그 다음 새 LoRA를 base에서 100 step 학습합니다. 진단 gate를 통과한
 경우에만 250 step, 필요하면 1 epoch(약 313 step)까지 이어갑니다.
-Qwen two-stage가 100-step 절대 gate를 통과했으므로 차기 교차 모델은
-`mistralai/Mistral-Small-4-119B-2603`으로 변경했습니다. GPT-OSS는 현재
-실행 후보에서 제외하고 기존 문서는 초기 연구 기록으로만 보존합니다.
+Qwen two-stage가 100-step 절대 gate를 통과했다고 보고(이 결과는 이후
+[평가 세트 중복](#평가-세트-중복-감사-2026-09-28)으로 무효) 차기 교차 모델을
+`mistralai/Mistral-Small-4-119B-2603`으로 변경했습니다. 당시 GPT-OSS는
+실행 후보에서 제외했고, 2026-09부터 GPT-OSS-20B 실험은
+[AegisLM](https://github.com/Malicious-code-detection-project/AegisLM)에서 다시 진행했습니다.
 
 </details>
 
@@ -616,7 +603,7 @@ Qwen3-Coder-Next 80B에서 학습, adapter 저장·로드, merge, 실제 API ser
 별개로 precision, recall, FPR, schema gate를 통과하지 못해 현재 adapter는
 채택하지 않습니다.
 
--> **Phase F: dataset 재설계 + source lifecycle PASS / binary F7 scale audit**
+-> **Phase F: dataset 재설계 + source lifecycle 검증(blind PASS는 평가 세트 중복으로 무효) / binary F7 scale audit**
 
 기존 33만 건을 확대하지 않고 catalog→eligible manifest→materialized JSONL
 세 계층으로 재구성합니다. 구조 검사를 통과한 데이터에 대해 코드 근거가
