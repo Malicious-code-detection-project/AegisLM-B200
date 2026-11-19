@@ -1,0 +1,114 @@
+{
+  "schema_version": "aegislm.mistral-f5x-compatibility-matrix.v1",
+  "work_order_id": "mistral-f5x-runtime-compatibility-matrix-v1",
+  "probe_root": ".runtime-probes/mistral-f5x",
+  "approval_environment": "AEGISLM_APPROVED_COMPATIBILITY_MATRIX_SHA256",
+  "python_version": "3.12",
+  "torch_backend": "cu130",
+  "cuda_version": "13.0",
+  "gpu_count": 2,
+  "gpu_name_contains": "B200",
+  "qwen_environment": ".venv",
+  "final_environment": ".venv-axolotl",
+  "telemetry_environment": {
+    "AXOLOTL_DO_NOT_TRACK": "1"
+  },
+  "shared_packages": {
+    "torch": {
+      "distribution": "torch",
+      "version": "2.12.1",
+      "import": "torch"
+    },
+    "cut_cross_entropy": {
+      "distribution": "cut-cross-entropy",
+      "repository": "https://github.com/axolotl-ai-cloud/ml-cross-entropy.git",
+      "revision": "5f0c7a7778b5b17d37738fae10065ed3034373af",
+      "import": "cut_cross_entropy"
+    },
+    "flash_attn": {
+      "distribution": "flash-attn",
+      "version": "2.8.3",
+      "import": "flash_attn"
+    },
+    "bitsandbytes": {
+      "distribution": "bitsandbytes",
+      "version": "0.49.1",
+      "import": "bitsandbytes"
+    },
+    "torchao": {
+      "distribution": "torchao",
+      "version": "0.17.0",
+      "import": "torchao"
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "current-declared",
+      "kind": "declared-consistent",
+      "probe_directory": "current-declared",
+      "eligible_for_final": true,
+      "expected_resolution": "pass",
+      "axolotl": {
+        "distribution": "axolotl",
+        "repository": "https://github.com/axolotl-ai-cloud/axolotl.git",
+        "revision": "3c8334b6f9ae6bf5596f99a1845525c8ffc0a97a",
+        "import": "axolotl",
+        "declared_transformers": "5.14.1"
+      },
+      "transformers": {
+        "distribution": "transformers",
+        "version": "5.14.1",
+        "import": "transformers"
+      }
+    },
+    {
+      "candidate_id": "official-v0-17",
+      "kind": "official-consistent",
+      "probe_directory": "official-v0-17",
+      "eligible_for_final": true,
+      "expected_resolution": "pass",
+      "axolotl": {
+        "distribution": "axolotl",
+        "repository": "https://github.com/axolotl-ai-cloud/axolotl.git",
+        "revision": "09d325b4fd1288b1473c8a330dd19e3c91b1ac32",
+        "import": "axolotl",
+        "declared_transformers": "5.9.0"
+      },
+      "transformers": {
+        "distribution": "transformers",
+        "version": "5.9.0",
+        "import": "transformers"
+      }
+    },
+    {
+      "candidate_id": "approved-negative-control",
+      "kind": "negative-control",
+      "probe_directory": "approved-negative-control",
+      "eligible_for_final": false,
+      "expected_resolution": "conflict",
+      "axolotl": {
+        "distribution": "axolotl",
+        "repository": "https://github.com/axolotl-ai-cloud/axolotl.git",
+        "revision": "3c8334b6f9ae6bf5596f99a1845525c8ffc0a97a",
+        "import": "axolotl",
+        "declared_transformers": "5.14.1"
+      },
+      "transformers": {
+        "distribution": "transformers",
+        "repository": "https://github.com/huggingface/transformers.git",
+        "revision": "d24d79da55f7ee6e538a460d3025e41dcc41ab21",
+        "observed_version": "5.15.0.dev0",
+        "import": "transformers"
+      }
+    }
+  ],
+  "mistral4_symbols": [
+    "transformers.models.mistral4.configuration_mistral4:Mistral4Config",
+    "transformers.models.mistral4.modeling_mistral4:Mistral4DecoderLayer"
+  ],
+  "prohibited_options": [
+    "--no-deps",
+    "--system",
+    "--break-system-packages"
+  ]
+}

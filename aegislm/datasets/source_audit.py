@@ -1,4 +1,23 @@
-"""F2 source-target quality and tokenizer audits."""
+"""Audit model-ready source targets without granting training approval.
+
+Pipeline position:
+    materialized records + private manifest + evidence candidates
+    -> canonical source records
+    -> label-blind prompts and supervised targets
+    -> exact chat-template token counts
+    -> schema, leakage, evidence, duplicate, and quota gates
+    -> automated audit report
+    -> separate manual review
+
+This module is a quality gate, not a vulnerability analyzer. It consumes private
+labels and provenance but only passes the prompt produced by
+``format_source_prompt`` to the tokenizer. It never repairs missing evidence,
+truncates an over-length sample, or marks data approved for training.
+
+``overall_pass`` intentionally remains false even when every automated gate
+passes. A separately recorded human review must be bound to the same immutable
+dataset, prompt, and tokenizer inputs before training can be approved.
+"""
 
 from __future__ import annotations
 
@@ -24,6 +43,8 @@ _GENERIC_EVIDENCE_MARKERS = (
     "code-visible operation on the vulnerable execution path",
     "exact source operation is the code-visible basis",
 )
+# Maximum assistant JSON content budget. The complete system+user+assistant
+# sequence is independently constrained by ``cutoff_len``.
 SOURCE_ASSISTANT_TOKEN_LIMIT = 768
 
 
@@ -36,7 +57,34 @@ def audit_source_targets(
     grounded_findings_by_id: Mapping[str, Sequence[Mapping[str, Any]]] | None = None,
     required_counts: Mapping[str, Mapping[str, int]] | None = None,
 ) -> dict[str, Any]:
-    """Audit conservative F2 targets without filling evidence or quota gaps."""
+    """Evaluate F2 source targets and return a private, non-approving report.
+
+    Args:
+        materialized_records: Candidate train, validation, challenge, and
+            evaluation records. Their IDs are joined to ``manifest_rows``.
+        manifest_rows: Private split, label, provenance, and evidence metadata.
+        tokenizer: The approved tokenizer used for the complete chat sequence.
+        cutoff_len: Maximum untruncated system+user+assistant token count.
+        grounded_findings_by_id: Optional exact-span evidence candidates keyed by
+            record ID.
+        required_counts: Minimum split/label supply for this legacy F2 audit.
+
+    Returns:
+        A private audit report with record-level decisions, aggregate metrics,
+        automated gates, and a mandatory manual-review state. ``overall_pass``
+        is always false in this function.
+
+    Contract:
+        Missing evidence and quota gaps remain failures. This function does not
+        synthesize replacements or approve training.
+
+    Review notes:
+        ``SRC-AUDIT-01`` and ``SRC-AUDIT-02`` track missing uniqueness and source
+        file-to-split binding checks in this legacy audit.
+    """
+    # Private join boundary. Duplicate IDs currently overwrite one another in
+    # this legacy implementation; keep SRC-AUDIT-01 open until uniqueness is
+    # enforced before building this index.
     manifest_by_id = {str(row["record_id"]): row for row in manifest_rows}
     findings_by_id = grounded_findings_by_id or {}
     required = (
@@ -71,6 +119,8 @@ def audit_source_targets(
             exclusion_counts["manifest_missing"] += 1
             continue
         try:
+            # The canonical record may contain private metadata. Only the
+            # allowlisted prompt returned below is model-visible.
             source_record = phase_f_record_to_source_record(record, manifest)
             prompt = format_source_prompt(source_record)
             prompt_leakage = _prompt_leakage(source_record, prompt)
@@ -113,6 +163,8 @@ def audit_source_targets(
             )
             continue
 
+        # build_source_target already validates its output. Rechecking here keeps
+        # the audit report explicit if the builder and validator later evolve.
         target_errors = validate_source_output(
             result.target,
             source_code=str(source_record["code"]["text"]),
@@ -124,6 +176,7 @@ def audit_source_targets(
             separators=(",", ":"),
         )
         target_hash = hashlib.sha256(target_json.encode()).hexdigest()
+        # Count the exact untruncated chat sequence used for supervised training.
         token_count = count_source_training_tokens(
             tokenizer,
             prompt,
@@ -136,6 +189,8 @@ def audit_source_targets(
         tokenized_sequence_count += 1
         maximum_observed_token_count = max(maximum_observed_token_count, token_count)
         if token_count > cutoff_len:
+            # Do not right-truncate security evidence. Exclude the complete record
+            # and let the quota gate expose any resulting supply shortage.
             exclusion_counts["tokenizer_cutoff_exceeded"] += 1
             cases.append(
                 {
@@ -157,6 +212,8 @@ def audit_source_targets(
             )
             continue
 
+        # Only records surviving contract and token gates contribute to eligible
+        # supply and target-duplication metrics.
         target_hashes[target_hash] += 1
         if materialization in {"train", "validation", "blind_test"}:
             eligible_counts[(split, label)] += 1
@@ -274,6 +331,8 @@ def audit_source_targets(
     return {
         "schema_version": "aegislm.source-target-audit.v1",
         "status": status,
+        # Deliberately fail-closed: automated quality is necessary but never
+        # sufficient for training approval.
         "overall_pass": False,
         "automated_pass": automated_pass,
         "manual_review": {
@@ -294,7 +353,16 @@ def count_source_training_tokens(
     prompt: Sequence[Any],
     target: Mapping[str, Any],
 ) -> int:
-    """Count the exact non-truncated chat sequence with thinking disabled."""
+    """Count the complete, non-truncated supervised chat sequence.
+
+    The assistant target is appended to the already label-blind prompt before
+    applying the tokenizer's chat template. The function requests
+    ``enable_thinking=False`` where supported.
+
+    Review note:
+        The current TypeError fallback omits ``enable_thinking``. It must not be
+        treated as proof of a no-think rendering contract; see ``SRC-AUDIT-04``.
+    """
     messages = [
         *[dict(message) for message in prompt],
         {
@@ -315,6 +383,8 @@ def count_source_training_tokens(
             enable_thinking=False,
         )
     except TypeError:
+        # Legacy compatibility fallback. A model profile must eventually replace
+        # this with an explicit chat-template capability check (SRC-AUDIT-04).
         encoded = tokenizer.apply_chat_template(
             messages,
             tokenize=True,
@@ -327,7 +397,11 @@ def count_source_assistant_tokens(
     tokenizer: Any,
     target: Mapping[str, Any],
 ) -> int:
-    """Count the compact assistant JSON without prompt or generation overhead."""
+    """Count compact assistant JSON without system/user or generation overhead.
+
+    This secondary budget prevents verbose targets from dominating training. It
+    does not replace the complete sequence count performed above.
+    """
     content = json.dumps(
         target,
         ensure_ascii=False,
@@ -359,6 +433,7 @@ def count_source_assistant_tokens(
 
 
 def _encoded_length(encoded: Any) -> int:
+    """Read token length from common tokenizer and batch-encoding shapes."""
     if isinstance(encoded, Mapping):
         encoded = encoded.get("input_ids")
         if encoded is None:
@@ -375,6 +450,11 @@ def _prompt_leakage(
     record: Mapping[str, Any],
     prompt: Sequence[Any],
 ) -> list[str]:
+    """Find known private identifiers and control keys in rendered prompts.
+
+    This is defense in depth after the allowlist formatter, not a general secret
+    or semantic leakage detector.
+    """
     metadata = record["metadata"]
     joined = "\n".join(str(message["content"]) for message in prompt).lower()
     candidates = {
@@ -401,13 +481,16 @@ def _prompt_leakage(
 
 
 def _contains_generic_evidence(target: Mapping[str, Any]) -> bool:
+    """Detect known low-information evidence templates by fixed marker text."""
     text = json.dumps(target, ensure_ascii=False).lower()
     return any(marker in text for marker in _GENERIC_EVIDENCE_MARKERS)
 
 
 def _ratio(numerator: int, denominator: int) -> float:
+    """Return a safe ratio, using zero for an empty denominator."""
     return numerator / denominator if denominator else 0.0
 
 
 def _rate(cases: Sequence[Mapping[str, Any]], key: str) -> float:
+    """Return the fraction of audit cases with a truthy metric field."""
     return _ratio(sum(bool(case.get(key)) for case in cases), len(cases))

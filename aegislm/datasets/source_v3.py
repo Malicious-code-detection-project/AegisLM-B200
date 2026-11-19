@@ -302,6 +302,7 @@ def _audit_source_v3(
         output_errors = validate_source_output(
             target,
             source_code=str(canonical["code"]["text"]),
+            expected_target_cwe=str(canonical["task"]["target_cwe"]),
         )
         errors.extend(f"{record_id}: {error}" for error in output_errors)
         label = str(canonical["metadata"]["label"])

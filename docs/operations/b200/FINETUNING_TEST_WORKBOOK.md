@@ -1,5 +1,72 @@
 # AegisLM 수동 파인튜닝 검증 워크북
 
+## Mistral F5-X 통합 실행 기록
+
+사용자 편집 SSOT는 `configs/experiment.yaml`이며 아래 세 명령만 사용한다.
+Mistral은 기존 Qwen `.venv`와 분리된 `.venv-axolotl`에서만 실행한다.
+
+```bash
+.venv-axolotl/bin/python scripts/run_experiment.py --config configs/experiment.yaml --action validate
+.venv-axolotl/bin/python scripts/run_experiment.py --config configs/experiment.yaml --action render
+.venv-axolotl/bin/python scripts/run_experiment.py --config configs/experiment.yaml --action run
+```
+
+`render`와 `run` 전에 승인된 raw-byte SHA-256을
+`AEGISLM_APPROVED_CONFIG_SHA256`에 설정한다. `training_artifacts` 전체는 기존
+Qwen 로컬 정책을 유지하고, Mistral 하위 디렉터리만 persistent
+`TrainingArtifacts/mistral-small-4-119b`에 연결한다.
+
+| Gate | 승인·기록 조건 |
+| --- | --- |
+| G0 | exact schema, immutable pin, runtime manifest, full model inventory, future gate false, 안전한 상대 경로, CPU tests |
+| Environment | `.venv-axolotl`, manifest SHA-256, exact package versions, `uv pip check`, Qwen `.venv` 불변 |
+| G1 QLoRA | `g1-qlora-ddp`, 1 step, 2 GPU, peak ≤165 GiB/GPU, finite loss, adapter inventory |
+| G1 LoRA | 새 config hash/run ID, `g1-bf16-lora-fsdp2`, 동일 hardware/save gate |
+| 선택 | LoRA 우선; LoRA hardware/save 실패 시 QLoRA; 둘 다 실패하면 중단 |
+| G2 | 새 Work Order, 선택 프로필 10-step save → 새 process reload → inference |
+| G3 | 새 Work Order, 100-step + 기존 blind 500건 precision/recall/FPR/abstention/schema/safety/evidence |
+
+2026-08-10 사용자 승인으로 Mistral 전용 dependency 설치와 G1 GPU 실행을
+활성화했다. model/data와 symlink는 실행 전 실제 경로·hash를 통과해야 한다.
+G2/G3, merge/evidence/full epoch는 계속 별도 승인 대상이며, G3 PASS 전 loss만으로
+Go를 판정하지 않는다.
+
+Runtime contract는 `configs/runtime/mistral_f5x_environment.json`이다. 설치 전
+`scripts/setup_mistral_f5x_env.py --action validate`로 hash와 설치 계획을 확인한다.
+운영 조합은 `torch==2.12.1`, `axolotl[flash-attn]==0.17.0`,
+`transformers==5.9.0`이다. PyTorch를 먼저 설치한 뒤 Axolotl을 설치하며,
+`UV_TORCH_BACKEND` 대신 설치 후 CUDA `13.0`과 B200 두 장을 직접 확인한다.
+SSH가 `.venv-axolotl` 생성 뒤 끊기면 환경을 삭제하지 않고 같은 runtime hash로
+`--action resume`을 실행한다.
+FlashAttention 전용 `FLASH_ATTN_CUDA_ARCHS=100`으로 B200만 대상으로 빌드하고
+Ninja job은 `4`, NVCC thread는 `1`로 제한한다. 이는 설치 중 host RAM 고갈을 막는 설정이며,
+학습 시 두 GPU의 병렬 사용량을 제한하는 값은 아니다.
+
+### Mistral runtime compatibility matrix v1 — historical
+
+최초 matrix 실행은 system `uv 0.9.3`의 `cu130` selector 파싱에서 중단됐다.
+패키지 resolver에 도달하지 않았으므로 후보 호환성 판정으로 재사용하지 않는다.
+기존 `.runtime-probes/mistral-f5x`와 inventory는 실패 증거로 보존한다. 현재 운영
+경로는 위의 단일 stable runtime 설치와 post-install 검증이다.
+
+### Runtime readiness v1 구현·B200 동기화 — 2026-08-06
+
+| 항목 | 증거 |
+| --- | --- |
+| Work Order | `mistral-f5x-runtime-readiness-v1` |
+| 로컬 기준 | `codex/phase-f-source-v3`, HEAD `cb520cdd132f86f23fc45a8800cb6c20c3ab9dc3`; Git stage/commit/push 없음 |
+| Config SHA-256 | `f5e8cd4be53cda6db55a886ddda12a967ceed68e84e6ec7ba0a4f167e28af07d` |
+| Runtime manifest SHA-256 | `3f13c441637fb91baf315d30977dba6b1bd9fbf16cb2259c6e792fc9432faba8` |
+| 로컬 gate | 전체 pytest `447 passed, 3 skipped`; Ruff check/format PASS; mypy `149` source PASS |
+| B200 기준 | `codex/b200-2gpu-rebuild`, HEAD `63e0a02bb02cdc0d7ee870765f5c9ef0c30f07be`; 기존 사용자 변경 보존 |
+| 동기화 | allowlist 파일 `21`, SHA-256 mismatch `0`; `.env.example`은 기존 내용을 보존하며 Mistral key만 병합 |
+| 초기 incoming archive SHA-256 | `1e683f64883c6414c4940a8102c818284273e16e1f2a21450e4a4cefdf0aac84`; evidence 행 추가 뒤 최종 21개 파일은 staged/current 개별 SHA 대조 |
+| 원격 before backup SHA-256 | `43a083a9faafa0c27ca37569e588f1ec8517e168bc43d25812824f6827830886` |
+| B200 gate | 대상 pytest `35 passed`; config/runtime manifest validate PASS |
+| 판정 | CPU readiness `PASS`, B200 source sync `PASS`; dependency 설치·download·symlink·GPU 실행은 미수행 |
+
+---
+
 이 문서는 B200 서버에서 운영자가 직접 명령을 실행하고, 증거와 판정을 한곳에 기록하기 위한 단일 실행 문서입니다.
 
 파인튜닝 성공 여부는 **loss 수렴이나 다른 모델보다 높은 점수로 판정하지 않습니다.** 동일한 label-blind challenge에서 사전에 정한 절대 보안 품질 gate를 통과해야 합니다. base model이나 다른 adapter와의 비교는 비용·속도·실패 원인을 이해하기 위한 보조 자료일 뿐, 합격 기준을 바꾸지 않습니다.

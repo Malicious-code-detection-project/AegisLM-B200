@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -33,7 +34,7 @@ def main() -> None:
     parser.add_argument("--tokenizer", required=True)
     parser.add_argument(
         "--profile",
-        default="phase-f-sard-grounded-v2",
+        default="phase-f-sard-grounded-v3",
         help="Immutable profile identifier written to the dataset manifest.",
     )
     parser.add_argument("--seed", type=int, default=SARD_JULIET_SEED)
@@ -124,6 +125,11 @@ def main() -> None:
     quarantined = [row for row in catalog if row["disposition"] != "eligible"]
     if quarantined:
         write_parquet(quarantined, output_dir / "quarantine_manifest.parquet")
+    if profile["quarantine_manifest"]:
+        write_parquet(
+            profile["quarantine_manifest"],
+            output_dir / "quality_quarantine_manifest.parquet",
+        )
     write_jsonl(profile["canonical_records"], output_dir / "private" / "records.jsonl")
     write_jsonl(profile["records"]["train"], output_dir / "train.jsonl")
     write_jsonl(profile["records"]["validation"], output_dir / "validation.jsonl")
@@ -147,17 +153,10 @@ def main() -> None:
         for row in split_rows
     }
     if not args.evaluation_only:
-        sampled_manifest = []
-        for label in ("present", "not_observed"):
-            label_rows = [row for row in profile["manifest"] if row["label"] == label]
-            sampled_manifest.extend(
-                sorted(
-                    label_rows,
-                    key=lambda row: hashlib.sha256(
-                        f"{args.seed}:manual:{row['record_id']}".encode()
-                    ).hexdigest(),
-                )[:50]
-            )
+        sampled_manifest = _select_manual_review_manifest(
+            profile["manifest"],
+            seed=args.seed,
+        )
         manual_rows = []
         for row in sampled_manifest:
             record_id = row["record_id"]
@@ -191,7 +190,13 @@ def main() -> None:
     summary = {
         key: value
         for key, value in profile.items()
-        if key not in {"records", "manifest", "canonical_records"}
+        if key
+        not in {
+            "records",
+            "manifest",
+            "quarantine_manifest",
+            "canonical_records",
+        }
     }
     summary["archive"] = {
         "external_path": str(args.archive.resolve()),
@@ -212,6 +217,36 @@ def main() -> None:
         f"available={profile['available_complete_pairs']}, "
         f"output={output_dir}"
     )
+
+
+def _select_manual_review_manifest(
+    manifest: Sequence[Mapping[str, object]],
+    *,
+    seed: int,
+    per_label: int = 50,
+) -> list[Mapping[str, object]]:
+    """Select a deterministic label-balanced review with CWE coverage first."""
+
+    selected: list[Mapping[str, object]] = []
+    for label in ("present", "not_observed"):
+        label_rows = [row for row in manifest if row.get("label") == label]
+        ordered = sorted(
+            label_rows,
+            key=lambda row: hashlib.sha256(
+                f"{seed}:manual:{row['record_id']}".encode()
+            ).hexdigest(),
+        )
+        coverage = [
+            next(row for row in ordered if str(row.get("cwe")) == cwe)
+            for cwe in sorted({str(row.get("cwe")) for row in ordered})
+        ]
+        label_selection = coverage[:per_label]
+        selected_ids = {str(row["record_id"]) for row in label_selection}
+        label_selection.extend(
+            row for row in ordered if str(row["record_id"]) not in selected_ids
+        )
+        selected.extend(label_selection[:per_label])
+    return selected
 
 
 def _sha256_file(path: Path) -> str:

@@ -52,6 +52,17 @@ relative_path: phase-f/source-v3/...
 `approved_for_training=false`는 manifest 필드만으로 끝나면 안 됩니다.
 training entrypoint가 승인 manifest와 digest를 검증하도록 연결해야 합니다.
 
+## Source audit 입력 결합
+
+`source_audit.py`의 결과에는 dataset, manifest, evidence, tokenizer revision,
+chat template와 system prompt digest가 모두 기록돼야 합니다. 현재는 tokenizer의
+`name_or_path`만 기록하고 있어 local 절대경로가 노출될 수 있고 동일 렌더링 계약을
+재현했다는 증거도 부족합니다.
+
+또한 `enable_thinking=False` 호출이 TypeError를 내면 해당 인자를 제거해 재시도합니다.
+모델 profile이 no-think를 보장하지 못하면 조용히 fallback하지 않고 실행을
+차단해야 합니다.
+
 ## 검증 항목
 
 - 동일 seed·동일 revision 재생성 hash 일치
@@ -59,3 +70,6 @@ training entrypoint가 승인 manifest와 digest를 검증하도록 연결해야
 - 공개 artifact의 host 절대경로 0
 - 승인되지 않은 tokenizer revision 실행 0
 - semantic 오류 row의 materialized training shard 유입 0
+- manifest·record의 빈 ID, 중복 ID, orphan row 0
+- train·validation·challenge 파일 role과 manifest split 불일치 0
+- audit 결과에 immutable input과 prompt contract digest 완비

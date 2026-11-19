@@ -196,15 +196,15 @@ def _evaluate_case(
         case["errors"].append("output must be a JSON object")
         return case
     case["parse_success"] = True
-    errors = validate_source_output(output, source_code=str(code["text"]))
-    scope = output.get("scope")
-    expected_target_cwe = task.get("target_cwe") if isinstance(task, dict) else None
-    if (
-        expected_target_cwe is not None
-        and isinstance(scope, dict)
-        and scope.get("target_cwe") != expected_target_cwe
-    ):
-        errors.append("scope.target_cwe does not match the requested target CWE")
+    errors = validate_source_output(
+        output,
+        source_code=str(code["text"]),
+        expected_target_cwe=(
+            str(task["target_cwe"])
+            if isinstance(task, dict) and "target_cwe" in task
+            else None
+        ),
+    )
     case["errors"].extend(errors)
     case["schema_valid"] = not errors
     unsafe = _unsafe_errors(output)
